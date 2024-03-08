@@ -7,6 +7,7 @@ set(HEADERS
     getopt.h
 	Game.hpp
 	Log.hpp
+	Constants.hpp
 )
 
 add_executable(
