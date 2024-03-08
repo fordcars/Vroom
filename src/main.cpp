@@ -1,34 +1,49 @@
-#include "getopt.h"
-#include <SDL2/SDL.h>
 #include <iostream>
+#include <string>
+#include "getopt.h"
+
+#include "Log.hpp"
+#include "Game.hpp"
 
 void printHelp(const std::string& progName) {
     std::cout
         << "Usage:\n"
-        << "    " << progName << " OPTIONS\n"
+        << "    " << progName
         << "Options:\n"
-        << "    -a        do something!\n"
-        << "    -b        do something else!"
+        << "    -l        logging level (0: errors only, 3: all)"
         << std::endl;
 }
 
 int main(int argc, char* argv[]) {
-    for(;;) {
-        switch(getopt(argc, argv, "h")) {
-        case '?':
-        case 'h':
-        default:
-            printHelp(argv[0]);
-            break;
+    LogLevel loggingLevel = LogLevel::INFO;
 
-        case -1:
-            break;
+    int c;
+    while((c = getopt(argc, argv, "hl:")) != -1) {
+        switch(c) {
+            case '?':
+            case 'l':
+            {
+                try {
+                    loggingLevel = static_cast<LogLevel>(std::stoi(optarg));
+                } catch(const std::invalid_argument& e) {
+                    std::cerr << "Invalid logging level: " << e.what() << std::endl;
+                }
+                break;
+            }
+            case 'h':
+            default:
+                printHelp(argv[0]);
+                return 0;
+                break;
+
+            case -1:
+                break;
         }
-
-        break;
     }
 
-    SDL_Init(SDL_INIT_EVERYTHING);
+    Log::setLevel(loggingLevel);
+    Game game;
+    game.init();
     
     return 0;
 }

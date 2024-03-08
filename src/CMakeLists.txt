@@ -1,9 +1,12 @@
 set(SOURCES
 	main.cpp
+	Game.cpp
 )
 
 set(HEADERS
     getopt.h
+	Game.hpp
+	Log.hpp
 )
 
 add_executable(
