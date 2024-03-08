@@ -9,5 +9,5 @@ public:
 
 private:
     SDL_Window* mMainWindow; // We might have multiple windows one day
-	SDL_GLContext mMainContext; // OpenGl context
+    SDL_GLContext mMainContext; // OpenGl context
 };
