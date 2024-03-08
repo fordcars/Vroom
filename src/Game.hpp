@@ -5,7 +5,7 @@
 class Game {
 public:
     Game();
-    void init();
+    bool init();
 
 private:
     SDL_Window* mMainWindow; // We might have multiple windows one day

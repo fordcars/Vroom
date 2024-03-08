@@ -6,6 +6,8 @@
 #include <iostream>
 #include <memory>
 
+#include <SDL2/SDL.h>
+
 enum class LogLevel : int {
     ERROR = 0,
     WARN  = 1,
@@ -17,17 +19,20 @@ enum class LogLevel : int {
 // Flushes buffer in destructor.
 class LogBuffer : public std::ostringstream {
 public:
-    LogBuffer(const std::string& name, LogLevel logLevel, LogLevel currentLevel, bool printToCerr = false)
+    LogBuffer(const std::string& name, LogLevel logLevel, LogLevel currentLevel,
+        bool printToCerr = false, const std::string& msgSuffix = "")
         : mName(name)
         , mLevel(logLevel)
         , mCurrentLevel(currentLevel)
-        , mPrintToCerr(printToCerr) {}
+        , mPrintToCerr(printToCerr)
+        , mMsgSuffix(msgSuffix) {}
     ~LogBuffer() {
         if(mLevel > mCurrentLevel) return;
 
         std::ostringstream tmp;
         tmp << std::setw(8) << std::left << ('[' + mName + "] ")
             << std::setw(0) << str();
+        if(!mMsgSuffix.empty()) tmp << mMsgSuffix;
         if(mPrintToCerr) std::cerr << tmp.str() << std::endl;
         else std::cout << tmp.str() << std::endl;
     }
@@ -37,6 +42,7 @@ private:
     LogLevel mLevel;
     LogLevel mCurrentLevel;
     bool mPrintToCerr;
+    std::string mMsgSuffix;
 };
 
 // Thread-safe logging class
@@ -47,10 +53,17 @@ public:
         getInstance().mLevel = level;
     }
 
-    static LogBuffer err()   { return LogBuffer("Error", LogLevel::ERROR, getInstance().mLevel, true); }
+    static LogBuffer error() { return LogBuffer("Error", LogLevel::ERROR, getInstance().mLevel, true); }
     static LogBuffer warn()  { return LogBuffer("Warn",  LogLevel::WARN,  getInstance().mLevel); }
     static LogBuffer info()  { return LogBuffer("Info",  LogLevel::INFO,  getInstance().mLevel); }
     static LogBuffer debug() { return LogBuffer("Debug", LogLevel::DEBUG, getInstance().mLevel); }
+
+    // Call when you know an SDL function failed
+    static LogBuffer sdl_error() {
+        std::string sdlError = std::string(" - SDL error: ") + SDL_GetError();
+        SDL_ClearError();
+        return LogBuffer("Error", LogLevel::ERROR, getInstance().mLevel, true, sdlError);
+    }
 
 private:
     LogLevel mLevel = LogLevel::INFO;
