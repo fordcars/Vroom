@@ -1,7 +1,7 @@
 set(SOURCES
 	main.cpp
 	Game.cpp
-	Renderer.cpp
+	RenderingSystem.cpp
 )
 
 set(HEADERS
@@ -9,12 +9,13 @@ set(HEADERS
 	Game.hpp
 	Log.hpp
 	Constants.hpp
-	Renderer.hpp
+	RenderingSystem.hpp
 )
 
 # Packages
 find_package(SDL2 REQUIRED CONFIG)
 find_package(glad REQUIRED)
+find_package(glm REQUIRED)
 
 add_executable(
 	Vroom
@@ -33,4 +34,5 @@ target_link_libraries(
 	Vroom
 	PRIVATE ${SDL2_LIBRARIES}
 	PRIVATE ${glad_LIBRARIES}
+	PRIVATE glm::glm
 )

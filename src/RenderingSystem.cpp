@@ -1,14 +1,14 @@
-#include "Renderer.hpp"
+#include "RenderingSystem.hpp"
 #include <glad/glad.h>
 
 #include "Constants.hpp"
 #include "Log.hpp"
 
-Renderer::~Renderer() {
+RenderingSystem::~RenderingSystem() {
     SDL_GL_DeleteContext(mContext);
 }
 
-bool Renderer::init(SDL_Window* window) {
+bool RenderingSystem::init(SDL_Window* window) {
     Log::info() << "Initializing graphics...";
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, Constants::OPENGL_MAJOR_VERSION);
@@ -34,22 +34,38 @@ bool Renderer::init(SDL_Window* window) {
     Log::info() << "OpenGL: " << (const char* )glGetString(GL_VERSION);
     SDL_GL_SetSwapInterval(1);
 
-    // Setup viewport and VAO
+    initGL(window);
+    return true;
+}
+
+void RenderingSystem::clear() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void RenderingSystem::render(SDL_Window* window) {
+    SDL_GL_SwapWindow(window);
+}
+
+void RenderingSystem::initGL(SDL_Window* window) {
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 
-	GLuint vertexArrayID; // VAO - vertex array object
+    GLuint vertexArrayID;
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID);
 
-    return true;
-}
+    glClearColor(
+        Constants::BG_COLOR.r,
+        Constants::BG_COLOR.g,
+        Constants::BG_COLOR.b,
+        1.0f
+    );
 
-void Renderer::clear() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
 
-void Renderer::render(SDL_Window* window) {
-    SDL_GL_SwapWindow(window);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
