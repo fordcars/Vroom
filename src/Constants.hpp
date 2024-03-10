@@ -6,4 +6,5 @@ namespace Constants {
     constexpr const char* GAME_NAME = "Vroom!";
     constexpr unsigned SIZE_X = 1024;
     constexpr unsigned SIZE_Y = 800;
+    constexpr unsigned FPS = 60;
 }

@@ -1,13 +1,26 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include "Renderer.hpp"
 
 class Game {
 public:
     Game();
-    bool init();
+    ~Game();
+    Game(const Game&) = delete;
+    Game& operator=(const Game&) = delete;
+    Game(Game&&) = delete;
+    Game& operator=(Game&&) = delete;
+    bool start();
 
 private:
-    SDL_Window* mMainWindow; // We might have multiple windows one day
-    SDL_GLContext mMainContext; // OpenGl context
+    Renderer mRenderer;
+    SDL_Window* mMainWindow;
+    bool mQuitting = false;
+
+    bool init();
+    void quit();
+    void doMainLoop();
+    void doEvents();
+    void checkForErrors();
 };

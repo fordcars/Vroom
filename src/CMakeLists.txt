@@ -1,13 +1,15 @@
 set(SOURCES
 	main.cpp
 	Game.cpp
+	Renderer.cpp
 )
 
 set(HEADERS
-    getopt.h
+    Utils/getopt.h
 	Game.hpp
 	Log.hpp
 	Constants.hpp
+	Renderer.hpp
 )
 
 # Packages

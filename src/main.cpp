@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "getopt.h"
+#include "Utils/getopt.h"
 
 #include "Log.hpp"
 #include "Game.hpp"
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 
     Log::setLevel(loggingLevel);
     Game game;
-    game.init();
+    game.start();
     
     return 0;
 }

@@ -5,7 +5,7 @@ Vroom!
 * [Conan](https://github.com/conan-io/conan)
 * [CMake](https://cmake.org/)
 
-For full list of dependencies, see `conanfile.txt`.
+For full list of dependencies, see [`conanfile.txt`](https://github.com/fordcars/Vroom/blob/main/conanfile.txt).
 
 ## Building
 ```bash

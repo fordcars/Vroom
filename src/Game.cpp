@@ -1,24 +1,33 @@
 #include "Game.hpp"
 #include <SDL2/SDL.h>
+#include <glad/glad.h>
 
 #include "Log.hpp"
 #include "Constants.hpp"
 
 Game::Game() {}
 
+Game::~Game() {
+    SDL_DestroyWindow(mMainWindow);
+    SDL_Quit();
+}
+
+bool Game::start() {
+    if(init()) {
+        while(!mQuitting) doMainLoop();
+        return true;
+    }
+    
+    return false;
+}
+
 bool Game::init() {
     Log::info() << "Initializing game...";
 
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
-    {
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         Log::sdl_error() << "Unable to initialize SDL!";
         return false;
     }
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, Constants::OPENGL_MAJOR_VERSION);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, Constants::OPENGL_MINOR_VERSION);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
     // Create window
     mMainWindow = SDL_CreateWindow(
@@ -30,23 +39,55 @@ bool Game::init() {
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
     );
     
-    if(!mMainWindow)
-    {
+    if(!mMainWindow) {
         Log::sdl_error() << "Unable to create window!";
         return false;
     }
 
-    // Create context
-    mMainContext = SDL_GL_CreateContext(mMainWindow);
-    if(!mMainContext)
-    {
-        Log::sdl_error() << "Unable to create OpenGL context! This game requires OpenGL "
-            << Constants::OPENGL_MAJOR_VERSION << "." << Constants::OPENGL_MINOR_VERSION
-            << ", make sure your system supports it!";
-        return false;
+    return mRenderer.init(mMainWindow);
+}
+
+void Game::quit() {
+    Log::info() << "Quitting!";
+    mQuitting = true;
+}
+
+void Game::doMainLoop() {
+    doEvents();
+    mRenderer.clear();
+    mRenderer.render(mMainWindow);
+    SDL_Delay(1000/Constants::FPS);
+}
+
+void Game::doEvents() {
+    SDL_Event event;
+    while(SDL_PollEvent(&event)) {
+        if(event.type == SDL_QUIT) quit();
     }
+}
 
-    SDL_GL_SetSwapInterval(1);
+void Game::checkForErrors() {
+    GLenum err;
+	while((err = glGetError()) != GL_NO_ERROR) {
+        if(err == GL_INVALID_ENUM)
+            Log::error() << "OpenGL error: GL_INVALID_ENUM";
+        else if(err == GL_INVALID_VALUE)
+            Log::error() << "OpenGL error: GL_INVALID_VALUE";
+        else if(err == GL_INVALID_OPERATION)
+            Log::error() << "OpenGL error: GL_INVALID_OPERATION";
+        else if(err == GL_STACK_OVERFLOW)
+            Log::error() << "OpenGL error: GL_STACK_OVERFLOW";
+        else if(err == GL_STACK_UNDERFLOW)
+            Log::error() << "OpenGL error: GL_STACK_UNDERFLOW";
+        else if(err == GL_OUT_OF_MEMORY)
+            Log::error() << "OpenGL error: GL_OUT_OF_MEMORY";
+	}
 
-    return true;
+	// Often, SDL errors will not be important, since it includes internal diagnostics
+	std::string message = SDL_GetError();
+	if(!message.empty())
+	{
+		Log::warn() << "SDL message: " << message;
+		SDL_ClearError();
+	}
 }
