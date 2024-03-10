@@ -24,9 +24,11 @@ target_include_directories(
 	Vroom
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 	PRIVATE ${SDL2_INCLUDE_DIRS}
+	PRIVATE ${glad_INCLUDE_DIRS}
 )
 
 target_link_libraries(
 	Vroom
 	PRIVATE ${SDL2_LIBRARIES}
+	PRIVATE ${glad_LIBRARIES}
 )

@@ -1,16 +1,12 @@
 include(FindPackageHandleStandardArgs)
 
-# Check if package is already found
 if(NOT glad_FOUND)
     # Add glad static library target
-    set(glad_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/external/glad/include)
-    find_path(glad_SOURCES NAMES glad.c PATHS ${PROJECT_SOURCE_DIR}/external/glad/src)
+    set(glad_DIR ${PROJECT_SOURCE_DIR}/external/glad)
+    set(glad_INCLUDE_DIRS ${glad_DIR}/include)
+    set(glad_SOURCES ${glad_DIR}/src/glad.c)
     add_library(glad STATIC ${glad_SOURCES})
-    target_include_directories(glad PUBLIC ${glad_INCLUDE_DIRS})
-
-    # Not sure why, but this is required to fix
-    # 'can not determine linker language' error
-    set_target_properties(glad PROPERTIES LINKER_LANGUAGE C)
+    target_include_directories(glad PRIVATE ${glad_INCLUDE_DIRS})
     
     # Set glad_LIBRARIES to target library
     set(glad_LIBRARIES glad)
