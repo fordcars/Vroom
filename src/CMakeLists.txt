@@ -10,14 +10,15 @@ set(HEADERS
 	Constants.hpp
 )
 
+# Packages
+find_package(SDL2 REQUIRED CONFIG)
+find_package(glad REQUIRED)
+
 add_executable(
 	Vroom
 	${SOURCES}
 	${HEADERS}
 )
-
-# Packages
-find_package(SDL2 REQUIRED CONFIG)
 
 target_include_directories(
 	Vroom
