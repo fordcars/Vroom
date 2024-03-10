@@ -1,7 +1,10 @@
 set(SOURCES
 	main.cpp
 	Game.cpp
-	RenderingSystem.cpp
+	Systems/RenderingSys.cpp
+	Entities/CarEntity.cpp
+
+	Entities/TempEntity.cpp
 )
 
 set(HEADERS
@@ -9,7 +12,17 @@ set(HEADERS
 	Game.hpp
 	Log.hpp
 	Constants.hpp
-	RenderingSystem.hpp
+
+	Systems/System.hpp
+	Systems/SystemEntities.hpp
+	Systems/RenderingSys.hpp
+	Entities/Entity.hpp
+	Entities/EntityRegistry.hpp
+	Entities/CarEntity.hpp
+	Components/PositionComp.hpp
+
+	Entities/TempEntity.hpp
+	Components/TempComp.hpp
 )
 
 # Packages

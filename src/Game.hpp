@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "Renderer.hpp"
+#include "Systems/RenderingSys.hpp"
 
 class Game {
 public:
@@ -14,7 +14,7 @@ public:
     bool start();
 
 private:
-    Renderer mRenderer;
+    RenderingSys mRenderingSys;
     SDL_Window* mMainWindow;
     bool mQuitting = false;
 

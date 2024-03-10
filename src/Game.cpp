@@ -44,7 +44,7 @@ bool Game::init() {
         return false;
     }
 
-    return mRenderer.init(mMainWindow);
+    return mRenderingSys.init(mMainWindow);
 }
 
 void Game::quit() {
@@ -54,8 +54,8 @@ void Game::quit() {
 
 void Game::doMainLoop() {
     doEvents();
-    mRenderer.clear();
-    mRenderer.render(mMainWindow);
+    mRenderingSys.clear();
+    mRenderingSys.render(mMainWindow);
     SDL_Delay(1000/Constants::FPS);
 }
 

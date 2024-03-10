@@ -1,14 +1,14 @@
-#include "RenderingSystem.hpp"
+#include "RenderingSys.hpp"
 #include <glad/glad.h>
 
 #include "Constants.hpp"
 #include "Log.hpp"
 
-RenderingSystem::~RenderingSystem() {
+RenderingSys::~RenderingSys() {
     SDL_GL_DeleteContext(mContext);
 }
 
-bool RenderingSystem::init(SDL_Window* window) {
+bool RenderingSys::init(SDL_Window* window) {
     Log::info() << "Initializing graphics...";
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, Constants::OPENGL_MAJOR_VERSION);
@@ -38,15 +38,31 @@ bool RenderingSystem::init(SDL_Window* window) {
     return true;
 }
 
-void RenderingSystem::clear() {
+void RenderingSys::clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void RenderingSystem::render(SDL_Window* window) {
+void RenderingSys::render(SDL_Window* window) {
     SDL_GL_SwapWindow(window);
 }
 
-void RenderingSystem::initGL(SDL_Window* window) {
+void RenderingSys::initGL(SDL_Window* window) {
+/// TMPPP
+    CarEntity car;
+    car.get<PositionComp>().coords.x = 100;
+    car.get<PositionComp>().coords.x = 200;
+    CarEntity::instances.emplace_back(car);
+
+    CarEntity car2;
+    car2.get<PositionComp>().coords.x = 500;
+    car2.get<PositionComp>().coords.x = 900;
+    CarEntity::instances.emplace_back(car2);
+
+    TempEntity tmp;
+    tmp.get<PositionComp>().coords.x = 1;
+    tmp.get<PositionComp>().coords.x = 2;
+    TempEntity::instances.emplace_back(tmp);
+
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
 	glViewport(0, 0, width, height);
@@ -68,4 +84,9 @@ void RenderingSystem::initGL(SDL_Window* window) {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+// TMPPPPPPPPPPPPPPP
+    for(const auto& [position] : getEntities()) {
+        Log::info() << "x: " << position.coords.x << "  y: " << position.coords.y;
+    }
 }
