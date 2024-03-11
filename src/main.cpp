@@ -8,7 +8,7 @@
 void printHelp(const std::string& progName) {
     std::cout
         << "Usage:\n"
-        << "    " << progName
+        << "    " << progName << '\n'
         << "Options:\n"
         << "    -l        logging level (0: errors only, 3: all)"
         << std::endl;

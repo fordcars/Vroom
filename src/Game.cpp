@@ -44,7 +44,8 @@ bool Game::init() {
         return false;
     }
 
-    return mRenderingSys.init(mMainWindow);
+    return mRenderingSys.init(mMainWindow)
+        && mResourceSys.loadResources();
 }
 
 void Game::quit() {

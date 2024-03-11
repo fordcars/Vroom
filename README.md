@@ -1,7 +1,8 @@
 # Vroom
 Vroom!
 
-# Dependencies
+# Requirements
+* C++20-compatible compiler
 * [Conan](https://github.com/conan-io/conan)
 * [CMake](https://cmake.org/)
 

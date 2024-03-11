@@ -4,7 +4,8 @@ set(SOURCES
 
 	# Systems
 	Systems/RenderingSys.cpp
-	Systems/ResourceSys.cpp
+	Systems/ResourceSys/ResourceSys.cpp
+	Systems/ResourceSys/ObjResource.cpp
 
 	# Entities
 	Entities/CarEntity.cpp
@@ -20,7 +21,9 @@ set(HEADERS
 	Systems/System.hpp
 	Systems/SystemEntities.hpp
 	Systems/RenderingSys.hpp
-	Systems/ResourceSys.hpp
+	Systems/ResourceSys/ResourceSys.hpp
+	Systems/ResourceSys/Resource.hpp
+	Systems/ResourceSys/ObjResource.hpp
 
 	# Entities
 	Entities/Entity.hpp
@@ -35,6 +38,7 @@ set(HEADERS
 find_package(SDL2 REQUIRED CONFIG)
 find_package(glad REQUIRED)
 find_package(glm REQUIRED)
+find_package(tinyobjloader REQUIRED)
 
 add_executable(
 	Vroom
@@ -54,6 +58,7 @@ target_link_libraries(
 	PRIVATE ${SDL2_LIBRARIES}
 	PRIVATE ${glad_LIBRARIES}
 	PRIVATE glm::glm
+	PRIVATE tinyobjloader::tinyobjloader
 )
 
 # Copy resources after buildin

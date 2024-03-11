@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include "Systems/RenderingSys.hpp"
+#include "Systems/ResourceSys/ResourceSys.hpp"
 
 class Game {
 public:
@@ -15,6 +16,8 @@ public:
 
 private:
     RenderingSys mRenderingSys;
+    ResourceSys mResourceSys;
+
     SDL_Window* mMainWindow;
     bool mQuitting = false;
 
