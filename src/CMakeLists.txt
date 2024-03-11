@@ -1,7 +1,12 @@
 set(SOURCES
 	main.cpp
 	Game.cpp
+
+	# Systems
 	Systems/RenderingSys.cpp
+	Systems/ResourceSys.cpp
+
+	# Entities
 	Entities/CarEntity.cpp
 )
 
@@ -11,12 +16,18 @@ set(HEADERS
 	Log.hpp
 	Constants.hpp
 
+	# Systems
 	Systems/System.hpp
 	Systems/SystemEntities.hpp
 	Systems/RenderingSys.hpp
+	Systems/ResourceSys.hpp
+
+	# Entities
 	Entities/Entity.hpp
 	Entities/EntityRegistry.hpp
 	Entities/CarEntity.hpp
+
+	# Components
 	Components/PositionComp.hpp
 )
 
@@ -44,3 +55,13 @@ target_link_libraries(
 	PRIVATE ${glad_LIBRARIES}
 	PRIVATE glm::glm
 )
+
+# Copy resources after buildin
+add_custom_command(
+    TARGET Vroom POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${RESOURCE_SRC_DIR}
+        ${RESOURCE_DEST_DIR}
+    COMMENT "Copying resources to output directory"
+)
+add_custom_target(copy_resources ALL DEPENDS ${RESOURCE_DEST_DIR})
