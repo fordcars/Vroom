@@ -10,4 +10,9 @@ public:
     ComponentT& get() {
         return std::get<ComponentT>(mComponents);
     }
+
+    // Useful for structured bindings when iterating
+    auto getComponents() {
+        return std::tie(std::get<ComponentTs>(mComponents)...);
+    }
 };
