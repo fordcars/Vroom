@@ -38,3 +38,6 @@ CMakeUserPresets.json
 .vscode/
 bin/
 build/
+
+# Resources
+!rsrc/*.obj
