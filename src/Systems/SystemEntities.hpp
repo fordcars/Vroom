@@ -1,3 +1,9 @@
+// This file deals with Entities, Systems and Components.
+// For more information: https://en.wikipedia.org/wiki/Entity_component_system
+// Essentially, SystemEntities is an iterable class, which will "iterate" through
+// all entity types registered in EntityRegistry, but will only return entity
+// types/instances which have at least the components defined in the System base class.
+
 #pragma once
 #include <tuple>
 #include <optional>
@@ -24,7 +30,6 @@ namespace SystemEntitiesTupleHelpers {
     using tuple_contains_type = typename has_type<T, Tuple>::type;
 }
 
-//// TODO: Change copies to references
 // Get tuple of ComponentTs values from EntityT
 // Ex: If the entity has components A, B, C, D, and
 // ComponentTs are A, D, C, we want to return a
@@ -64,7 +69,7 @@ namespace IsValidEntityInternal {
 template<typename EntityT, typename... ComponentTs>
 concept IsValidEntity = IsValidEntityInternal::IsValidEntity_Type<EntityT, ComponentTs...>::value;
 
-// Helper class for getting the next entity with the specified components
+// Helper class for getting the next entity with the specified components.
 template<typename... ComponentTs>
 class SystemEntitiesGetter {
 public:
