@@ -47,30 +47,6 @@ void RenderingSys::render(SDL_Window* window) {
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
-/// TMPPP
-    CarEntity car;
-    //car.get<TempComp>().x = 1;
-    car.get<PositionComp>().coords.x = 1;
-    car.get<PositionComp>().coords.y = 1;
-    CarEntity::instances.emplace_back(car);
-
-    CarEntity car2;
-    car2.get<PositionComp>().coords.x = 2;
-    car2.get<PositionComp>().coords.y = 2;
-    //car2.get<TempComp>().x = 2;
-    CarEntity::instances.emplace_back(car2);
-
-    CarEntity car3;
-    car3.get<PositionComp>().coords.x = 3;
-    car3.get<PositionComp>().coords.y = 3;
-    //car3.get<TempComp>().x = 2;
-    CarEntity::instances.emplace_back(car3);
-
-    TempEntity tmp;// this aint showing up
-    // tmp.get<PositionComp>().coords.x = 1;
-    // tmp.get<PositionComp>().coords.y = 2;
-    TempEntity::instances.emplace_back(tmp);
-
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
 	glViewport(0, 0, width, height);
@@ -92,11 +68,4 @@ void RenderingSys::initGL(SDL_Window* window) {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-// TMPPPPPPPPPPPPPPP
-    for(const auto& [position] : getEntities()) {
-        Log::info() << "x: " << position.coords.x << "  y: " << position.coords.y;
-        position.coords.x = -5;
-        //Log::info() << "Temp: " << temp.x;
-    }
 }

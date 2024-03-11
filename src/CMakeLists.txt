@@ -3,8 +3,6 @@ set(SOURCES
 	Game.cpp
 	Systems/RenderingSys.cpp
 	Entities/CarEntity.cpp
-
-	Entities/TempEntity.cpp
 )
 
 set(HEADERS
@@ -20,9 +18,6 @@ set(HEADERS
 	Entities/EntityRegistry.hpp
 	Entities/CarEntity.hpp
 	Components/PositionComp.hpp
-
-	Entities/TempEntity.hpp
-	Components/TempComp.hpp
 )
 
 # Packages
