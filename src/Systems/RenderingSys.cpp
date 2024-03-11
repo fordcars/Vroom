@@ -50,15 +50,21 @@ void RenderingSys::initGL(SDL_Window* window) {
 /// TMPPP
     CarEntity car;
     //car.get<TempComp>().x = 1;
-    car.get<PositionComp>().coords.x = 100;
-    car.get<PositionComp>().coords.y = 200;
+    car.get<PositionComp>().coords.x = 1;
+    car.get<PositionComp>().coords.y = 1;
     CarEntity::instances.emplace_back(car);
 
     CarEntity car2;
-    car2.get<PositionComp>().coords.x = 500;
-    car2.get<PositionComp>().coords.y = 900;
+    car2.get<PositionComp>().coords.x = 2;
+    car2.get<PositionComp>().coords.y = 2;
     //car2.get<TempComp>().x = 2;
     CarEntity::instances.emplace_back(car2);
+
+    CarEntity car3;
+    car3.get<PositionComp>().coords.x = 3;
+    car3.get<PositionComp>().coords.y = 3;
+    //car3.get<TempComp>().x = 2;
+    CarEntity::instances.emplace_back(car3);
 
     TempEntity tmp;// this aint showing up
     // tmp.get<PositionComp>().coords.x = 1;
@@ -90,6 +96,7 @@ void RenderingSys::initGL(SDL_Window* window) {
 // TMPPPPPPPPPPPPPPP
     for(const auto& [position] : getEntities()) {
         Log::info() << "x: " << position.coords.x << "  y: " << position.coords.y;
+        position.coords.x = -5;
         //Log::info() << "Temp: " << temp.x;
     }
 }

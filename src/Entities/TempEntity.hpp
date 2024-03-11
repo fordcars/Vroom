@@ -5,7 +5,7 @@
 #include "Components/PositionComp.hpp"
 #include "Components/TempComp.hpp"
 
-class TempEntity : public Entity<PositionComp> {
+class TempEntity : public Entity<TempComp, PositionComp> {
 public:
     static std::vector<TempEntity> instances;
 };

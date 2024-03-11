@@ -31,16 +31,16 @@ namespace SystemEntitiesTupleHelpers {
 // std::tuple<A&, D&, C&>.
 template<typename EntityT>
 class EntityComponentFilter {
+private:
+    EntityT& mEntity;
+
 public:
     EntityComponentFilter(EntityT& entity) : mEntity(entity) {}
 
     template<typename... ComponentTs>
-    std::tuple<ComponentTs...> getTuple() {
-        return std::make_tuple(mEntity.get<ComponentTs>()...);
+    std::tuple<ComponentTs&...> getTuple() {
+        return std::tie(mEntity.get<ComponentTs>()...);
     }
-
-private:
-    EntityT& mEntity;
 };
 
 namespace IsValidEntityInternal {
@@ -71,8 +71,8 @@ public:
     // Find next valid entity
     // Return empty value if there is no next entity
     template<typename... EntityTs>
-    std::optional<std::tuple<ComponentTs...>> getNextEntity(const EntityRegistry<EntityTs...>&) {
-        std::optional<std::tuple<ComponentTs...>> returnValue;
+    std::optional<std::tuple<ComponentTs&...>> getNextEntity(const EntityRegistry<EntityTs...>&) {
+        std::optional<std::tuple<ComponentTs&...>> returnValue;
         if(mReachedEnd) return {};
 
         (..., getNextEntityOfEntityT<EntityTs>(returnValue));
@@ -90,7 +90,7 @@ private:
     bool mReachedEnd = false;
     
     template<typename EntityT>
-    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs...>>& returnValue)
+    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs&...>>& returnValue)
         requires IsValidEntity<EntityT, ComponentTs...> {
         if(mCurrentEntityVector == nullptr) {
             // This is the first entity being traversed in this EntityT
@@ -114,7 +114,7 @@ private:
 
     // SFINAE
     template<typename EntityT>
-    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs...>>& returnValue)
+    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs&...>>& returnValue)
         requires (!IsValidEntity<EntityT, ComponentTs...>) {}
 };
 
@@ -127,16 +127,22 @@ public:
     public:
         Iterator(bool isEnd = false) : mIsEnd(isEnd) {
             if(!mIsEnd) {
+                // It's extremely important to use reset() before assigning a new
+                // value to the std::optional (at least on Windows), since without it,
+                // it will move-assign the next entity in the previous one for some reason.
+                // This is because we are using std::tuples of references.
+                mCurrentEntity.reset();
                 mCurrentEntity = mEntitiesGetter.getNextEntity(mEntityRegistry);
                 if(!mCurrentEntity.has_value()) mIsEnd = true;
             }
         }
 
-        std::tuple<ComponentTs...>& operator*() {
+        std::tuple<ComponentTs&...>& operator*() {
             return mCurrentEntity.value();
         }
 
         Iterator& operator++() {
+            mCurrentEntity.reset();
             mCurrentEntity = mEntitiesGetter.getNextEntity(mEntityRegistry);
             if(!mCurrentEntity.has_value()) mIsEnd = true;
             return *this;
@@ -150,7 +156,7 @@ public:
         bool mIsEnd;
         EntityRegistryDefinition mEntityRegistry; // This is in reality an empty class
         SystemEntitiesGetter<ComponentTs...> mEntitiesGetter;
-        std::optional<std::tuple<ComponentTs...>> mCurrentEntity;
+        std::optional<std::tuple<ComponentTs&...>> mCurrentEntity;
     };
 
     Iterator begin() {
