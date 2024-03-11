@@ -15,4 +15,5 @@ private:
 
     bool loadResourcesFromDir(const std::filesystem::path& dirPath);
     bool loadResource(const std::filesystem::path& path);
+    const ObjResource& getObjResource(const std::string& name) const;
 };

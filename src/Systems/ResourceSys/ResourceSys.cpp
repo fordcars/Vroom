@@ -44,3 +44,12 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     }
     return true;
 }
+
+const ObjResource& ResourceSys::getObjResource(const std::string& name) const {
+    if(mObjResources.find(name) == mObjResources.end()) {
+        Log::error() << "Cannot find obj resource '" << name << "'!";
+        throw std::invalid_argument("No obj resource with name '" + name + "'");
+    }
+
+    return mObjResources.at(name);
+}

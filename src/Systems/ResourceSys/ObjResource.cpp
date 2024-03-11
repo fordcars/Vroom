@@ -1,7 +1,5 @@
 #include "ObjResource.hpp"
 
-#include <vector>
-#include <tiny_obj_loader.h>
 #include "Log.hpp"
 
 ObjResource::ObjResource(const std::string& name, const std::filesystem::path& path)
@@ -10,22 +8,33 @@ ObjResource::ObjResource(const std::string& name, const std::filesystem::path& p
     load();
 }
 
+const tinyobj::attrib_t& ObjResource::getAttrib() const {
+    return mReader.GetAttrib();
+}
+
+const std::vector<tinyobj::shape_t>& ObjResource::getShapes() const {
+    return mReader.GetShapes();
+}
+
+const std::vector<tinyobj::material_t>& ObjResource::getMaterials() const {
+    return mReader.GetMaterials();
+}
+
 bool ObjResource::load() {
     // https://github.com/tinyobjloader/tinyobjloader?tab=readme-ov-file
     tinyobj::ObjReaderConfig reader_config;
-    tinyobj::ObjReader reader;
 
-    if (!reader.ParseFromFile(mPath.string(), reader_config)) {
-        if (!reader.Error().empty()) {
+    if (!mReader.ParseFromFile(mPath.string(), reader_config)) {
+        if (!mReader.Error().empty()) {
             Log::error() << "TinyObjReader error while loading '"
-                << mPath.string() << "': " << reader.Error();
+                << mPath.string() << "': " << mReader.Error();
             return false;
         }
     }
 
-    if (!reader.Warning().empty()) {
+    if (!mReader.Warning().empty()) {
         Log::warn() << "TinyObjReader warning while loading '"
-            << mPath.string() << "': " << reader.Warning();
+            << mPath.string() << "': " << mReader.Warning();
     }
 
     return true;
