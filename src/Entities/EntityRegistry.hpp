@@ -6,6 +6,6 @@ template<typename... EntityTs>
 class EntityRegistry {};
 
 using EntityRegistryDefinition = EntityRegistry<
-    CarEntity
-    //TempEntity
+    CarEntity,
+    TempEntity
 >;

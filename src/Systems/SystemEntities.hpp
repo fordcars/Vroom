@@ -34,22 +34,9 @@ class EntityComponentFilter {
 public:
     EntityComponentFilter(EntityT& entity) : mEntity(entity) {}
 
-    // Base-case: one component
-    template<typename ComponentT>
-    std::tuple<ComponentT> getTuple() {
-        return std::tuple<ComponentT>(mEntity.get<ComponentT>()); // std::tie
-    }
-
-    // https://stackoverflow.com/a/31356705/6222104
-    template<typename FirstComponentT, typename SecondComponentT, typename... ComponentTs>
-    std::tuple<FirstComponentT, ComponentTs...> getTuple() {
-        return std::tuple_cat(
-            std::tuple<FirstComponentT, SecondComponentT>(
-                mEntity.get<FirstComponentT>(),
-                mEntity.get<SecondComponentT>()
-            ),
-            getTuple<ComponentTs...>(mEntity)
-        );
+    template<typename... ComponentTs>
+    std::tuple<ComponentTs...> getTuple() {
+        return std::make_tuple(mEntity.get<ComponentTs>()...);
     }
 
 private:
