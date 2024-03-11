@@ -1,3 +1,5 @@
 #pragma once
 
-struct TempComp {};
+struct TempComp {
+    int x = 0;
+};

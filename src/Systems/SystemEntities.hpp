@@ -56,15 +56,43 @@ private:
     EntityT& mEntity;
 };
 
+namespace IsValidEntityInternal {
+    // Forward decl
+    template<typename EntityT, typename... ComponentTs>
+    struct IsValidEntity_Type;
+
+    // Recursive case: check if the first type matches, or check the rest of the tuple
+    template<typename EntityT, typename FirstComponentT, typename... RestComponentTs>
+    struct IsValidEntity_Type<EntityT, FirstComponentT, RestComponentTs...> :
+        std::conditional<SystemEntitiesTupleHelpers::tuple_contains_type<FirstComponentT, decltype(EntityT::mComponents)>::value,
+            IsValidEntity_Type<EntityT, RestComponentTs...>,
+            std::false_type
+            >::type {};
+
+    // Base case: empty ComponentTs (valid EntityT)
+    template<typename EntityT, typename... ComponentTs>
+    struct IsValidEntity_Type : std::true_type {};
+}
+
+template<typename EntityT, typename... ComponentTs>
+concept IsValidEntity = IsValidEntityInternal::IsValidEntity_Type<EntityT, ComponentTs...>::value;
+
 // Helper class for getting the next entity with the specified components
 template<typename... ComponentTs>
 class SystemEntitiesGetter {
 public:
+    // Find next valid entity
     // Return empty value if there is no next entity
     template<typename... EntityTs>
     std::optional<std::tuple<ComponentTs...>> getNextEntity(const EntityRegistry<EntityTs...>&) {
         std::optional<std::tuple<ComponentTs...>> returnValue;
+        if(mReachedEnd) return {};
+
         (..., getNextEntityOfEntityT<EntityTs>(returnValue));
+        if(mCurrentEntityVector == nullptr) {
+            // We reached the end!
+            mReachedEnd = true;
+        }
         return returnValue;
     }
 
@@ -72,21 +100,20 @@ private:
     // The current vector being traversed, and its index
     void* mCurrentEntityVector = nullptr;
     std::size_t mIndex = 0;
+    bool mReachedEnd = false;
     
     template<typename EntityT>
-    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs...>>& returnValue) {
-        // Check the EntityT has the specified components
-        if constexpr(!entityIsValid<EntityT>()) return;
-
+    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs...>>& returnValue)
+        requires IsValidEntity<EntityT, ComponentTs...> {
         if(mCurrentEntityVector == nullptr) {
             // This is the first entity being traversed in this EntityT
             mCurrentEntityVector = &(EntityT::instances);
+            mIndex = 0;
         }
 
-        if(mCurrentEntityVector == &(EntityT::instances)) {
+        if(mCurrentEntityVector == &(EntityT::instances) && !returnValue.has_value()) {
             // The is the current EntityT being traversed
             if(mIndex < EntityT::instances.size()) {
-                assert(!returnValue.has_value());
                 returnValue = EntityComponentFilter(EntityT::instances[mIndex]).getTuple<ComponentTs...>();
                 ++mIndex;
             }
@@ -98,11 +125,10 @@ private:
         }
     }
 
-    // Returns true if EntityT contains all ComponentTs
+    // SFINAE
     template<typename EntityT>
-    static constexpr bool entityIsValid() {
-        return (... && SystemEntitiesTupleHelpers::tuple_contains_type<ComponentTs, decltype(EntityT::mComponents)>::value);
-    }
+    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs...>>& returnValue)
+        requires (!IsValidEntity<EntityT, ComponentTs...>) {}
 };
 
 // Iterable class for getting the current entities which
