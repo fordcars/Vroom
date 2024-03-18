@@ -16,8 +16,9 @@ bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
     namespace fs = std::filesystem;
     bool success = true;
 
-    for (const auto& entry : fs::directory_iterator(dirPath)) {
-        if (fs::is_directory(entry.path())) {
+    if(!fs::is_directory(dirPath)) return false;
+    for(const auto& entry : fs::directory_iterator(dirPath)) {
+        if(fs::is_directory(entry.path())) {
             success &= loadResourcesFromDir(entry.path());
         } else {
             success &= loadResource(entry.path());
@@ -40,12 +41,12 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
                 << "', an obj resource with the name '" << name
                 << "' already exists!";
         }
-        mObjResources.insert({name, ObjResource(name, path)});
+        mObjResources.insert({name, ObjResource::create(name, path)});
     }
     return true;
 }
 
-const ObjResource& ResourceSys::getObjResource(const std::string& name) const {
+ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
     if(mObjResources.find(name) == mObjResources.end()) {
         Log::error() << "Cannot find obj resource '" << name << "'!";
         throw std::invalid_argument("No obj resource with name '" + name + "'");

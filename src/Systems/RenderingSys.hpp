@@ -1,8 +1,10 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include "System.hpp"
+#include "Components/PositionComp.hpp"
+#include "Components/RenderableComp.hpp"
 
-class RenderingSys : protected System<PositionComp> {
+class RenderingSys : protected System<PositionComp, RenderableComp> {
 public:
     RenderingSys() = default;
     ~RenderingSys();

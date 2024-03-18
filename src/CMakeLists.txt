@@ -5,7 +5,9 @@ set(SOURCES
 	# Systems
 	Systems/RenderingSys.cpp
 	Systems/ResourceSys/ResourceSys.cpp
-	Systems/ResourceSys/ObjResource.cpp
+	Systems/ResourceSys/Obj/ObjResource.cpp
+	Systems/ResourceSys/Obj/GPUBuffer.cpp
+	Systems/ResourceSys/Obj/ObjMesh.cpp
 
 	# Entities
 	Entities/CarEntity.cpp
@@ -23,7 +25,9 @@ set(HEADERS
 	Systems/RenderingSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp
 	Systems/ResourceSys/Resource.hpp
-	Systems/ResourceSys/ObjResource.hpp
+	Systems/ResourceSys/Obj/ObjResource.hpp
+	Systems/ResourceSys/Obj/GPUBuffer.hpp
+	Systems/ResourceSys/Obj/ObjMesh.hpp
 
 	# Entities
 	Entities/Entity.hpp
@@ -32,6 +36,7 @@ set(HEADERS
 
 	# Components
 	Components/PositionComp.hpp
+	Components/RenderableComp.hpp
 )
 
 # Packages
