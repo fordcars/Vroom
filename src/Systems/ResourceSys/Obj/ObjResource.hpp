@@ -5,11 +5,10 @@
 #include <memory>
 
 #include <tiny_obj_loader.h>
-#include "Systems/ResourceSys/Resource.hpp"
 #include "GPUBuffer.hpp"
 #include "ObjMesh.hpp"
 
-class ObjResource : public Resource {
+class ObjResource {
 public:
     using Ptr = std::shared_ptr<ObjResource>;
     using CPtr = std::shared_ptr<const ObjResource>;
@@ -20,11 +19,11 @@ public:
     GPUBuffer colorBuffer;
     std::vector<ObjMesh::Ptr> objMeshes;
 
-    static Ptr create(const std::string& name, const std::filesystem::path& path) {
-        return std::make_shared<ObjResource>(name, path);
+    static Ptr create(const std::filesystem::path& path) {
+        return std::make_shared<ObjResource>(path);
     }
 
-    ObjResource(const std::string& name, const std::filesystem::path& path);
+    ObjResource(const std::filesystem::path& path);
 
 private:
     std::filesystem::path mPath;

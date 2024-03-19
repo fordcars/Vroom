@@ -51,13 +51,21 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     Log::debug() << "Loading resource '" << name
         << "' with type '" << type << "' from " << path.string();
 
+    bool alreadyExists = false;
     if(type == ".obj") {
-        if(mObjResources.find(name) != mObjResources.end()) {
-            Log::error() << "Cannot load obj resource '" << path.string()
-                << "', an obj resource with the name '" << name
-                << "' already exists!";
-        }
-        mObjResources.insert({name, ObjResource::create(name, path)});
+        if(mObjResources.find(name) != mObjResources.end()) alreadyExists = true;
+        else mObjResources.insert({name, ObjResource::create(path)});
+    } else if(type == ".glsl") {
+        if(mShaderResources.find(name) != mShaderResources.end()) alreadyExists = true;
+        else mShaderResources.insert({name, ShaderResource::create(path)});
+        /// TODO: deal with separate v and f shader source files
+    }
+
+    if(alreadyExists) {
+        Log::error() << "Cannot load " << type << " resource '" << path.string()
+            << "', a " << type << " resource with the name '" << name
+            << "' already exists!";
+        return false;
     }
     return true;
 }

@@ -4,9 +4,8 @@
 
 #include "Log.hpp"
 
-ObjResource::ObjResource(const std::string& name, const std::filesystem::path& path)
-    : Resource(name)
-    , mPath(path) {
+ObjResource::ObjResource(const std::filesystem::path& path)
+    : mPath(path) {
     load();
 }
 

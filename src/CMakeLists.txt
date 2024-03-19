@@ -10,6 +10,7 @@ set(SOURCES
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
+	Systems/ResourceSys/ShaderResource.cpp
 
 	# Entities
 	Entities/CarEntity.cpp
@@ -30,6 +31,7 @@ set(HEADERS
 	Systems/ResourceSys/Obj/ObjResource.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
+	Systems/ResourceSys/ShaderResource.hpp
 
 	# Entities
 	Entities/Entity.hpp
