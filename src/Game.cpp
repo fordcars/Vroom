@@ -14,6 +14,7 @@ Game::~Game() {
 
 bool Game::start() {
     if(init()) {
+        mGameSys.start();
         while(!mQuitting) doMainLoop();
         return true;
     }

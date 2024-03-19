@@ -3,10 +3,9 @@
 #include <unordered_map>
 #include <string>
 
-#include "Systems/System.hpp"
 #include "Obj/ObjResource.hpp"
 
-class ResourceSys : protected System<> {
+class ResourceSys {
 public:
     bool loadResources();
 

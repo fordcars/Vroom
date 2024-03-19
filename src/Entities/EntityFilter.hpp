@@ -1,8 +1,13 @@
 // This file deals with Entities, Systems and Components.
 // For more information: https://en.wikipedia.org/wiki/Entity_component_system
-// Essentially, SystemEntities is an iterable class, which will "iterate" through
+// Essentially, ComponentFilter is an iterable class, which will "iterate" through
 // all entity types registered in EntityRegistry, but will only return entity
-// types/instances which have at least the components defined in the System base class.
+// types/instances which have at least the specified components.
+//
+// Example usage:
+// EntityFilter<PositionComp, RenderableComp> filter;
+// for(auto& [position, renderable] : filter)
+//     // Do something with entity
 
 #pragma once
 #include <tuple>
@@ -11,9 +16,10 @@
 #include <cassert>
 #include "Entities/EntityRegistry.hpp"
 
+namespace EntityFilterInternal {
 // Helper classes for checking if tuple has type
 // https://stackoverflow.com/a/25958302/6222104
-namespace SystemEntitiesTupleHelpers {
+namespace TupleHelpers {
     template <typename T, typename Tuple>
     struct has_type;
 
@@ -35,12 +41,12 @@ namespace SystemEntitiesTupleHelpers {
 // ComponentTs are A, D, C, we want to return a
 // std::tuple<A&, D&, C&>.
 template<typename EntityT>
-class EntityComponentFilter {
+class ComponentTuple {
 private:
     EntityT& mEntity;
 
 public:
-    EntityComponentFilter(EntityT& entity) : mEntity(entity) {}
+    ComponentTuple(EntityT& entity) : mEntity(entity) {}
 
     template<typename... ComponentTs>
     std::tuple<ComponentTs&...> getTuple() {
@@ -56,7 +62,7 @@ namespace IsValidEntityInternal {
     // Recursive case: check if the first type matches, or check the rest of the tuple
     template<typename EntityT, typename FirstComponentT, typename... RestComponentTs>
     struct IsValidEntity_Type<EntityT, FirstComponentT, RestComponentTs...> :
-        std::conditional<SystemEntitiesTupleHelpers::tuple_contains_type<FirstComponentT, decltype(EntityT::mComponents)>::value,
+        std::conditional<TupleHelpers::tuple_contains_type<FirstComponentT, decltype(EntityT::mComponents)>::value,
             IsValidEntity_Type<EntityT, RestComponentTs...>,
             std::false_type
             >::type {};
@@ -71,7 +77,7 @@ concept IsValidEntity = IsValidEntityInternal::IsValidEntity_Type<EntityT, Compo
 
 // Helper class for getting the next entity with the specified components.
 template<typename... ComponentTs>
-class SystemEntitiesGetter {
+class EntityGetter {
 public:
     // Find next valid entity
     // Return empty value if there is no next entity
@@ -106,7 +112,7 @@ private:
         if(mCurrentEntityVector == &(EntityT::instances) && !returnValue.has_value()) {
             // The is the current EntityT being traversed
             if(mIndex < EntityT::instances.size()) {
-                returnValue = EntityComponentFilter(EntityT::instances[mIndex]).getTuple<ComponentTs...>();
+                returnValue = ComponentTuple(EntityT::instances[mIndex]).getTuple<ComponentTs...>();
                 ++mIndex;
             }
 
@@ -123,10 +129,12 @@ private:
         requires (!IsValidEntity<EntityT, ComponentTs...>) {}
 };
 
+} // ComponentFilterInternal
+
 // Iterable class for getting the current entities which
 // have the specified components.
 template<typename... ComponentTs>
-class SystemEntities {
+class EntityFilter {
 public:
     class Iterator {
     public:
@@ -137,7 +145,7 @@ public:
                 // it will move-assign the next entity in the previous one for some reason.
                 // This is because we are using std::tuples of references.
                 mCurrentEntity.reset();
-                mCurrentEntity = mEntitiesGetter.getNextEntity(mEntityRegistry);
+                mCurrentEntity = mEntityGetter.getNextEntity(mEntityRegistry);
                 if(!mCurrentEntity.has_value()) mIsEnd = true;
             }
         }
@@ -148,7 +156,7 @@ public:
 
         Iterator& operator++() {
             mCurrentEntity.reset();
-            mCurrentEntity = mEntitiesGetter.getNextEntity(mEntityRegistry);
+            mCurrentEntity = mEntityGetter.getNextEntity(mEntityRegistry);
             if(!mCurrentEntity.has_value()) mIsEnd = true;
             return *this;
         }
@@ -160,7 +168,7 @@ public:
     private:
         bool mIsEnd;
         EntityRegistryDefinition mEntityRegistry; // This is in reality an empty class
-        SystemEntitiesGetter<ComponentTs...> mEntitiesGetter;
+        EntityFilterInternal::EntityGetter<ComponentTs...> mEntityGetter;
         std::optional<std::tuple<ComponentTs&...>> mCurrentEntity;
     };
 

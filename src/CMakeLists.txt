@@ -5,12 +5,14 @@ set(SOURCES
 	# Systems
 	Systems/RenderingSys.cpp
 	Systems/ResourceSys/ResourceSys.cpp
+	Systems/GameSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 
 	# Entities
 	Entities/CarEntity.cpp
+	Entities/CameraEntity.cpp
 )
 
 set(HEADERS
@@ -20,9 +22,8 @@ set(HEADERS
 	Constants.hpp
 
 	# Systems
-	Systems/System.hpp
-	Systems/SystemEntities.hpp
 	Systems/RenderingSys.hpp
+	Systems/GameSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp
 	Systems/ResourceSys/Resource.hpp
 	Systems/ResourceSys/Obj/ObjResource.hpp
@@ -32,11 +33,14 @@ set(HEADERS
 	# Entities
 	Entities/Entity.hpp
 	Entities/EntityRegistry.hpp
+	Entities/EntityFilter.hpp
 	Entities/CarEntity.hpp
+	Entities/CameraEntity.hpp
 
 	# Components
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
+	Components/CameraLensComp.hpp
 )
 
 # Packages
