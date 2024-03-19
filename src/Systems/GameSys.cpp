@@ -3,6 +3,13 @@
 #include "Entities/CameraEntity.hpp"
 #include "Entities/CarEntity.hpp"
 #include "Constants.hpp"
+#include "ResourceSys/ResourceSys.hpp"
+
+// Static
+GameSys& GameSys::get() {
+    static std::unique_ptr<GameSys> instance = std::make_unique<GameSys>();
+    return *instance;
+}
 
 void GameSys::start() {
     // Create camera
@@ -20,6 +27,7 @@ void GameSys::start() {
     position.coords.x = 10;
     position.coords.y = 10;
     position.coords.z = 10;
-    
+    renderable.mesh = ResourceSys::get().getObjResource("cow")->objMeshes[0];
+
     CarEntity::instances.emplace_back(car);
 }

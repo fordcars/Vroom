@@ -1,10 +1,10 @@
 #pragma once
 #include <SDL2/SDL.h>
-#include "Components/PositionComp.hpp"
-#include "Components/RenderableComp.hpp"
 
 class RenderingSys {
 public:
+    static RenderingSys& get();
+
     RenderingSys() = default;
     ~RenderingSys();
     RenderingSys(const RenderingSys&) = delete;

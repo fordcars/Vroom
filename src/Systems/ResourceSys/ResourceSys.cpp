@@ -1,8 +1,15 @@
 #include "ResourceSys.hpp"
 
 #include <string>
+#include <memory>
 #include "Log.hpp"
 #include "Constants.hpp"
+
+// Static
+ResourceSys& ResourceSys::get() {
+    static std::unique_ptr<ResourceSys> instance = std::make_unique<ResourceSys>();
+    return *instance;
+}
 
 // Will load all resources in all subdirs of the resource dir.
 // Resources will have the name of the file (without extension).
@@ -10,6 +17,15 @@ bool ResourceSys::loadResources() {
     Log::info() << "Loading resources from "
         << Constants::RESOURCE_DIR << "/ directory...";
     return loadResourcesFromDir(Constants::RESOURCE_DIR);
+}
+
+ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
+    if(mObjResources.find(name) == mObjResources.end()) {
+        Log::error() << "Cannot find obj resource '" << name << "'!";
+        throw std::invalid_argument("No obj resource with name '" + name + "'");
+    }
+
+    return mObjResources.at(name);
 }
 
 bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
@@ -44,13 +60,4 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
         mObjResources.insert({name, ObjResource::create(name, path)});
     }
     return true;
-}
-
-ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
-    if(mObjResources.find(name) == mObjResources.end()) {
-        Log::error() << "Cannot find obj resource '" << name << "'!";
-        throw std::invalid_argument("No obj resource with name '" + name + "'");
-    }
-
-    return mObjResources.at(name);
 }

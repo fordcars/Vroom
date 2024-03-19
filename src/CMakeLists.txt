@@ -1,5 +1,6 @@
 set(SOURCES
 	main.cpp
+	Log.cpp
 	Game.cpp
 
 	# Systems

@@ -4,7 +4,6 @@
 #include <string>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 
 #include <SDL2/SDL.h>
 
@@ -26,6 +25,7 @@ public:
         , mCurrentLevel(currentLevel)
         , mPrintToCerr(printToCerr)
         , mMsgSuffix(msgSuffix) {}
+
     ~LogBuffer() {
         if(mLevel > mCurrentLevel) return;
 
@@ -67,9 +67,5 @@ public:
 
 private:
     LogLevel mLevel = LogLevel::INFO;
-
-    static Log& getInstance() {
-        static std::unique_ptr<Log> mInstance = std::make_unique<Log>();
-        return *mInstance;
-    }
+    static Log& getInstance();
 };

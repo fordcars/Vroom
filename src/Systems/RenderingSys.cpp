@@ -4,6 +4,16 @@
 #include "Constants.hpp"
 #include "Log.hpp"
 
+#include "Entities/EntityFilter.hpp"
+#include "Components/PositionComp.hpp"
+#include "Components/RenderableComp.hpp"
+
+// Static
+RenderingSys& RenderingSys::get() {
+    static std::unique_ptr<RenderingSys> instance = std::make_unique<RenderingSys>();
+    return *instance;
+}
+
 RenderingSys::~RenderingSys() {
     SDL_GL_DeleteContext(mContext);
 }
@@ -43,6 +53,11 @@ void RenderingSys::clear() {
 }
 
 void RenderingSys::render(SDL_Window* window) {
+    EntityFilter<PositionComp, RenderableComp> filter;
+    for(const auto& [position, renderable] : filter) {
+        
+    }
+
     SDL_GL_SwapWindow(window);
 }
 

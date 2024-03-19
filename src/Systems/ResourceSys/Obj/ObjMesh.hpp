@@ -10,8 +10,8 @@
 class ObjResource;
 class ObjMesh {
 public:
-    using Ptr = std::weak_ptr<ObjMesh>;
-    using CPtr = std::weak_ptr<const ObjMesh>;
+    using Ptr = std::shared_ptr<ObjMesh>;
+    using CPtr = std::shared_ptr<const ObjMesh>;
 
     static Ptr create(ObjResource& parent, const tinyobj::shape_t& shape) {
         return std::make_shared<ObjMesh>(parent, shape);

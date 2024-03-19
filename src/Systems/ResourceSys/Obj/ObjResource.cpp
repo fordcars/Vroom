@@ -36,14 +36,14 @@ bool ObjResource::load() {
 void ObjResource::loadOnGPU(const tinyobj::ObjReader& reader) {
     // Load attributes
     const auto& attribs = reader.GetAttrib();
-    mVertexBuffer.setData(attribs.vertices);
-    mNormalBuffer.setData(attribs.normals);
-    mTexCoordBuffer.setData(attribs.texcoords);
-    mColorBuffer.setData(attribs.colors);
+    vertexBuffer.setData(attribs.vertices);
+    normalBuffer.setData(attribs.normals);
+    texCoordBuffer.setData(attribs.texcoords);
+    colorBuffer.setData(attribs.colors);
 
     // Load shapes
     const auto& shapes = reader.GetShapes();
     for(const auto& shape : shapes) {
-        mObjMeshes.emplace_back(ObjMesh::create(*this, shape));
+        objMeshes.emplace_back(ObjMesh::create(*this, shape));
     }
 }

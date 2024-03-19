@@ -11,8 +11,14 @@
 
 class ObjResource : public Resource {
 public:
-    using Ptr = std::weak_ptr<ObjResource>;
-    using CPtr = std::weak_ptr<const ObjResource>;
+    using Ptr = std::shared_ptr<ObjResource>;
+    using CPtr = std::shared_ptr<const ObjResource>;
+
+    GPUBuffer vertexBuffer;
+    GPUBuffer normalBuffer;
+    GPUBuffer texCoordBuffer;
+    GPUBuffer colorBuffer;
+    std::vector<ObjMesh::Ptr> objMeshes;
 
     static Ptr create(const std::string& name, const std::filesystem::path& path) {
         return std::make_shared<ObjResource>(name, path);
@@ -22,13 +28,6 @@ public:
 
 private:
     std::filesystem::path mPath;
-
-    // Buffers
-    GPUBuffer mVertexBuffer;
-    GPUBuffer mNormalBuffer;
-    GPUBuffer mTexCoordBuffer;
-    GPUBuffer mColorBuffer;
-    std::vector<ObjMesh::Ptr> mObjMeshes;
 
     bool load();
     void loadOnGPU(const tinyobj::ObjReader& reader);

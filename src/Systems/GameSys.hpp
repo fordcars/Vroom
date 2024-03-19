@@ -5,5 +5,6 @@
 
 class GameSys {
 public:
+    static GameSys& get();
     void start();
 };

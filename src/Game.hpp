@@ -1,9 +1,6 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "Systems/RenderingSys.hpp"
-#include "Systems/GameSys.hpp"
-#include "Systems/ResourceSys/ResourceSys.hpp"
 
 class Game {
 public:
@@ -16,10 +13,6 @@ public:
     bool start();
 
 private:
-    RenderingSys mRenderingSys;
-    GameSys mGameSys;
-    ResourceSys mResourceSys;
-
     SDL_Window* mMainWindow;
     bool mQuitting = false;
 

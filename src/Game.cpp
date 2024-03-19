@@ -5,6 +5,10 @@
 #include "Log.hpp"
 #include "Constants.hpp"
 
+#include "Systems/RenderingSys.hpp"
+#include "Systems/GameSys.hpp"
+#include "Systems/ResourceSys/ResourceSys.hpp"
+
 Game::Game() {}
 
 Game::~Game() {
@@ -14,7 +18,7 @@ Game::~Game() {
 
 bool Game::start() {
     if(init()) {
-        mGameSys.start();
+        GameSys::get().start();
         while(!mQuitting) doMainLoop();
         return true;
     }
@@ -45,8 +49,8 @@ bool Game::init() {
         return false;
     }
 
-    return mRenderingSys.init(mMainWindow)
-        && mResourceSys.loadResources();
+    return RenderingSys::get().init(mMainWindow)
+        && ResourceSys::get().loadResources();
 }
 
 void Game::quit() {
@@ -56,8 +60,8 @@ void Game::quit() {
 
 void Game::doMainLoop() {
     doEvents();
-    mRenderingSys.clear();
-    mRenderingSys.render(mMainWindow);
+    RenderingSys::get().clear();
+    RenderingSys::get().render(mMainWindow);
     SDL_Delay(1000/Constants::FPS);
 }
 
