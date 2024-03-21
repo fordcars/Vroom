@@ -18,13 +18,13 @@ public:
     size_t getSize() const;
 
     template<typename T>
-    void setData(const std::vector<T>& data) {
+    void setData(GLenum target, const std::vector<T>& data) {
         if(data.empty()) return;
         mSize = data.size() * sizeof(T);
 
-        glBindBuffer(GL_ARRAY_BUFFER, mId);
+        glBindBuffer(target, mId);
         glBufferData(
-            GL_ARRAY_BUFFER,
+            target,
             mSize,
             data.data(),
             GL_STATIC_DRAW

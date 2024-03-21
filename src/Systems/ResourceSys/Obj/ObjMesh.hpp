@@ -18,7 +18,7 @@ public:
     GPUBuffer vertexIndexBuffer;
     GPUBuffer normalIndexBuffer;
     GPUBuffer texCoordIndexBuffer;
-    std::vector<int> materialIds;
+    std::vector<int> materialIds; // Per-face material ID
 
     static Ptr create(ObjResource& parent, const tinyobj::shape_t& shape) {
         return std::make_shared<ObjMesh>(parent, shape);

@@ -33,6 +33,7 @@ set(HEADERS
 	Systems/ResourceSys/Obj/ObjResource.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
+	Systems/ResourceSys/Obj/ObjMaterial.hpp
 	Systems/ResourceSys/ShaderResource.hpp
 
 	# Entities

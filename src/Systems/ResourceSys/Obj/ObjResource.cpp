@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include "Log.hpp"
+#include "ObjMaterial.hpp"
 
 ObjResource::ObjResource(const std::filesystem::path& path)
     : mPath(path) {
@@ -35,14 +36,21 @@ bool ObjResource::load() {
 void ObjResource::loadOnGPU(const tinyobj::ObjReader& reader) {
     // Load attributes
     const auto& attribs = reader.GetAttrib();
-    vertexBuffer.setData(attribs.vertices);
-    normalBuffer.setData(attribs.normals);
-    texCoordBuffer.setData(attribs.texcoords);
-    colorBuffer.setData(attribs.colors);
+    vertexBuffer.setData(GL_ARRAY_BUFFER, attribs.vertices);
+    normalBuffer.setData(GL_ARRAY_BUFFER, attribs.normals);
+    texCoordBuffer.setData(GL_ARRAY_BUFFER, attribs.texcoords);
+    colorBuffer.setData(GL_ARRAY_BUFFER, attribs.colors);
 
     // Load shapes
     const auto& shapes = reader.GetShapes();
     for(const auto& shape : shapes) {
         objMeshes.emplace_back(ObjMesh::create(*this, shape));
     }
+
+    // Load materials in uniform buffer object
+    std::vector<ObjMaterial> objMaterials(
+        reader.GetMaterials().begin(),
+        reader.GetMaterials().end()
+    );
+    materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
 }

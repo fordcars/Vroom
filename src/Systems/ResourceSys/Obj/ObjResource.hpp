@@ -17,6 +17,7 @@ public:
     GPUBuffer normalBuffer;
     GPUBuffer texCoordBuffer;
     GPUBuffer colorBuffer;
+    GPUBuffer materialUniformBuffer;
     std::vector<ObjMesh::Ptr> objMeshes;
 
     static Ptr create(const std::filesystem::path& path) {

@@ -28,12 +28,14 @@ public:
     friend void swap(ShaderResource& first, ShaderResource& second) noexcept;
 
     GLuint getId() const;
-    GLuint findUniform(const std::string& uniformName) const;
+    GLint findUniform(const std::string& uniformName) const;
+    GLint findUniformBlock(const std::string& uniformBlockName) const;
 
 private:
     std::string mName; // Useful for logs
     GLuint mId = 0;
     std::unordered_map<std::string, GLuint> mUniformMap; // mUniformMap[uniformName] = uniform location
+    std::unordered_map<std::string, GLuint> mUniformBlockMap; // Same, but for uniform block indices
 
     static GLuint compileShader(const std::filesystem::path& shaderPath,
                                 const std::string& shaderSource, GLenum type);
@@ -46,4 +48,5 @@ private:
 
     void registerUniforms();
     GLuint registerUniform(const std::string& uniformName);
+    GLuint registerUniformBlock(const std::string& uniformBlockName);
 };

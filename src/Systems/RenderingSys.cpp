@@ -108,6 +108,14 @@ void RenderingSys::renderEntity(const PositionComp& position,
     glUseProgram(renderable.shader->getId());
     glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
     glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
+    if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
+        Log::info() << "FOUND";
+        glBindBufferBase(
+            GL_UNIFORM_BUFFER,
+            renderable.shader->findUniformBlock("obj_materials"),
+            renderable.objectResource->materialUniformBuffer.getId()
+        );
+    }
 
     // Pass vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());

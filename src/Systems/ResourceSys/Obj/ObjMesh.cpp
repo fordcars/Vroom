@@ -30,7 +30,7 @@ ObjMesh::ObjMesh(ObjResource& parent,
         }
     }
 
-    vertexIndexBuffer.setData<unsigned int>(vertexIndices);
-    normalIndexBuffer.setData<unsigned int>(normalIndices);
-    texCoordIndexBuffer.setData<unsigned int>(texCoordIndices);
+    vertexIndexBuffer.setData<unsigned int>(GL_ARRAY_BUFFER, vertexIndices);
+    normalIndexBuffer.setData<unsigned int>(GL_ARRAY_BUFFER, normalIndices);
+    texCoordIndexBuffer.setData<unsigned int>(GL_ARRAY_BUFFER, texCoordIndices);
 }

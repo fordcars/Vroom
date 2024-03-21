@@ -48,8 +48,14 @@ GLuint ShaderResource::getId() const {
 }
 
 // If uniform is not found, returns -1 (ignored uniform location by OpenGL)
-GLuint ShaderResource::findUniform(const std::string& uniformName) const {
+GLint ShaderResource::findUniform(const std::string& uniformName) const {
     if(mUniformMap.find(uniformName) != mUniformMap.end()) return mUniformMap.at(uniformName);
+    return -1;
+}
+
+GLint ShaderResource::findUniformBlock(const std::string& uniformBlockName) const {
+    if(mUniformBlockMap.find(uniformBlockName) != mUniformBlockMap.end())
+        return mUniformBlockMap.at(uniformBlockName);
     return -1;
 }
 
@@ -149,14 +155,23 @@ void ShaderResource::registerUniforms() {
     const GLsizei bufferSize = 256;
     GLchar uniformNameBuffer[bufferSize]; // Each uniform name will be read to this buffer
 
-    GLint uniformCount;
-    glGetProgramiv(mId, GL_ACTIVE_UNIFORMS, &uniformCount);
-
-    GLsizei charCount = 0;
-    for(int i=0; i < uniformCount; i++)
+    // Uniforms
+    GLint count;
+    glGetProgramiv(mId, GL_ACTIVE_UNIFORMS, &count);
+    for(int i=0; i < count; i++)
     {
+        GLsizei charCount = 0;
         glGetActiveUniformName(mId, i, bufferSize, &charCount, uniformNameBuffer);
         registerUniform(uniformNameBuffer);
+    }
+
+    // Uniform blocks
+    glGetProgramiv(mId, GL_ACTIVE_UNIFORM_BLOCKS, &count);
+    for(int i=0; i < count; i++)
+    {
+        GLsizei charCount = 0;
+        glGetActiveUniformBlockName(mId, i, bufferSize, &charCount, uniformNameBuffer);
+        registerUniformBlock(uniformNameBuffer);
     }
 }
 
@@ -176,4 +191,22 @@ GLuint ShaderResource::registerUniform(const std::string& uniformName) {
     }
 
     return uniformLocation;
+}
+
+GLuint ShaderResource::registerUniformBlock(const std::string& uniformBlockName) {
+    if(mUniformBlockMap.find(uniformBlockName) != mUniformBlockMap.end()) {
+        Log::error() << "Uniform block '" << uniformBlockName << "' already exists in "
+            << "shader " << mName << " and cannot be added again!";
+            return 0;
+    }
+
+    GLuint uniformBlockIndex = glGetUniformBlockIndex(mId, uniformBlockName.c_str());
+    if(uniformBlockIndex != -1) mUniformBlockMap.insert({uniformBlockName, uniformBlockIndex});
+    else {
+        Log::warn() << "Uniform block '" << uniformBlockName << "' does not exist/is inactive in shader "
+            << mName << ", but is trying to be registered. We should never get here.";
+        return 0;
+    }
+
+    return uniformBlockIndex;
 }
