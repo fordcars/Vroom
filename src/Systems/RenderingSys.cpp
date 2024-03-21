@@ -23,6 +23,11 @@ bool RenderingSys::init(SDL_Window* window) {
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, Constants::OPENGL_MAJOR_VERSION);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, Constants::OPENGL_MINOR_VERSION);
+    
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
@@ -58,10 +63,6 @@ void RenderingSys::render(SDL_Window* window) {
         renderEntity(position, renderable);
     }
 
-    /// TODO: MOVE THIS
-    auto [position, info] = CameraEntity::instances[0].getComponents();
-    position.coords.z += 0.01;
-
     // Check for gl error
     GLenum error = glGetError();
     if(error != GL_NO_ERROR) {
@@ -86,13 +87,15 @@ void RenderingSys::initGL(SDL_Window* window) {
         1.0f
     );
 
-    /// TODO: renable this
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
 
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnableVertexAttribArray(0);
+
+    glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
 }
 
 void RenderingSys::renderEntity(const PositionComp& position,
@@ -100,13 +103,12 @@ void RenderingSys::renderEntity(const PositionComp& position,
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 MVP = getProjectionMatrix(camera) * getViewMatrix(camera) * getModelMatrix(position);
 
-    glm::vec3 color = {0.0f, 0.0f, 0.0f};
+    glm::vec3 color = {0.5f, 0.5f, 0.5f};
     glUseProgram(renderable.shader->getId());
     glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
     glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
 
     // Pass vertex buffer
-    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, renderable.mesh->parent.vertexBuffer.getId());
     glVertexAttribPointer(
         0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
@@ -125,8 +127,6 @@ void RenderingSys::renderEntity(const PositionComp& position,
         GL_UNSIGNED_INT,         // Type
         (void*)0                 // Element array buffer offset
     );
-
-    glDisableVertexAttribArray(0);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
