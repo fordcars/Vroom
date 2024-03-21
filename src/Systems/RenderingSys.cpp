@@ -62,6 +62,7 @@ void RenderingSys::render(SDL_Window* window) {
     for(const auto& [position, renderable] : filter) {
         renderEntity(position, renderable);
     }
+    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.01;
 
     // Check for gl error
     GLenum error = glGetError();
@@ -109,7 +110,7 @@ void RenderingSys::renderEntity(const PositionComp& position,
     glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
 
     // Pass vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, renderable.mesh->parent.vertexBuffer.getId());
+    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
     glVertexAttribPointer(
         0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
         3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
@@ -119,14 +120,16 @@ void RenderingSys::renderEntity(const PositionComp& position,
         (void*)0			// Array buffer offset
     );
 
-    // Draw!
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable.mesh->vertexIndexBuffer.getId());
-    glDrawElements(
-        GL_TRIANGLES,            // Mode
-        renderable.mesh->vertexIndexBuffer.getSize(),
-        GL_UNSIGNED_INT,         // Type
-        (void*)0                 // Element array buffer offset
-    );
+    // Render all meshes
+    for(const auto& mesh : renderable.meshes) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vertexIndexBuffer.getId());
+        glDrawElements(
+            GL_TRIANGLES,            // Mode
+            mesh->vertexIndexBuffer.getSize(),
+            GL_UNSIGNED_INT,         // Type
+            (void*)0                 // Element array buffer offset
+        );
+    }
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {

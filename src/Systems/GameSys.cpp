@@ -22,7 +22,7 @@ void GameSys::start() {
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
     info.direction = {10, 10, 10, 1};
-    cameraPos.coords = {10, 10, 20};
+    cameraPos.coords = {12, 13, 15};
 
     CameraEntity::instances.emplace_back(camera);
 
@@ -32,7 +32,8 @@ void GameSys::start() {
     position.coords.x = 10;
     position.coords.y = 10;
     position.coords.z = 10;
-    renderable.mesh = ResourceSys::get().getObjResource("cow")->objMeshes[0];
+    renderable.objectResource = ResourceSys::get().getObjResource("low_poly_car");
+    renderable.setMeshes(renderable.objectResource->objMeshes);
     renderable.shader = ResourceSys::get().getShaderResource("basic");
 
     CarEntity::instances.emplace_back(car);

@@ -72,6 +72,7 @@ namespace IsValidEntityInternal {
     struct IsValidEntity_Type : std::true_type {};
 }
 
+// Is true if EntityT has at least the specified components.
 template<typename EntityT, typename... ComponentTs>
 concept IsValidEntity = IsValidEntityInternal::IsValidEntity_Type<EntityT, ComponentTs...>::value;
 

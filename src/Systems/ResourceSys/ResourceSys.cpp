@@ -16,7 +16,10 @@ ResourceSys& ResourceSys::get() {
 bool ResourceSys::loadResources() {
     Log::info() << "Loading resources from "
         << Constants::RESOURCE_DIR << "/ directory...";
-    return loadResourcesFromDir(Constants::RESOURCE_DIR);
+    bool res = loadResourcesFromDir(Constants::RESOURCE_DIR);
+    Log::info() << "Done loading resources!";
+
+    return res;
 }
 
 ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
