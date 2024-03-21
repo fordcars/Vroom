@@ -2,6 +2,7 @@ set(SOURCES
 	main.cpp
 	Log.cpp
 	Game.cpp
+	Utils/FileUtils.cpp
 
 	# Systems
 	Systems/RenderingSys.cpp
@@ -18,10 +19,12 @@ set(SOURCES
 )
 
 set(HEADERS
-    Utils/getopt.h
 	Game.hpp
 	Log.hpp
 	Constants.hpp
+
+	Utils/getopt.h
+	Utils/FileUtils.hpp
 
 	# Systems
 	Systems/RenderingSys.hpp

@@ -70,7 +70,7 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
             std::filesystem::path fragmentShaderPath = path.parent_path() / (name + ".f.glsl");
             
             if (std::filesystem::exists(vertexShaderPath) && std::filesystem::exists(fragmentShaderPath)) {
-                mShaderResources.insert({name, ShaderResource::create(vertexShaderPath, fragmentShaderPath)});
+                mShaderResources.insert({name, ShaderResource::create(name, vertexShaderPath, fragmentShaderPath)});
             } else {
                 Log::error() << "Failed to load shader resource '" << path.string() << "': "
                     << "both vertex and fragment shaders must have the same name!";
