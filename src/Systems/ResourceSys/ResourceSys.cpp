@@ -48,22 +48,40 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     std::string name = path.stem().string();
     std::string type = path.extension().string();
 
+    // If a dot is present in the name, only keep whatever is before it
+    size_t firstDot = name.find('.');
+    if(firstDot != std::string::npos) name = name.substr(0, firstDot);
+
     Log::debug() << "Loading resource '" << name
         << "' with type '" << type << "' from " << path.string();
 
     bool alreadyExists = false;
+    std::string resourceType;
     if(type == ".obj") {
-        if(mObjResources.find(name) != mObjResources.end()) alreadyExists = true;
-        else mObjResources.insert({name, ObjResource::create(path)});
+        if(mObjResources.find(name) != mObjResources.end()) {
+            alreadyExists = true;
+            resourceType = "object";
+        } else mObjResources.insert({name, ObjResource::create(path)});
     } else if(type == ".glsl") {
-        if(mShaderResources.find(name) != mShaderResources.end()) alreadyExists = true;
-        else mShaderResources.insert({name, ShaderResource::create(path)});
-        /// TODO: deal with separate v and f shader source files
+        if(mShaderResources.find(name) == mShaderResources.end()) {
+            // Don't throw error, since multiple shader sources must have the same name.
+            // Find both vertex and fragment shader sources:
+            std::filesystem::path vertexShaderPath = path.parent_path() / (name + ".v.glsl");
+            std::filesystem::path fragmentShaderPath = path.parent_path() / (name + ".f.glsl");
+            
+            if (std::filesystem::exists(vertexShaderPath) && std::filesystem::exists(fragmentShaderPath)) {
+                mShaderResources.insert({name, ShaderResource::create(vertexShaderPath, fragmentShaderPath)});
+            } else {
+                Log::error() << "Failed to load shader resource '" << path.string() << "': "
+                    << "both vertex and fragment shaders must have the same name!";
+                return false;
+            }
+        }
     }
 
     if(alreadyExists) {
-        Log::error() << "Cannot load " << type << " resource '" << path.string()
-            << "', a " << type << " resource with the name '" << name
+        Log::error() << "Cannot load " << resourceType << " resource '" << path.string()
+            << "': a " << resourceType << " resource with the name '" << name
             << "' already exists!";
         return false;
     }

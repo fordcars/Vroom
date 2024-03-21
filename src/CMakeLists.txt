@@ -27,7 +27,6 @@ set(HEADERS
 	Systems/RenderingSys.hpp
 	Systems/GameSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp
-	Systems/ResourceSys/Resource.hpp
 	Systems/ResourceSys/Obj/ObjResource.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp

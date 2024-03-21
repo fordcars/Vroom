@@ -7,9 +7,11 @@ public:
     using Ptr = std::shared_ptr<ShaderResource>;
     using CPtr = std::shared_ptr<const ShaderResource>;
 
-    static Ptr create(const std::filesystem::path& path) {
-        return std::make_shared<ShaderResource>(path);
+    static Ptr create(const std::filesystem::path& vertexPath,
+        const std::filesystem::path& fragmentPath) {
+        return std::make_shared<ShaderResource>(vertexPath, fragmentPath);
     }
 
-    ShaderResource(const std::filesystem::path& path);
+    ShaderResource(const std::filesystem::path& vertexPath,
+        const std::filesystem::path& fragmentPath);
 };
