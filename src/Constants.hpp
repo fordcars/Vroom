@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <glm/glm.hpp>
 
 namespace Constants {
@@ -11,7 +12,7 @@ namespace Constants {
     constexpr unsigned SIZE_X = 1024;
     constexpr unsigned SIZE_Y = 800;
     constexpr unsigned FPS = 60;
-    constexpr float    HORIZ_FOV = 90.0f;
+    const float        HORIZ_FOV = glm::radians(90.0f); // In radians
 
     constexpr glm::vec3 BG_COLOR(0.78f, 0.78f, 1.0f);
 }

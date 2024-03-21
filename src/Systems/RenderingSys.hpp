@@ -1,7 +1,9 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <glm/glm.hpp>
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
+#include "Entities/CameraEntity.hpp"
 
 class RenderingSys {
 public:
@@ -23,4 +25,7 @@ private:
     void initGL(SDL_Window* window);
     void renderEntity(const PositionComp& position,
                       const RenderableComp& renderable);
+    glm::mat4 getModelMatrix(const PositionComp& position);
+    glm::mat4 getViewMatrix(const CameraEntity& camera);
+    glm::mat4 getProjectionMatrix(const CameraEntity& camera);
 };

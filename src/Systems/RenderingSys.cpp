@@ -1,5 +1,6 @@
 #include "RenderingSys.hpp"
 #include <glad/glad.h>
+#include <glm/gtc/matrix_transform.hpp> // For lookAt()
 
 #include "Constants.hpp"
 #include "Log.hpp"
@@ -57,6 +58,10 @@ void RenderingSys::render(SDL_Window* window) {
         renderEntity(position, renderable);
     }
 
+    /// TODO: MOVE THIS
+    auto [position, info] = CameraEntity::instances[0].getComponents();
+    position.coords.z += 0.01;
+
     // Check for gl error
     GLenum error = glGetError();
     if(error != GL_NO_ERROR) {
@@ -68,11 +73,11 @@ void RenderingSys::render(SDL_Window* window) {
 void RenderingSys::initGL(SDL_Window* window) {
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
-	glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height);
 
     GLuint vertexArrayID;
-	glGenVertexArrays(1, &vertexArrayID);
-	glBindVertexArray(vertexArrayID);
+    glGenVertexArrays(1, &vertexArrayID);
+    glBindVertexArray(vertexArrayID);
 
     glClearColor(
         Constants::BG_COLOR.r,
@@ -81,43 +86,78 @@ void RenderingSys::initGL(SDL_Window* window) {
         1.0f
     );
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
+    /// TODO: renable this
+    //glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    //glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void RenderingSys::renderEntity(const PositionComp& position,
                                 const RenderableComp& renderable) {
-	// glm::mat4 modelMatrix = getPhysicsBody().generateModelMatrix();
-	// glm::mat4 MVP = camera.getProjectionMatrix() * camera.getViewMatrix() * modelMatrix;
+    const CameraEntity& camera = CameraEntity::instances[0];
+    glm::mat4 MVP = getProjectionMatrix(camera) * getViewMatrix(camera) * getModelMatrix(position);
 
-    glm::vec3 color = {0.5f, 0.5f, 0.5f};
-	glUseProgram(renderable.shader->getId());
-	// glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
-	// glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
+    glm::vec3 color = {0.0f, 0.0f, 0.0f};
+    glUseProgram(renderable.shader->getId());
+    glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
+    glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
 
     // Pass vertex buffer
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, renderable.mesh->parent.vertexBuffer.getId());
-	glVertexAttribPointer(
-		0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
-		3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
-		GL_FLOAT,			// Type of data (GLfloats)
-		GL_FALSE,			// Normalized?
-		0,					// Stride
-		(void*)0			// Array buffer offset
-	);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, renderable.mesh->parent.vertexBuffer.getId());
+    glVertexAttribPointer(
+        0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
+        3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
+        GL_FLOAT,			// Type of data (GLfloats)
+        GL_FALSE,			// Normalized?
+        0,					// Stride
+        (void*)0			// Array buffer offset
+    );
 
-	// Draw!
-	glDrawElements(
-		GL_TRIANGLES,            // Mode
-		renderable.mesh->indexBuffer.getSize(),
-		GL_UNSIGNED_INT,         // Type
-		(void*)0                 // Element array buffer offset
-	);
+    // Draw!
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderable.mesh->vertexIndexBuffer.getId());
+    glDrawElements(
+        GL_TRIANGLES,            // Mode
+        renderable.mesh->vertexIndexBuffer.getSize(),
+        GL_UNSIGNED_INT,         // Type
+        (void*)0                 // Element array buffer offset
+    );
 
-	glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(0);
+}
+
+glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
+    return glm::translate(glm::mat4(1.0f), position.coords);
+}
+
+glm::mat4 RenderingSys::getViewMatrix(const CameraEntity& camera) {
+    glm::vec3 position = camera.get<PositionComp>().coords;
+    const CameraInfoComp& info = camera.get<CameraInfoComp>();
+
+    glm::vec3 vec3Direction;
+    if(info.direction.w == 0) {
+        // Direction is a vector
+        vec3Direction = glm::vec3(info.direction) + position;
+    } else {
+        // Direction is a point (position)
+        vec3Direction = glm::vec3(info.direction);
+    }
+
+    return glm::lookAt(position, vec3Direction, info.upVector);
+}
+
+glm::mat4 RenderingSys::getProjectionMatrix(const CameraEntity& camera) {
+    glm::vec3 position = camera.get<PositionComp>().coords;
+    const CameraInfoComp& info = camera.get<CameraInfoComp>();
+    float vertFOX = 2 * atan( tan(info.horizFOV / 2) / info.aspectRatio);
+    
+    return glm::perspective(
+        vertFOX,
+        info.aspectRatio,
+        info.nearClippingPlane,
+        info.farClippingPlane
+    );
 }

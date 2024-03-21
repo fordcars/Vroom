@@ -15,7 +15,9 @@ public:
 
     std::string name;
     ObjResource& parent;
-    GPUBuffer indexBuffer;
+    GPUBuffer vertexIndexBuffer;
+    GPUBuffer normalIndexBuffer;
+    GPUBuffer texCoordIndexBuffer;
     std::vector<int> materialIds;
 
     static Ptr create(ObjResource& parent, const tinyobj::shape_t& shape) {

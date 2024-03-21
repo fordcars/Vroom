@@ -45,7 +45,7 @@ set(HEADERS
 	# Components
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
-	Components/CameraLensComp.hpp
+	Components/CameraInfoComp.hpp
 )
 
 # Packages

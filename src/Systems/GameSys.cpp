@@ -14,11 +14,16 @@ GameSys& GameSys::get() {
 void GameSys::start() {
     // Create camera
     CameraEntity camera;
-    CameraLensComp& lens = camera.get<CameraLensComp>();
-    lens.horizFOV = Constants::HORIZ_FOV;
-    lens.aspectRatio = static_cast<float>(Constants::SIZE_X) / Constants::SIZE_Y;
-    lens.nearClippingPlane = 0.0001f;
-    lens.farClippingPlane = 10000.0f;
+    CameraInfoComp& info = camera.get<CameraInfoComp>();
+    PositionComp& cameraPos = camera.get<PositionComp>();
+    info.horizFOV = Constants::HORIZ_FOV;
+    info.aspectRatio = static_cast<float>(Constants::SIZE_X) / Constants::SIZE_Y;
+    info.nearClippingPlane = 0.0001f;
+    info.farClippingPlane = 10000.0f;
+    info.direction = glm::vec4(10, 10, 10, 1);
+
+    cameraPos.coords = {10, 10, 9};
+
     CameraEntity::instances.emplace_back(camera);
 
     // Create car
