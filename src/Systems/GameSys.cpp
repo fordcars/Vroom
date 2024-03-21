@@ -28,6 +28,7 @@ void GameSys::start() {
     position.coords.y = 10;
     position.coords.z = 10;
     renderable.mesh = ResourceSys::get().getObjResource("cow")->objMeshes[0];
+    renderable.shader = ResourceSys::get().getShaderResource("basic");
 
     CarEntity::instances.emplace_back(car);
 }

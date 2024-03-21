@@ -15,6 +15,7 @@ public:
     friend void swap(GPUBuffer& first, GPUBuffer& second) noexcept;
 
     GLuint getId() const;
+    size_t getSize() const;
 
     template<typename T>
     void setData(const std::vector<T>& data) {

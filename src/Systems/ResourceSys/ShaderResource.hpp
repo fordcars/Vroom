@@ -20,6 +20,12 @@ public:
     ShaderResource(const std::string& name,
                    const std::filesystem::path& vertexPath,
                    const std::filesystem::path& fragmentPath);
+    ~ShaderResource();
+    ShaderResource(const ShaderResource& other) = delete; // Don't copy shaders lol
+    ShaderResource(ShaderResource&& other) noexcept;
+    ShaderResource& operator=(ShaderResource other) = delete; // Same
+    ShaderResource& operator=(ShaderResource&& other) noexcept;
+    friend void swap(ShaderResource& first, ShaderResource& second) noexcept;
 
     GLuint getId() const;
     GLuint findUniform(const std::string& uniformName) const;

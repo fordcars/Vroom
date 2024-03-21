@@ -1,5 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include "Components/PositionComp.hpp"
+#include "Components/RenderableComp.hpp"
 
 class RenderingSys {
 public:
@@ -19,4 +21,6 @@ public:
 private:
     SDL_GLContext mContext;
     void initGL(SDL_Window* window);
+    void renderEntity(const PositionComp& position,
+                      const RenderableComp& renderable);
 };

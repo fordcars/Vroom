@@ -28,6 +28,15 @@ ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
     return mObjResources.at(name);
 }
 
+ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) const {
+    if(mShaderResources.find(name) == mShaderResources.end()) {
+        Log::error() << "Cannot find shader resource '" << name << "'!";
+        throw std::invalid_argument("No shader resource with name '" + name + "'");
+    }
+
+    return mShaderResources.at(name);
+}
+
 bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
     namespace fs = std::filesystem;
     bool success = true;
@@ -72,8 +81,8 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
             if (std::filesystem::exists(vertexShaderPath) && std::filesystem::exists(fragmentShaderPath)) {
                 mShaderResources.insert({name, ShaderResource::create(name, vertexShaderPath, fragmentShaderPath)});
             } else {
-                Log::error() << "Failed to load shader resource '" << path.string() << "': "
-                    << "both vertex and fragment shaders must have the same name!";
+                Log::error() << "Failed to load shader '" << path.string() << "': "
+                    << "could not find matching vertex/fragment shader!";
                 return false;
             }
         }

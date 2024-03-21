@@ -5,8 +5,7 @@
 #include "Log.hpp"
 
 #include "Entities/EntityFilter.hpp"
-#include "Components/PositionComp.hpp"
-#include "Components/RenderableComp.hpp"
+#include "ResourceSys/Obj/ObjResource.hpp"
 
 // Static
 RenderingSys& RenderingSys::get() {
@@ -29,7 +28,7 @@ bool RenderingSys::init(SDL_Window* window) {
     // Create context
     mContext = SDL_GL_CreateContext(window);
     if(!mContext) {
-        Log::sdl_error() << "Unable to create OpenGL context! This game requires OpenGL "
+        Log::sdlError() << "Unable to create OpenGL context! This game requires OpenGL "
             << Constants::OPENGL_MAJOR_VERSION << "." << Constants::OPENGL_MINOR_VERSION
             << ", make sure your system supports it!";
         return false;
@@ -55,9 +54,14 @@ void RenderingSys::clear() {
 void RenderingSys::render(SDL_Window* window) {
     EntityFilter<PositionComp, RenderableComp> filter;
     for(const auto& [position, renderable] : filter) {
-        
+        renderEntity(position, renderable);
     }
 
+    // Check for gl error
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+        Log::glError(error) << "Encountered an OpenGL error while rendering!";
+    }
     SDL_GL_SwapWindow(window);
 }
 
@@ -83,4 +87,37 @@ void RenderingSys::initGL(SDL_Window* window) {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void RenderingSys::renderEntity(const PositionComp& position,
+                                const RenderableComp& renderable) {
+	// glm::mat4 modelMatrix = getPhysicsBody().generateModelMatrix();
+	// glm::mat4 MVP = camera.getProjectionMatrix() * camera.getViewMatrix() * modelMatrix;
+
+    glm::vec3 color = {0.5f, 0.5f, 0.5f};
+	glUseProgram(renderable.shader->getId());
+	// glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
+	// glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
+
+    // Pass vertex buffer
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, renderable.mesh->parent.vertexBuffer.getId());
+	glVertexAttribPointer(
+		0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
+		3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
+		GL_FLOAT,			// Type of data (GLfloats)
+		GL_FALSE,			// Normalized?
+		0,					// Stride
+		(void*)0			// Array buffer offset
+	);
+
+	// Draw!
+	glDrawElements(
+		GL_TRIANGLES,            // Mode
+		renderable.mesh->indexBuffer.getSize(),
+		GL_UNSIGNED_INT,         // Type
+		(void*)0                 // Element array buffer offset
+	);
+
+	glDisableVertexAttribArray(0);
 }

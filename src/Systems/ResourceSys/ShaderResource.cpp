@@ -1,4 +1,6 @@
 #include "ShaderResource.hpp"
+
+#include <utility>
 #include "Utils/FileUtils.hpp"
 #include "Log.hpp"
 
@@ -20,6 +22,25 @@ ShaderResource::ShaderResource(const std::string& name,
     }
 
     registerUniforms(); // For easier access later
+}
+
+ShaderResource::~ShaderResource() {
+    glDeleteProgram(mId);
+}
+
+ShaderResource::ShaderResource(ShaderResource&& other) noexcept {
+    swap(*this, other);
+}
+
+ShaderResource& ShaderResource::operator=(ShaderResource&& other) noexcept {
+    swap(*this, other);
+    return *this;
+}
+
+void swap(ShaderResource& first, ShaderResource& second) noexcept {
+    std::swap(first.mName, second.mName);
+    std::swap(first.mId, second.mId);
+    std::swap(first.mUniformMap, second.mUniformMap);
 }
 
 GLuint ShaderResource::getId() const {
@@ -82,11 +103,13 @@ GLuint ShaderResource::linkShaderProgram(const std::string& shaderProgramName,
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &programValid);
 
+    // Flag shaders for deletion
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
     if(!programValid)
     {
-        std::string shaderLog = getGLShaderDebugLog(program, glGetProgramiv, glGetProgramInfoLog); // Give it the right functions
-        glDeleteProgram(program);
-
+        std::string shaderLog = getGLShaderDebugLog(program, glGetProgramiv, glGetProgramInfoLog);
         Log::error() << "Failed to link shader " << shaderProgramName << ": ";
         Log::error() << shaderLog;
         return 0;

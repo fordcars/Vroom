@@ -12,6 +12,7 @@ public:
     
     bool loadResources();
     ObjResource::CPtr getObjResource(const std::string& name) const;
+    ShaderResource::CPtr getShaderResource(const std::string& name) const;
 
 private:
     std::unordered_map<std::string, ObjResource::Ptr> mObjResources;

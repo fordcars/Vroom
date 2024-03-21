@@ -6,6 +6,32 @@
 #include <iostream>
 
 #include <SDL2/SDL.h>
+#include <glad/glad.h>
+
+namespace {
+    std::string getGlErrors(GLenum firstError) {
+        std::string out;
+        GLenum err = firstError;
+
+        while(err != GL_NO_ERROR) {
+            if(err == GL_INVALID_ENUM)           out += "GL_INVALID_ENUM, ";
+            else if(err == GL_INVALID_VALUE)     out += "GL_INVALID_VALUE, ";
+            else if(err == GL_INVALID_OPERATION) out += "GL_INVALID_OPERATION, ";
+            else if(err == GL_STACK_OVERFLOW)    out += "GL_STACK_OVERFLOW, ";
+            else if(err == GL_STACK_UNDERFLOW)   out += "GL_STACK_UNDERFLOW, ";
+            else if(err == GL_OUT_OF_MEMORY)     out += "GL_OUT_OF_MEMORY, ";
+
+            err = glGetError();
+        }
+
+        // Remove last comma and return
+        if(out.size() >= 2) {
+            out.pop_back();
+            out.pop_back();
+        }
+        return out;
+    }
+}
 
 enum class LogLevel : int {
     ERROR = 0,
@@ -59,10 +85,18 @@ public:
     static LogBuffer debug() { return LogBuffer("Debug", LogLevel::DEBUG, getInstance().mLevel); }
 
     // Call when you know an SDL function failed
-    static LogBuffer sdl_error() {
+    static LogBuffer sdlError() {
         std::string sdlError = std::string(" - SDL error: ") + SDL_GetError();
         SDL_ClearError();
         return LogBuffer("Error", LogLevel::ERROR, getInstance().mLevel, true, sdlError);
+    }
+
+    // Call when you know an OpenGL function failed.
+    // We take a first error as an argument, since you most definitely
+    // called glGetError() before calling this, which pops the first error.
+    static LogBuffer glError(GLenum firstError) {
+        std::string errorMsg = std::string(" - OpenGL error(s): ") + getGlErrors(firstError);
+        return LogBuffer("Error", LogLevel::ERROR, getInstance().mLevel, true, errorMsg);
     }
 
 private:

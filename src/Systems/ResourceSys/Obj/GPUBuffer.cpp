@@ -45,3 +45,7 @@ void swap(GPUBuffer& first, GPUBuffer& second) noexcept {
 GLuint GPUBuffer::getId() const {
     return mId;
 }
+
+size_t GPUBuffer::getSize() const {
+    return mSize;
+}
