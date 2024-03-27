@@ -47,6 +47,6 @@ private:
                                            PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
     void registerUniforms();
-    GLuint registerUniform(const std::string& uniformName);
-    GLuint registerUniformBlock(const std::string& uniformBlockName);
+    void registerUniform(const std::string& uniformName);
+    void registerUniformBlock(const std::string& uniformBlockName);
 };
