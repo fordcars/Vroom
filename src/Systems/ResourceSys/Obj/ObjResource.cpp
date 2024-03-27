@@ -16,7 +16,7 @@ bool ObjResource::load() {
     // https://github.com/tinyobjloader/tinyobjloader?tab=readme-ov-file
     tinyobj::ObjReader reader;
     tinyobj::ObjReaderConfig reader_config;
-    //reader_config.triangulate = true;
+    reader_config.triangulate = true;
 
     if (!reader.ParseFromFile(mPath.string(), reader_config)) {
         if (!reader.Error().empty()) {
