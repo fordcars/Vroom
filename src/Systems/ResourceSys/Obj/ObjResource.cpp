@@ -16,7 +16,7 @@ bool ObjResource::load() {
     // https://github.com/tinyobjloader/tinyobjloader?tab=readme-ov-file
     tinyobj::ObjReader reader;
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.triangulate = true;
+    //reader_config.triangulate = true;
 
     if (!reader.ParseFromFile(mPath.string(), reader_config)) {
         if (!reader.Error().empty()) {
@@ -61,7 +61,17 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
     auto normals = attribs.normals;
     auto texcoords = attribs.texcoords;
     auto colors = attribs.colors;
-    std::vector<int> materialIds(attribs.vertices.size() / 3, -1); // Per vertex material id
+
+    // -2 to identify uninitialized values, since tinyobjloader uses -1.
+    std::vector<int> materialIds(attribs.vertices.size() / 3, -2);
+
+    // Make sure all attributes have the same size
+    if(normals.size() != vertices.size())
+        normals = decltype(normals)(attribs.vertices.size(), 0.0f);
+    if(texcoords.size() != vertices.size())
+        texcoords = decltype(texcoords)((attribs.vertices.size()/3) * 2, 0.0f);
+    if(colors.size() != vertices.size())
+        colors = decltype(colors)(attribs.vertices.size(), 0.0f);
 
     for(const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
@@ -70,7 +80,7 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
 
         for(size_t indexI = 0; indexI < shape.mesh.indices.size(); ++indexI) {
             int vertexI = shape.mesh.indices[indexI].vertex_index;
-            if(materialIds[vertexI] == -1) {
+            if(materialIds[vertexI] == -2) {
                 // No material set yet! Lets use ours.
                 materialIds[vertexI] = shape.mesh.material_ids[indexI / 3]; // 3 vertices per face
                 meshVertexIndices.emplace_back(vertexI); // Copy vertex index
@@ -84,7 +94,7 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
                 normals.insert(normals.end(),
                     normals.begin() + vertexI * 3, normals.begin() + vertexI * 3 + 3);
                 texcoords.insert(texcoords.end(),
-                    texcoords.begin() + vertexI * 3, texcoords.begin() + vertexI * 3 + 3);
+                    texcoords.begin() + vertexI * 2, texcoords.begin() + vertexI * 2 + 2);
                 colors.insert(colors.end(),
                     colors.begin() + vertexI * 3, colors.begin() + vertexI * 3 + 3);
                 materialIds.emplace_back(shape.mesh.material_ids[indexI / 3]);

@@ -1,8 +1,8 @@
 #version 330 core
+#define MAX_MATERIALS 100
 
 uniform vec3 color;
-
-in vec3 fScreenPos;
+flat in int materialId;
 out vec3 outColor;
 
 struct ObjMaterial {
@@ -27,10 +27,10 @@ struct ObjMaterial {
 };
 
 layout(std140) uniform ObjMaterialsBlock {
-    ObjMaterial objMaterials[];
+    ObjMaterial objMaterials[MAX_MATERIALS];
 } objMaterialsBlock;
 
 void main()
 {
-    outColor = objMaterialsBlock.objMaterials[0].diffuse;
+    outColor = objMaterialsBlock.objMaterials[materialId].diffuse;
 }

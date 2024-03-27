@@ -184,16 +184,14 @@ void ShaderResource::registerUniform(const std::string& uniformName) {
             return;
     }
 
-    Log::debug() << "Registering uniform '" << uniformName << "' in shader '"
-        << mName << "'.";
-    GLuint uniformLocation = glGetUniformLocation(mId, uniformName.c_str());
 
-    if(uniformLocation != -1) mUniformMap.insert({uniformName, uniformLocation});
-    else {
-        // Ignore if the uniform location is invalid, it is probably part of a uniform block.
-        Log::debug() << "Ignoring invalid uniform '" << uniformName << "' in shader '"
-            << mName << "'. Assuming it is part of a uniform block.";
+    GLuint uniformLocation = glGetUniformLocation(mId, uniformName.c_str());
+    if(uniformLocation != -1) {
+        Log::debug() << "Registering uniform '" << uniformName << "' in shader '"
+            << mName << "'.";
+        mUniformMap.insert({uniformName, uniformLocation});
     }
+    // Ignore if the uniform location is invalid, it is probably part of a uniform block.
 }
 
 void ShaderResource::registerUniformBlock(const std::string& uniformBlockName) {

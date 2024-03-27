@@ -62,7 +62,8 @@ void RenderingSys::render(SDL_Window* window) {
     for(const auto& [position, renderable] : filter) {
         renderEntity(position, renderable);
     }
-    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.01;
+    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.01; // TODO: remove
+    CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.01; // TODO: remove
 
     // Check for gl error
     GLenum error = glGetError();
@@ -118,9 +119,20 @@ void RenderingSys::renderEntity(const PositionComp& position,
     // Pass vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
     glVertexAttribPointer(
-        0,					// Attribute 0, no particular reason but same as the vertex shader's layout and glEnableVertexAttribArray
+        0,					// Attribute index
         3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
-        GL_FLOAT,			// Type of data (GLfloats)
+        GL_FLOAT,			// Type of data
+        GL_FALSE,			// Normalized?
+        0,					// Stride
+        (void*)0			// Array buffer offset
+    );
+
+    // Pass material id buffer
+    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->materialIdBuffer.getId());
+    glVertexAttribPointer(
+        1,					// Attribute index
+        1,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
+        GL_INT,		     	// Type of data
         GL_FALSE,			// Normalized?
         0,					// Stride
         (void*)0			// Array buffer offset
@@ -128,17 +140,19 @@ void RenderingSys::renderEntity(const PositionComp& position,
 
     // Render all meshes
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     for(const auto& mesh : renderable.meshes) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(
             GL_TRIANGLES,            // Mode
-            mesh->indexBuffer.getSize(),
+            mesh->indexBuffer.getCount(),
             GL_UNSIGNED_INT,         // Type
             (void*)0                 // Element array buffer offset
         );
     }
 
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {

@@ -39,13 +39,21 @@ GPUBuffer& GPUBuffer::operator=(GPUBuffer&& other) noexcept {
 }
 
 void swap(GPUBuffer& first, GPUBuffer& second) noexcept {
-    std::swap(first.mId, second.mId); 
+    std::swap(first.mId, second.mId);
+    std::swap(first.mCount, second.mCount);
+    std::swap(first.mSize, second.mSize);
 }
 
 GLuint GPUBuffer::getId() const {
     return mId;
 }
 
+// Returns the number of elements in buffer
+size_t GPUBuffer::getCount() const {
+    return mCount;
+}
+
+// Returns the size of the contents of the buffer
 size_t GPUBuffer::getSize() const {
     return mSize;
 }
