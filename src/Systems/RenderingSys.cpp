@@ -129,10 +129,10 @@ void RenderingSys::renderEntity(const PositionComp& position,
     // Render all meshes
     glEnableVertexAttribArray(0);
     for(const auto& mesh : renderable.meshes) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vertexIndexBuffer.getId());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(
             GL_TRIANGLES,            // Mode
-            mesh->vertexIndexBuffer.getSize(),
+            mesh->indexBuffer.getSize(),
             GL_UNSIGNED_INT,         // Type
             (void*)0                 // Element array buffer offset
         );

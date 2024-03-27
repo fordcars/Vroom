@@ -17,6 +17,7 @@ public:
     GPUBuffer normalBuffer;
     GPUBuffer texCoordBuffer;
     GPUBuffer colorBuffer;
+    GPUBuffer materialIdBuffer;
     GPUBuffer materialUniformBuffer;
     std::vector<ObjMesh::Ptr> objMeshes;
 
@@ -31,4 +32,5 @@ private:
 
     bool load();
     void loadOnGPU(const tinyobj::ObjReader& reader);
+    void loadMeshes(const tinyobj::ObjReader& reader);
 };

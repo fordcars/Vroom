@@ -15,14 +15,13 @@ public:
 
     std::string name;
     ObjResource& parent;
-    GPUBuffer vertexIndexBuffer;
-    GPUBuffer normalIndexBuffer;
-    GPUBuffer texCoordIndexBuffer;
-    std::vector<int> materialIds; // Per-face material ID
+    GPUBuffer indexBuffer;
 
-    static Ptr create(ObjResource& parent, const tinyobj::shape_t& shape) {
-        return std::make_shared<ObjMesh>(parent, shape);
+    static Ptr create(ObjResource& parent, const std::string& name,
+        const std::vector<unsigned int>& indices) {
+        return std::make_shared<ObjMesh>(parent, name, indices);
     }
 
-    ObjMesh(ObjResource& parent, const tinyobj::shape_t& shape);
+    ObjMesh(ObjResource& parent, const std::string& name,
+        const std::vector<unsigned int>& indices);
 };
