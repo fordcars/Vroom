@@ -2,12 +2,13 @@
 #pragma once
 #include <tiny_obj_loader.h>
 
+// std140-compatible struct
 struct ObjMaterial {
-    float ambient[3];
-    float diffuse[3];
-    float specular[3];
-    float transmittance[3];
-    float emission[3];
+    float ambient[3];       float p1;
+    float diffuse[3];       float p2;
+    float specular[3];      float p3;
+    float transmittance[3]; float p4;
+    float emission[3];      float p5;
     float shininess;
     float ior;       // index of refraction
     float dissolve;  // 1 == opaque; 0 == fully transparent
@@ -21,6 +22,10 @@ struct ObjMaterial {
     float clearcoat_roughness;  // [0, 1] default 0
     float anisotropy;           // aniso. [0, 1] default 0
     float anisotropy_rotation;  // anisor. [0, 1] default 0
+
+    // Struct padding
+    float p6;
+    float p7;
 
     ObjMaterial(const tinyobj::material_t& mat) {
         ambient[0] = mat.ambient[0];

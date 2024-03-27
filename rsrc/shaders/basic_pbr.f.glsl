@@ -1,5 +1,5 @@
 #version 330 core
-#define MAX_MATERIALS 50
+#define MAX_MATERIALS 15
 
 uniform vec3 color;
 flat in int materialId;
@@ -24,6 +24,8 @@ struct ObjMaterial {
     float clearcoat_roughness;  // [0, 1] default 0
     float anisotropy;           // aniso. [0, 1] default 0
     float anisotropy_rotation;  // anisor. [0, 1] default 0
+    float p1;
+    float p2;
 };
 
 layout(std140) uniform ObjMaterialsBlock {
@@ -35,8 +37,6 @@ void main()
     if(materialId == -1) {
         outColor = vec3(0.1, 0.1, 0.1);
     } else {
-        vec3 finalColor = objMaterialsBlock.objMaterials[materialId].ambient
-            + objMaterialsBlock.objMaterials[materialId].diffuse;
-        outColor = clamp(finalColor, 0.0, 1.0);
+        outColor = clamp(objMaterialsBlock.objMaterials[materialId].diffuse, 0.0, 1.0);
     }
 }

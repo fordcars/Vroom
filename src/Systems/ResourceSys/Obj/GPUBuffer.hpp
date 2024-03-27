@@ -19,7 +19,8 @@ public:
     size_t getSize() const;
 
     template<typename T>
-    void setData(GLenum target, const std::vector<T>& data) {
+    void setData(GLenum target, const std::vector<T>& data,
+        GLenum usageHint = GL_STATIC_DRAW) {
         if(data.empty()) return;
 
         glBindBuffer(target, mId);
@@ -27,7 +28,7 @@ public:
             target,
             data.size() * sizeof(T),
             data.data(),
-            GL_STATIC_DRAW
+            usageHint
         );
 
         mCount = data.size();

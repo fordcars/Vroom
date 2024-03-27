@@ -44,6 +44,8 @@ void ObjResource::loadOnGPU(const tinyobj::ObjReader& reader) {
         reader.GetMaterials().end()
     );
     materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
+
+    Log::debug() << "Loaded " << objMaterials.size() << " materials.";
 }
 
 void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
