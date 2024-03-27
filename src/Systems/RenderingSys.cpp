@@ -104,10 +104,8 @@ void RenderingSys::renderEntity(const PositionComp& position,
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 MVP = getProjectionMatrix(camera) * getViewMatrix(camera) * getModelMatrix(position);
 
-    glm::vec3 color = {0.5f, 0.5f, 0.5f};
     glUseProgram(renderable.shader->getId());
     glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
-    glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
     if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
         glBindBufferBase(
             GL_UNIFORM_BUFFER,
@@ -115,6 +113,9 @@ void RenderingSys::renderEntity(const PositionComp& position,
             renderable.objectResource->materialUniformBuffer.getId()
         );
     }
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     // Pass vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
@@ -129,18 +130,15 @@ void RenderingSys::renderEntity(const PositionComp& position,
 
     // Pass material id buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->materialIdBuffer.getId());
-    glVertexAttribPointer(
+    glVertexAttribIPointer(
         1,					// Attribute index
         1,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
         GL_INT,		     	// Type of data
-        GL_FALSE,			// Normalized?
         0,					// Stride
         (void*)0			// Array buffer offset
     );
 
     // Render all meshes
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
     for(const auto& mesh : renderable.meshes) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(

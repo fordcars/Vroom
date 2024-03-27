@@ -11,6 +11,5 @@ void main()
     vec4 v = vec4(vertexPosition_modelspace, 1);
     gl_Position = MVP * v;
 
-    if(vertexMaterialId == -1) materialId = 0;
-    else materialId = vertexMaterialId;
+    materialId = vertexMaterialId;
 }

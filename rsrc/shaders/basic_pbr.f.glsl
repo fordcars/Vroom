@@ -1,5 +1,5 @@
 #version 330 core
-#define MAX_MATERIALS 100
+#define MAX_MATERIALS 50
 
 uniform vec3 color;
 flat in int materialId;
@@ -32,5 +32,11 @@ layout(std140) uniform ObjMaterialsBlock {
 
 void main()
 {
-    outColor = objMaterialsBlock.objMaterials[materialId].diffuse;
+    if(materialId == -1) {
+        outColor = vec3(0.1, 0.1, 0.1);
+    } else {
+        vec3 finalColor = objMaterialsBlock.objMaterials[materialId].ambient
+            + objMaterialsBlock.objMaterials[materialId].diffuse;
+        outColor = clamp(finalColor, 0.0, 1.0);
+    }
 }

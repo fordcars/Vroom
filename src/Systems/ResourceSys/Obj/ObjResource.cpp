@@ -63,7 +63,7 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
     auto colors = attribs.colors;
 
     // -2 to identify uninitialized values, since tinyobjloader uses -1.
-    std::vector<int> materialIds(attribs.vertices.size() / 3, -2);
+    std::vector<GLint> materialIds(attribs.vertices.size()/3, -2);
 
     // Make sure all attributes have the same size
     if(normals.size() != vertices.size())
