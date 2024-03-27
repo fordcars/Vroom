@@ -34,7 +34,7 @@ void GameSys::start() {
     position.coords.z = 10;
     renderable.objectResource = ResourceSys::get().getObjResource("low_poly_car");
     renderable.setMeshes(renderable.objectResource->objMeshes);
-    renderable.shader = ResourceSys::get().getShaderResource("basic");
+    renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
 
     CarEntity::instances.emplace_back(car);
 }

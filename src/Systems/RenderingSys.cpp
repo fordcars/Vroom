@@ -94,7 +94,6 @@ void RenderingSys::initGL(SDL_Window* window) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnableVertexAttribArray(0);
 
     glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
 }
@@ -109,10 +108,9 @@ void RenderingSys::renderEntity(const PositionComp& position,
     glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
     glUniform3f(renderable.shader->findUniform("color"), color.r, color.g, color.b);
     if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
-        Log::info() << "FOUND";
         glBindBufferBase(
             GL_UNIFORM_BUFFER,
-            renderable.shader->findUniformBlock("obj_materials"),
+            renderable.shader->findUniformBlock("ObjMaterialsBlock"),
             renderable.objectResource->materialUniformBuffer.getId()
         );
     }
@@ -129,6 +127,7 @@ void RenderingSys::renderEntity(const PositionComp& position,
     );
 
     // Render all meshes
+    glEnableVertexAttribArray(0);
     for(const auto& mesh : renderable.meshes) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->vertexIndexBuffer.getId());
         glDrawElements(
@@ -138,6 +137,8 @@ void RenderingSys::renderEntity(const PositionComp& position,
             (void*)0                 // Element array buffer offset
         );
     }
+
+    glDisableVertexAttribArray(0);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
