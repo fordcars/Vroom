@@ -22,6 +22,8 @@ public:
 
 private:
     SDL_GLContext mContext;
+    unsigned mCurrentTime = 0;
+
     void initGL(SDL_Window* window);
     void renderEntity(const PositionComp& position,
                       const RenderableComp& renderable);

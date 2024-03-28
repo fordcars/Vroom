@@ -15,7 +15,6 @@ struct ObjMaterial {
     vec3 transmittance;
     vec3 emission;
     float shininess;
-    float ior;       // index of refraction
     float dissolve;  // 1 == opaque; 0 == fully transparent
 
     // PBR extension
@@ -23,12 +22,9 @@ struct ObjMaterial {
     float roughness;            // [0, 1] default 0
     float metallic;             // [0, 1] default 0
     float sheen;                // [0, 1] default 0
-    float clearcoat_thickness;  // [0, 1] default 0
-    float clearcoat_roughness;  // [0, 1] default 0
-    float anisotropy;           // aniso. [0, 1] default 0
-    float anisotropy_rotation;  // anisor. [0, 1] default 0
     float p1;
     float p2;
+    float p3;
 };
 
 layout(std140) uniform ObjMaterialsBlock {

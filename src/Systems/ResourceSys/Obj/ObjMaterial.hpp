@@ -10,7 +10,6 @@ struct ObjMaterial {
     float transmittance[3]; float p4;
     float emission[3];      float p5;
     float shininess;
-    float ior;       // index of refraction
     float dissolve;  // 1 == opaque; 0 == fully transparent
 
     // PBR extension
@@ -18,14 +17,11 @@ struct ObjMaterial {
     float roughness;            // [0, 1] default 0
     float metallic;             // [0, 1] default 0
     float sheen;                // [0, 1] default 0
-    float clearcoat_thickness;  // [0, 1] default 0
-    float clearcoat_roughness;  // [0, 1] default 0
-    float anisotropy;           // aniso. [0, 1] default 0
-    float anisotropy_rotation;  // anisor. [0, 1] default 0
 
     // Struct padding
     float p6;
     float p7;
+    float p8;
 
     ObjMaterial(const tinyobj::material_t& mat) {
         ambient[0] = mat.ambient[0];
@@ -49,15 +45,10 @@ struct ObjMaterial {
         emission[2] = mat.emission[2];
 
         shininess = mat.shininess;
-        ior       = mat.ior;
         dissolve  = mat.dissolve;
 
         roughness           = mat.roughness;
         metallic            = mat.metallic;
         sheen               = mat.sheen;
-        clearcoat_thickness = mat.clearcoat_thickness;
-        clearcoat_roughness = mat.clearcoat_roughness;
-        anisotropy          = mat.anisotropy;
-        anisotropy_rotation = mat.anisotropy_rotation;
     }
 };
