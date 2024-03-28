@@ -1,5 +1,5 @@
 #version 330 core
-#define MAX_MATERIALS 15
+#define MAX_MATERIALS 30
 
 flat in int materialId;
 in vec3 normal_cameraspace;
