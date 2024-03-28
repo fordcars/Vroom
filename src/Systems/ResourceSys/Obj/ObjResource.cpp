@@ -1,12 +1,28 @@
 #include "ObjResource.hpp"
 #include <utility>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 #include "Log.hpp"
 #include "ObjMaterial.hpp"
 
-// We currently only support vertex indices!
-// We don't support normal or texcoord indices.
+namespace {
+    // Returns new vertex index
+    int duplicateVertex(
+        std::vector<glm::vec3>& vertices,
+        std::vector<glm::vec3>& normals,
+        std::vector<glm::vec2>& texcoords,
+        std::vector<GLint>& materialIds,
+        int vertexI) {
+            vertices.emplace_back(vertices[vertexI]);
+            normals.emplace_back(normals[vertexI]);
+            texcoords.emplace_back(texcoords[vertexI]);
+            materialIds.emplace_back(materialIds[vertexI]);
+
+            return static_cast<int>(vertices.size() - 1);
+        }
+}
+
 ObjResource::ObjResource(const std::filesystem::path& path)
     : mPath(path) {
     load();
@@ -49,6 +65,10 @@ void ObjResource::loadOnGPU(const tinyobj::ObjReader& reader) {
 }
 
 void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
+    const unsigned VERTICES_PER_FACE = 3;
+    const glm::vec3 UNINITIALIZED_VEC3(-1.0f);
+    const glm::vec2 UNINITIALIZED_VEC2(-1.0f);
+
     // We are given per-vertex attributes (position, normal, texcoords, colors),
     // and per-FACE material id (sad!). This does not work well with OpenGL
     // index buffers. To fix this, we make the material id per-VERTEX. To do this,
@@ -57,23 +77,17 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
     // same material id, greatly simplifying the rendering process.
 
     // Copy all attributes :(
-    // This is necessary, since we may add new vertices.
+    // Convert all attributes to only use a single index buffer (vertex index).
+    // -1 to identify uninitialized values.
     const auto& attribs = reader.GetAttrib();
-    auto vertices = attribs.vertices;
-    auto normals = attribs.normals;
-    auto texcoords = attribs.texcoords;
-    auto colors = attribs.colors;
+    std::vector<glm::vec3> vertices(attribs.vertices.size()/3, UNINITIALIZED_VEC3);
+    std::vector<glm::vec3> normals(attribs.vertices.size()/3, UNINITIALIZED_VEC3);
+    std::vector<glm::vec2> texcoords(attribs.vertices.size()/3, UNINITIALIZED_VEC2);
+    std::vector<GLint>   materialIds(attribs.vertices.size()/3, -1);
 
-    // -2 to identify uninitialized values, since tinyobjloader uses -1.
-    std::vector<GLint> materialIds(attribs.vertices.size()/3, -2);
-
-    // Make sure all attributes have the same size
-    if(normals.size() != vertices.size())
-        normals = decltype(normals)(attribs.vertices.size(), 0.0f);
-    if(texcoords.size() != vertices.size())
-        texcoords = decltype(texcoords)((attribs.vertices.size()/3) * 2, 0.0f);
-    if(colors.size() != vertices.size())
-        colors = decltype(colors)(attribs.vertices.size(), 0.0f);
+    Log::debug() << "Found " << attribs.vertices.size() << " vertex positions, "
+        << attribs.normals.size() << " normals and " << attribs.texcoords.size()
+        << " texcoords.";
 
     for(const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
@@ -82,28 +96,41 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
 
         for(size_t indexI = 0; indexI < shape.mesh.indices.size(); ++indexI) {
             int vertexI = shape.mesh.indices[indexI].vertex_index;
-            if(materialIds[vertexI] == -2) {
-                // No material set yet! Lets use ours.
-                materialIds[vertexI] = shape.mesh.material_ids[indexI / 3]; // 3 vertices per face
-                meshVertexIndices.emplace_back(vertexI); // Copy vertex index
-            } else {
-                // Bummer! A previous vertex set this material. This means this
-                // vertex is used with 2 different materials. We must duplicate this vertex.
-                // Note: it is possible we duplicate the same vertex multiple times, for ex:
-                // this vertex is used by many different faces with the same "new" material id.
-                vertices.insert(vertices.end(),
-                    vertices.begin() + vertexI * 3, vertices.begin() + vertexI * 3 + 3);
-                normals.insert(normals.end(),
-                    normals.begin() + vertexI * 3, normals.begin() + vertexI * 3 + 3);
-                texcoords.insert(texcoords.end(),
-                    texcoords.begin() + vertexI * 2, texcoords.begin() + vertexI * 2 + 2);
-                colors.insert(colors.end(),
-                    colors.begin() + vertexI * 3, colors.begin() + vertexI * 3 + 3);
-                materialIds.emplace_back(shape.mesh.material_ids[indexI / 3]);
+            int normalI = shape.mesh.indices[indexI].normal_index;
+            int texcoordI = shape.mesh.indices[indexI].texcoord_index;
 
-                // Our vertex index will point to our new, duplicated vertex.
-                meshVertexIndices.push_back(static_cast<unsigned int>((vertices.size() / 3) - 1));
+            glm::vec3 newVertex(
+                attribs.vertices[vertexI * 3],
+                attribs.vertices[vertexI * 3 + 1],
+                attribs.vertices[vertexI * 3 + 2]);
+            glm::vec3 newNormal = normalI >= 0 ? glm::vec3(
+                attribs.normals[normalI * 3],
+                attribs.normals[normalI * 3 + 1],
+                attribs.normals[normalI * 3 + 2])
+                : glm::vec3(0.0f);
+            glm::vec2 newTexcoord = texcoordI >= 0 ? glm::vec2(
+                attribs.texcoords[texcoordI * 2],
+                attribs.texcoords[texcoordI * 2 + 1])
+                : glm::vec2(0.0f);
+            GLint newMaterialId = shape.mesh.material_ids[indexI / VERTICES_PER_FACE];
+
+            if(
+                   (normals[vertexI]     != UNINITIALIZED_VEC3 && normals[vertexI] != newNormal)
+                || (texcoords[vertexI]   != UNINITIALIZED_VEC2 && texcoords[vertexI] != newTexcoord)
+                || (materialIds[vertexI] != -1 && materialIds[vertexI] != newMaterialId)) {
+                // Bummer! A previous vertex set the attributes of this vertex.
+                // We must duplicate it.
+                vertexI = duplicateVertex(vertices, normals, texcoords, materialIds, vertexI);
             }
+
+            // Move attributes
+            vertices[vertexI]    = std::move(newVertex);
+            normals[vertexI]     = std::move(newNormal);
+            texcoords[vertexI]   = std::move(newTexcoord);
+            materialIds[vertexI] = std::move(newMaterialId);
+
+            // Copy our vertex index
+            meshVertexIndices.emplace_back(vertexI);
         }
 
         // Add mesh
@@ -116,7 +143,6 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
     // Load attributes
     vertexBuffer.setData(GL_ARRAY_BUFFER, vertices);
     normalBuffer.setData(GL_ARRAY_BUFFER, normals);
-    texCoordBuffer.setData(GL_ARRAY_BUFFER, texcoords);
-    colorBuffer.setData(GL_ARRAY_BUFFER, colors);
+    texcoordBuffer.setData(GL_ARRAY_BUFFER, texcoords);
     materialIdBuffer.setData(GL_ARRAY_BUFFER, materialIds);
 }

@@ -18,11 +18,11 @@ void GameSys::start() {
     PositionComp& cameraPos = camera.get<PositionComp>();
     info.horizFOV = Constants::HORIZ_FOV;
     info.aspectRatio = static_cast<float>(Constants::SIZE_X) / Constants::SIZE_Y;
-    info.nearClippingPlane = 0.1f;
+    info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
-    info.direction = {10, 10, 10, 1};
-    cameraPos.coords = {12, 13, 15};
+    info.direction = {10, 0, 10, 1};//{10, 20, 10, 1};
+    cameraPos.coords = {12, 3, 15};//{20, 50, 35};
 
     CameraEntity::instances.emplace_back(camera);
 
@@ -30,7 +30,7 @@ void GameSys::start() {
     CarEntity car;
     auto [position, renderable] = car.getComponents();
     position.coords.x = 10;
-    position.coords.y = 10;
+    position.coords.y = 0;
     position.coords.z = 10;
     renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
     renderable.setMeshes(renderable.objectResource->objMeshes);

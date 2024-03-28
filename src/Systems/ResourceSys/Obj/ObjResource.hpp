@@ -15,8 +15,7 @@ public:
 
     GPUBuffer vertexBuffer;
     GPUBuffer normalBuffer;
-    GPUBuffer texCoordBuffer;
-    GPUBuffer colorBuffer;
+    GPUBuffer texcoordBuffer;
     GPUBuffer materialIdBuffer;
     GPUBuffer materialUniformBuffer;
     std::vector<ObjMesh::Ptr> objMeshes;

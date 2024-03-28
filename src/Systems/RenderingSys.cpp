@@ -62,8 +62,10 @@ void RenderingSys::render(SDL_Window* window) {
     for(const auto& [position, renderable] : filter) {
         renderEntity(position, renderable);
     }
-    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.01; // TODO: remove
-    CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.01; // TODO: remove
+    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.02; // TODO: remove
+    CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.005; // TODO: remove
+    //CameraEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
+    //CarEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
 
     // Check for gl error
     GLenum error = glGetError();
@@ -103,9 +105,14 @@ void RenderingSys::renderEntity(const PositionComp& position,
                                 const RenderableComp& renderable) {
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 MVP = getProjectionMatrix(camera) * getViewMatrix(camera) * getModelMatrix(position);
+    glm::mat4 modelViewMatrix = getViewMatrix(camera) * getModelMatrix(position);
+    glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
 
     glUseProgram(renderable.shader->getId());
     glUniformMatrix4fv(renderable.shader->findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(renderable.shader->findUniform("modelMatrix"), 1, GL_FALSE, &getModelMatrix(position)[0][0]);
+    glUniformMatrix4fv(renderable.shader->findUniform("viewMatrix"), 1, GL_FALSE, &getViewMatrix(camera)[0][0]);
+    glUniformMatrix4fv(renderable.shader->findUniform("normalMatrix"), 1, GL_FALSE, &normalMatrix[0][0]);
     if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
         glBindBufferBase(
             GL_UNIFORM_BUFFER,
@@ -116,6 +123,7 @@ void RenderingSys::renderEntity(const PositionComp& position,
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     // Pass vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
@@ -128,10 +136,21 @@ void RenderingSys::renderEntity(const PositionComp& position,
         (void*)0			// Array buffer offset
     );
 
+    // Pass normal buffer
+    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->normalBuffer.getId());
+    glVertexAttribPointer(
+        1,					// Attribute index
+        3,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
+        GL_FLOAT,			// Type of data
+        GL_FALSE,			// Normalized?
+        0,					// Stride
+        (void*)0			// Array buffer offset
+    );
+
     // Pass material id buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->materialIdBuffer.getId());
     glVertexAttribIPointer(
-        1,					// Attribute index
+        2,					// Attribute index
         1,					// Size. Number of values per vertex, must be 1, 2, 3 or 4.
         GL_INT,		     	// Type of data
         0,					// Stride
@@ -151,6 +170,7 @@ void RenderingSys::renderEntity(const PositionComp& position,
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
