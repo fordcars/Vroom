@@ -1,10 +1,11 @@
 #pragma once
 
-#include <filesystem>
-#include <vector>
-#include <memory>
-
 #include <tiny_obj_loader.h>
+
+#include <filesystem>
+#include <memory>
+#include <vector>
+
 #include "GPUBuffer.hpp"
 #include "ObjMesh.hpp"
 

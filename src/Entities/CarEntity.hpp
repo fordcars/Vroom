@@ -1,9 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "Entity.hpp"
+
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
+#include "Entity.hpp"
 
 class CarEntity : public Entity<PositionComp, RenderableComp> {
 public:

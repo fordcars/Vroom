@@ -4,19 +4,24 @@
 
 // std140-compatible struct
 struct ObjMaterial {
-    float ambient[3];       float p1;
-    float diffuse[3];       float p2;
-    float specular[3];      float p3;
-    float transmittance[3]; float p4;
-    float emission[3];      float p5;
+    float ambient[3];
+    float p1;
+    float diffuse[3];
+    float p2;
+    float specular[3];
+    float p3;
+    float transmittance[3];
+    float p4;
+    float emission[3];
+    float p5;
     float shininess;
     float dissolve;  // 1 == opaque; 0 == fully transparent
 
     // PBR extension
     // http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
-    float roughness;            // [0, 1] default 0
-    float metallic;             // [0, 1] default 0
-    float sheen;                // [0, 1] default 0
+    float roughness;  // [0, 1] default 0
+    float metallic;   // [0, 1] default 0
+    float sheen;      // [0, 1] default 0
 
     // Struct padding
     float p6;
@@ -45,10 +50,10 @@ struct ObjMaterial {
         emission[2] = mat.emission[2];
 
         shininess = mat.shininess;
-        dissolve  = mat.dissolve;
+        dissolve = mat.dissolve;
 
-        roughness           = mat.roughness;
-        metallic            = mat.metallic;
-        sheen               = mat.sheen;
+        roughness = mat.roughness;
+        metallic = mat.metallic;
+        sheen = mat.sheen;
     }
 };

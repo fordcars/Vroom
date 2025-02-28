@@ -1,8 +1,8 @@
 #include "GameSys.hpp"
 
+#include "Constants.hpp"
 #include "Entities/CameraEntity.hpp"
 #include "Entities/CarEntity.hpp"
-#include "Constants.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
@@ -21,8 +21,8 @@ void GameSys::start() {
     info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
-    info.direction = {10, 0, 10, 1};//{10, 20, 10, 1};
-    cameraPos.coords = {12, 3, 15};//{20, 50, 35};
+    info.direction = {10, 0, 10, 1};  //{10, 20, 10, 1};
+    cameraPos.coords = {12, 3, 15};   //{20, 50, 35};
 
     CameraEntity::instances.emplace_back(camera);
 

@@ -8,6 +8,8 @@ set(SOURCES
 	Systems/RenderingSys.cpp
 	Systems/ResourceSys/ResourceSys.cpp
 	Systems/GameSys.cpp
+	Systems/EventSys.cpp
+	Systems/InputSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
@@ -29,6 +31,8 @@ set(HEADERS
 	# Systems
 	Systems/RenderingSys.hpp
 	Systems/GameSys.hpp
+	Systems/EventSys.hpp
+	Systems/InputSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp
 	Systems/ResourceSys/Obj/ObjResource.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp

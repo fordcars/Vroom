@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "Systems/ResourceSys/Obj/ObjMesh.hpp"
 #include "Systems/ResourceSys/Obj/ObjResource.hpp"
 #include "Systems/ResourceSys/ShaderResource.hpp"
@@ -11,7 +12,6 @@ struct RenderableComp {
     ShaderResource::CPtr shader;
 
     void setMeshes(const std::vector<ObjMesh::Ptr>& nonConstMeshes) {
-        meshes =
-            decltype(meshes)(nonConstMeshes.begin(), nonConstMeshes.end());
+        meshes = decltype(meshes)(nonConstMeshes.begin(), nonConstMeshes.end());
     }
 };

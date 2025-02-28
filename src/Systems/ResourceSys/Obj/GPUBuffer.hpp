@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
 #include <glad/glad.h>
+
+#include <vector>
 
 // Simple OpenGL buffer wrapper for RAII
 class GPUBuffer {
@@ -18,18 +19,13 @@ public:
     size_t getCount() const;
     size_t getSize() const;
 
-    template<typename T>
+    template <typename T>
     void setData(GLenum target, const std::vector<T>& data,
-        GLenum usageHint = GL_STATIC_DRAW) {
+                 GLenum usageHint = GL_STATIC_DRAW) {
         if(data.empty()) return;
 
         glBindBuffer(target, mId);
-        glBufferData(
-            target,
-            data.size() * sizeof(T),
-            data.data(),
-            usageHint
-        );
+        glBufferData(target, data.size() * sizeof(T), data.data(), usageHint);
 
         mCount = data.size();
         mSize = data.size() * sizeof(T);
