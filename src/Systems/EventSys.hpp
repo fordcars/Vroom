@@ -4,7 +4,7 @@ class EventSys {
 public:
     static EventSys& get();
     EventSys() = default;
-    void handleEvents();
+    bool handleEvents();
 
 private:
     EventSys(const EventSys&) = delete;

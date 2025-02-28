@@ -19,6 +19,5 @@ private:
     bool init();
     void quit();
     void doMainLoop();
-    void doEvents();
     void checkForErrors();
 };

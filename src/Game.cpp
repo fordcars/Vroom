@@ -5,7 +5,9 @@
 
 #include "Constants.hpp"
 #include "Log.hpp"
+#include "Systems/EventSys.hpp"
 #include "Systems/GameplaySys.hpp"
+#include "Systems/InputSys.hpp"
 #include "Systems/RenderingSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
 
@@ -48,6 +50,7 @@ bool Game::init() {
         return false;
     }
 
+    InputSys::get().init();
     return RenderingSys::get().init(mMainWindow) && ResourceSys::get().loadResources();
 }
 
@@ -57,17 +60,10 @@ void Game::quit() {
 }
 
 void Game::doMainLoop() {
-    doEvents();
+    if(!EventSys::get().handleEvents()) quit();
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
     SDL_Delay(1000 / Constants::FPS);
-}
-
-void Game::doEvents() {
-    SDL_Event event;
-    while(SDL_PollEvent(&event)) {
-        if(event.type == SDL_QUIT) quit();
-    }
 }
 
 void Game::checkForErrors() {

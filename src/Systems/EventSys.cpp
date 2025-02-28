@@ -12,9 +12,15 @@ EventSys& EventSys::get() {
     return *instance;
 }
 
-void EventSys::handleEvents() {
+// Returns false if the game should quit
+bool EventSys::handleEvents() {
     SDL_Event event;
     while(SDL_PollEvent(&event)) {
+        // Handle quit event
+        if(event.type == SDL_QUIT) {
+            return false;
+        }
+
         // Handle input events
         if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
            event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP ||
@@ -22,4 +28,6 @@ void EventSys::handleEvents() {
             InputSys::get().handleEvent(event);
         }
     }
+
+    return true;
 }
