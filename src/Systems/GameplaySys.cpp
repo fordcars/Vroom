@@ -1,4 +1,4 @@
-#include "GameSys.hpp"
+#include "GameplaySys.hpp"
 
 #include "Constants.hpp"
 #include "Entities/CameraEntity.hpp"
@@ -6,12 +6,12 @@
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
-GameSys& GameSys::get() {
-    static std::unique_ptr<GameSys> instance = std::make_unique<GameSys>();
+GameplaySys& GameplaySys::get() {
+    static std::unique_ptr<GameplaySys> instance = std::make_unique<GameplaySys>();
     return *instance;
 }
 
-void GameSys::start() {
+void GameplaySys::start() {
     // Create camera
     CameraEntity camera;
     CameraInfoComp& info = camera.get<CameraInfoComp>();

@@ -7,7 +7,7 @@ set(SOURCES
 	# Systems
 	Systems/RenderingSys.cpp
 	Systems/ResourceSys/ResourceSys.cpp
-	Systems/GameSys.cpp
+	Systems/GameplaySys.cpp
 	Systems/EventSys.cpp
 	Systems/InputSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
@@ -30,7 +30,7 @@ set(HEADERS
 
 	# Systems
 	Systems/RenderingSys.hpp
-	Systems/GameSys.hpp
+	Systems/GameplaySys.hpp
 	Systems/EventSys.hpp
 	Systems/InputSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp

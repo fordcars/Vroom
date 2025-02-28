@@ -1,12 +1,12 @@
 #include "Game.hpp"
+
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
 
-#include "Log.hpp"
 #include "Constants.hpp"
-
+#include "Log.hpp"
+#include "Systems/GameplaySys.hpp"
 #include "Systems/RenderingSys.hpp"
-#include "Systems/GameSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
 
 Game::Game() {}
@@ -18,11 +18,11 @@ Game::~Game() {
 
 bool Game::start() {
     if(init()) {
-        GameSys::get().start();
+        GameplaySys::get().start();
         while(!mQuitting) doMainLoop();
         return true;
     }
-    
+
     return false;
 }
 
@@ -40,21 +40,15 @@ bool Game::init() {
 
     // Create window
     mMainWindow = SDL_CreateWindow(
-        Constants::GAME_NAME,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        Constants::SIZE_X,
-        Constants::SIZE_Y,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
-    );
-    
+        Constants::GAME_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        Constants::SIZE_X, Constants::SIZE_Y, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+
     if(!mMainWindow) {
         Log::sdlError() << "Unable to create window!";
         return false;
     }
 
-    return RenderingSys::get().init(mMainWindow)
-        && ResourceSys::get().loadResources();
+    return RenderingSys::get().init(mMainWindow) && ResourceSys::get().loadResources();
 }
 
 void Game::quit() {
@@ -66,7 +60,7 @@ void Game::doMainLoop() {
     doEvents();
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
-    SDL_Delay(1000/Constants::FPS);
+    SDL_Delay(1000 / Constants::FPS);
 }
 
 void Game::doEvents() {
@@ -78,7 +72,7 @@ void Game::doEvents() {
 
 void Game::checkForErrors() {
     GLenum err;
-	while((err = glGetError()) != GL_NO_ERROR) {
+    while((err = glGetError()) != GL_NO_ERROR) {
         if(err == GL_INVALID_ENUM)
             Log::error() << "OpenGL error: GL_INVALID_ENUM";
         else if(err == GL_INVALID_VALUE)
@@ -91,13 +85,12 @@ void Game::checkForErrors() {
             Log::error() << "OpenGL error: GL_STACK_UNDERFLOW";
         else if(err == GL_OUT_OF_MEMORY)
             Log::error() << "OpenGL error: GL_OUT_OF_MEMORY";
-	}
+    }
 
-	// Often, SDL errors will not be important, since it includes internal diagnostics
-	std::string message = SDL_GetError();
-	if(!message.empty())
-	{
-		Log::warn() << "SDL message: " << message;
-		SDL_ClearError();
-	}
+    // Often, SDL errors will not be important, since it includes internal diagnostics
+    std::string message = SDL_GetError();
+    if(!message.empty()) {
+        Log::warn() << "SDL message: " << message;
+        SDL_ClearError();
+    }
 }

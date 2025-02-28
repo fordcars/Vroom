@@ -34,7 +34,7 @@ void InputSys::handleKeyboardInput(const SDL_Event& event) {
             InputNeed inputNeed = it->second;
             switch(inputNeed) {
                 case InputNeed::Jump:
-                    // Handle Jump
+                    printf("JUMMMPPP\n");
                     break;
                 case InputNeed::WalkLeft:
                     // Handle WalkLeft
