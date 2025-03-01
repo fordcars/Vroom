@@ -2,6 +2,10 @@
 
 #include <memory>
 
+#include "Components/MotionComp.hpp"
+#include "Entities/PlayerEntity.hpp"
+#include "Systems/PhysicsSys.hpp"
+
 // Static
 InputSys& InputSys::get() {
     static std::unique_ptr<InputSys> instance = std::make_unique<InputSys>();
@@ -29,17 +33,20 @@ void InputSys::init() {
 }
 
 void InputSys::handleNeed(InputNeed need, bool isKeyDown) {
+    const float speed = 1;
+    auto& physicsSys = PhysicsSys::get();
+
     switch(need) {
         case InputNeed::Jump:
+            physicsSys.applyImpulse(PlayerEntity::instances[0], {0, speed, 0});
             break;
         case InputNeed::WalkLeft:
-            // Handle WalkLeft
+            physicsSys.applyImpulse(PlayerEntity::instances[0], {-speed, 0, 0});
             break;
         case InputNeed::WalkRight:
-            // Handle WalkRight
+            physicsSys.applyImpulse(PlayerEntity::instances[0], {speed, 0, 0});
             break;
         case InputNeed::Crouch:
-            // Handle Crouch
             break;
     }
 }

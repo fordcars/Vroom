@@ -2,7 +2,7 @@
 
 #include "Constants.hpp"
 #include "Entities/CameraEntity.hpp"
-#include "Entities/CarEntity.hpp"
+#include "Entities/PlayerEntity.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
@@ -26,9 +26,9 @@ void GameplaySys::start() {
 
     CameraEntity::instances.emplace_back(camera);
 
-    // Create car
-    CarEntity car;
-    auto [position, renderable] = car.getComponents();
+    // Create player
+    PlayerEntity player;
+    auto [position, renderable, velocity] = player.getComponents();
     position.coords.x = 10;
     position.coords.y = 0;
     position.coords.z = 10;
@@ -36,5 +36,5 @@ void GameplaySys::start() {
     renderable.setMeshes(renderable.objectResource->objMeshes);
     renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
 
-    CarEntity::instances.emplace_back(car);
+    PlayerEntity::instances.emplace_back(player);
 }

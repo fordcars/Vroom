@@ -8,6 +8,7 @@
 #include "Systems/EventSys.hpp"
 #include "Systems/GameplaySys.hpp"
 #include "Systems/InputSys.hpp"
+#include "Systems/PhysicsSys.hpp"
 #include "Systems/RenderingSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
 
@@ -60,7 +61,12 @@ void Game::quit() {
 }
 
 void Game::doMainLoop() {
+    Uint32 currentFrameTime = SDL_GetTicks();
+    float deltaTime = (currentFrameTime - mLastFrameTime) / 1000.0f;
+    mLastFrameTime = currentFrameTime;
+
     if(!EventSys::get().handleEvents()) quit();
+    PhysicsSys::get().update(deltaTime);
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
     SDL_Delay(1000 / Constants::FPS);

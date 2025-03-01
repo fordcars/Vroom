@@ -14,9 +14,10 @@ set(SOURCES
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/ShaderResource.cpp
+	Systems/PhysicsSys.cpp
 
 	# Entities
-	Entities/CarEntity.cpp
+	Entities/PlayerEntity.cpp
 	Entities/CameraEntity.cpp
 )
 
@@ -39,18 +40,20 @@ set(HEADERS
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
 	Systems/ResourceSys/ShaderResource.hpp
+	Systems/PhysicsSys.hpp
 
 	# Entities
 	Entities/Entity.hpp
 	Entities/EntityRegistry.hpp
 	Entities/EntityFilter.hpp
-	Entities/CarEntity.hpp
+	Entities/PlayerEntity.hpp
 	Entities/CameraEntity.hpp
 
 	# Components
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
 	Components/CameraInfoComp.hpp
+	Components/MotionComp.hpp
 )
 
 # Packages

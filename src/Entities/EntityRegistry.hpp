@@ -1,8 +1,8 @@
 #pragma once
 #include "CameraEntity.hpp"
-#include "CarEntity.hpp"
+#include "PlayerEntity.hpp"
 
 template <typename... EntityTs>
 class EntityRegistry {};
 
-using EntityRegistryDefinition = EntityRegistry<CarEntity, CameraEntity>;
+using EntityRegistryDefinition = EntityRegistry<PlayerEntity, CameraEntity>;

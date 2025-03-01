@@ -15,6 +15,7 @@ public:
 private:
     SDL_Window* mMainWindow;
     bool mQuitting = false;
+    Uint32 mLastFrameTime;
 
     bool init();
     void quit();

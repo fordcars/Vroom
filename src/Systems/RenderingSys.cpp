@@ -61,10 +61,10 @@ void RenderingSys::render(SDL_Window* window) {
     for(const auto& [position, renderable] : filter) {
         renderEntity(position, renderable);
     }
-    CameraEntity::instances[0].get<PositionComp>().coords.x += 0.02;   // TODO: remove
-    CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.005;  // TODO: remove
+    // CameraEntity::instances[0].get<PositionComp>().coords.x += 0.02;   // TODO: remove
+    // CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.005;  // TODO: remove
     // CameraEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
-    // CarEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
+    // PlayerEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
 
     // Check for gl error
     GLenum error = glGetError();
