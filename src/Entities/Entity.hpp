@@ -1,24 +1,29 @@
 #pragma once
 #include <tuple>
 
+#include "Utils/TupleUtils.hpp"
+
 template <typename... ComponentTs>
 class Entity {
 public:
     std::tuple<ComponentTs...> mComponents = {};
 
     template <typename ComponentT>
-    ComponentT& get() {
-        return std::get<ComponentT>(mComponents);
+    decltype(auto) get() {
+        return Utils::OptionalTupleGetter<ComponentT>::get(mComponents);
     }
 
     template <typename ComponentT>
-    const ComponentT& get() const {
-        return std::get<ComponentT>(mComponents);
+    decltype(auto) get() const {
+        return Utils::OptionalTupleGetter<ComponentT>::get(mComponents);
     }
 
-    // Useful for structured bindings when iterating.
+    // Useful for structured bindings.
     // Returns tuple of references to components.
-    auto getComponents() { return std::tie(std::get<ComponentTs>(mComponents)...); }
-
-    auto getComponents() const { return std::tie(std::get<ComponentTs>(mComponents)...); }
+    auto getComponents() {
+        return std::tie(Utils::OptionalTupleGetter<ComponentTs>::get(mComponents)...);
+    }
+    auto getComponents() const {
+        return std::tie(Utils::OptionalTupleGetter<ComponentTs>::get(mComponents)...);
+    }
 };

@@ -28,6 +28,7 @@ set(HEADERS
 
 	Utils/getopt.h
 	Utils/FileUtils.hpp
+	Utils/TupleUtils.hpp
 
 	# Systems
 	Systems/RenderingSys.hpp
