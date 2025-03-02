@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-#include <glm/gtc/matrix_transform.hpp>  // For lookAt()
+#include <glm/gtc/matrix_transform.hpp> // For lookAt()
 
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
@@ -57,14 +57,10 @@ void RenderingSys::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 void RenderingSys::render(SDL_Window* window) {
     mCurrentTime = SDL_GetTicks();
-    EntityFilter<PositionComp, RenderableComp> filter;
-    for(const auto& [position, renderable] : filter) {
-        renderEntity(position, renderable);
+    EntityFilter<PositionComp, RenderableComp, std::optional<AnimationComp>> filter;
+    for(const auto& [position, renderable, animation] : filter) {
+        renderEntity(position, renderable, animation);
     }
-    // CameraEntity::instances[0].get<PositionComp>().coords.x += 0.02;   // TODO: remove
-    // CameraEntity::instances[0].get<PositionComp>().coords.y -= 0.005;  // TODO: remove
-    // CameraEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
-    // PlayerEntity::instances[0].get<PositionComp>().coords.z += 0.01; // TODO: remove
 
     // Check for gl error
     GLenum error = glGetError();
@@ -87,17 +83,18 @@ void RenderingSys::initGL(SDL_Window* window) {
                  1.0f);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);  // Accept the fragment closer to the camera
+    glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glEnable(GL_MULTISAMPLE);  // Enable anti-aliasing (SDL attributes)
+    glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
 }
 
-void RenderingSys::renderEntity(const PositionComp& position,
-                                const RenderableComp& renderable) {
+void RenderingSys::renderEntity(
+    const PositionComp& position, const RenderableComp& renderable,
+    std::optional<std::reference_wrapper<AnimationComp>> animation) {
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 modelMatrix = getModelMatrix(position);
@@ -127,46 +124,53 @@ void RenderingSys::renderEntity(const PositionComp& position,
                          renderable.objectResource->materialUniformBuffer.getId());
     }
 
+    if(animation && renderable.shader->findUniformBlock("BoneTransformsBlock") != -1) {
+        const AnimationComp& anim = animation->get();
+        glBindBufferBase(GL_UNIFORM_BUFFER,
+                         renderable.shader->findUniformBlock("BoneTransformsBlock"),
+                         anim.resource.getBoneTransformsUniformBuffer().getId());
+    }
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
     // Pass vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
-    glVertexAttribPointer(0,  // Attribute index
-                          3,  // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                          GL_FLOAT,  // Type of data
-                          GL_FALSE,  // Normalized?
-                          0,         // Stride
-                          (void*)0   // Array buffer offset
+    glVertexAttribPointer(0, // Attribute index
+                          3, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
+                          GL_FLOAT, // Type of data
+                          GL_FALSE, // Normalized?
+                          0,        // Stride
+                          (void*)0  // Array buffer offset
     );
 
     // Pass normal buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->normalBuffer.getId());
-    glVertexAttribPointer(1,  // Attribute index
-                          3,  // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                          GL_FLOAT,  // Type of data
-                          GL_FALSE,  // Normalized?
-                          0,         // Stride
-                          (void*)0   // Array buffer offset
+    glVertexAttribPointer(1, // Attribute index
+                          3, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
+                          GL_FLOAT, // Type of data
+                          GL_FALSE, // Normalized?
+                          0,        // Stride
+                          (void*)0  // Array buffer offset
     );
 
     // Pass material id buffer
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->materialIdBuffer.getId());
-    glVertexAttribIPointer(2,  // Attribute index
-                           1,  // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                           GL_INT,   // Type of data
-                           0,        // Stride
-                           (void*)0  // Array buffer offset
+    glVertexAttribIPointer(2, // Attribute index
+                           1, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
+                           GL_INT,  // Type of data
+                           0,       // Stride
+                           (void*)0 // Array buffer offset
     );
 
     // Render all meshes
     for(const auto& mesh : renderable.meshes) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
-        glDrawElements(GL_TRIANGLES,  // Mode
+        glDrawElements(GL_TRIANGLES, // Mode
                        mesh->indexBuffer.getCount(),
-                       GL_UNSIGNED_INT,  // Type
-                       (void*)0          // Element array buffer offset
+                       GL_UNSIGNED_INT, // Type
+                       (void*)0         // Element array buffer offset
         );
     }
 

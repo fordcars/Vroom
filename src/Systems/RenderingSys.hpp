@@ -2,7 +2,9 @@
 #include <SDL2/SDL.h>
 
 #include <glm/glm.hpp>
+#include <optional>
 
+#include "Components/AnimationComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
 #include "Entities/CameraEntity.hpp"
@@ -27,7 +29,8 @@ private:
     RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
-    void renderEntity(const PositionComp& position, const RenderableComp& renderable);
+    void renderEntity(const PositionComp& position, const RenderableComp& renderable,
+                      std::optional<std::reference_wrapper<AnimationComp>> animation);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
     glm::mat4 getProjectionMatrix(const CameraEntity& camera);

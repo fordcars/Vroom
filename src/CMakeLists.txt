@@ -59,6 +59,7 @@ set(HEADERS
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
 	Components/CameraInfoComp.hpp
+	Components/AnimationComp.hpp
 	Components/MotionComp.hpp
 )
 

@@ -80,4 +80,6 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
             node.scale = lerpVec3(s0, s1, alpha);
         }
     }
+
+    animation.resource.updateBoneBuffer();
 }

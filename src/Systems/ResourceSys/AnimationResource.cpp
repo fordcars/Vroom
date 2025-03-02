@@ -1,5 +1,7 @@
 #include "AnimationResource.hpp"
 
+#include <glm/gtc/type_ptr.hpp> // Required for glm::value_ptr
+
 #include "Log.hpp"
 
 AnimationResource::AnimationResource(const std::string &name,
@@ -8,6 +10,37 @@ AnimationResource::AnimationResource(const std::string &name,
     if(!loadGLTFModel()) {
         Log::error() << "Failed to load GLTF model from file: " << filePath.string();
     }
+}
+
+void AnimationResource::updateBoneBuffer() {
+    for(size_t i = 0; i < mBones.size(); ++i) {
+        Bone &bone = mBones[i];
+        int nodeIndex = bone.id;
+        Node &node = mNodes[nodeIndex]; // Get latest node transform
+
+        // Start with identity matrix
+        glm::mat4 boneTransform = glm::mat4(1.0f);
+
+        // Apply translation
+        boneTransform = glm::translate(boneTransform, node.translation);
+
+        // Apply rotation (convert quaternion to matrix)
+        boneTransform *= glm::mat4_cast(node.rotation);
+
+        // Apply scale
+        boneTransform = glm::scale(boneTransform, node.scale);
+
+        // Compute final bone transformation
+        bone.finalTransform = boneTransform * bone.inverseBindMatrix;
+
+        // If i < max bones, update buffer
+        if(i < Constants::MAX_BONES) {
+            mBoneTransforms[i] = bone.finalTransform;
+        }
+    }
+
+    // Load in uniform buffer
+    mBoneTransformsBuffer.setData(GL_UNIFORM_BUFFER, mBoneTransforms);
 }
 
 bool AnimationResource::loadGLTFModel() {
@@ -33,6 +66,7 @@ bool AnimationResource::loadGLTFModel() {
     if(ret) {
         loadNodes(model);
         loadAnimationData(model);
+        loadBones(model);
     }
 
     return ret;
@@ -123,5 +157,49 @@ void AnimationResource::loadAnimationData(const tinygltf::Model &model) {
         if(channelDuration > mDuration) {
             mDuration = channelDuration;
         }
+    }
+}
+
+void AnimationResource::loadBones(const tinygltf::Model &model) {
+    if(model.skins.empty()) {
+        Log::error() << "No skeleton found in GLTF model!";
+        return;
+    }
+
+    const tinygltf::Skin &skin = model.skins[0]; // Assume first skin
+    mBones.resize(skin.joints.size());
+
+    // Load inverse bind matrices
+    std::vector<glm::mat4> inverseBindMatrices;
+    if(skin.inverseBindMatrices >= 0) {
+        const tinygltf::Accessor &accessor = model.accessors[skin.inverseBindMatrices];
+        const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
+        const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
+
+        const float *matrixData =
+            reinterpret_cast<const float *>(&buffer.data[bufferView.byteOffset]);
+
+        for(size_t i = 0; i < accessor.count; i++) {
+            glm::mat4 mat;
+            std::memcpy(glm::value_ptr(mat), matrixData + i * 16,
+                        sizeof(glm::mat4)); // Copy 16 floats
+            inverseBindMatrices.push_back(mat);
+        }
+    }
+
+    // Load bones
+    for(size_t i = 0; i < skin.joints.size(); i++) {
+        int nodeIndex = skin.joints[i];
+
+        mBones[i].id = nodeIndex;
+        mBones[i].name = model.nodes[nodeIndex].name;
+        mBones[i].inverseBindMatrix =
+            inverseBindMatrices.empty() ? glm::mat4(1.0f) : inverseBindMatrices[i];
+        mBones[i].finalTransform = glm::mat4(1.0f);
+    }
+
+    // Check if we bust bone limit
+    if(mBones.size() > Constants::MAX_BONES) {
+        Log::warn() << "Bone count exceeds maximum limit of " << Constants::MAX_BONES;
     }
 }
