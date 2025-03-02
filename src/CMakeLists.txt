@@ -2,6 +2,7 @@ set(SOURCES
 	main.cpp
 	Log.cpp
 	Game.cpp
+	Utils/LinkerUtils.cpp
 	Utils/FileUtils.cpp
 
 	# Systems
@@ -14,7 +15,9 @@ set(SOURCES
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/ShaderResource.cpp
+	Systems/ResourceSys/AnimationResource.cpp
 	Systems/PhysicsSys.cpp
+	Systems/AnimationSys.cpp
 
 	# Entities
 	Entities/PlayerEntity.cpp
@@ -41,7 +44,9 @@ set(HEADERS
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
 	Systems/ResourceSys/ShaderResource.hpp
+	Systems/ResourceSys/AnimationResource.hpp
 	Systems/PhysicsSys.hpp
+	Systems/AnimationSys.hpp
 
 	# Entities
 	Entities/Entity.hpp
@@ -62,6 +67,7 @@ find_package(SDL2 REQUIRED CONFIG)
 find_package(glad REQUIRED)
 find_package(glm REQUIRED)
 find_package(tinyobjloader REQUIRED)
+find_package(TinyGLTF REQUIRED)
 
 add_executable(
 	Vroom
@@ -82,6 +88,7 @@ target_link_libraries(
 	PRIVATE ${glad_LIBRARIES}
 	PRIVATE glm::glm
 	PRIVATE tinyobjloader::tinyobjloader
+	PRIVATE TinyGLTF::TinyGLTF
 )
 
 # Copy resources after buildin

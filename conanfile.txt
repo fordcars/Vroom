@@ -2,6 +2,7 @@
 sdl/[~2.26] 
 glm/cci.20230113
 tinyobjloader/2.0.0-rc10
+tinygltf/[~2.9.0]
 
 [generators]
 CMakeDeps

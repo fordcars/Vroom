@@ -1,9 +1,10 @@
 #include "ResourceSys.hpp"
 
-#include <string>
 #include <memory>
-#include "Log.hpp"
+#include <string>
+
 #include "Constants.hpp"
+#include "Log.hpp"
 
 // Static
 ResourceSys& ResourceSys::get() {
@@ -14,8 +15,8 @@ ResourceSys& ResourceSys::get() {
 // Will load all resources in all subdirs of the resource dir.
 // Resources will have the name of the file (without extension).
 bool ResourceSys::loadResources() {
-    Log::info() << "Loading resources from "
-        << Constants::RESOURCE_DIR << "/ directory...";
+    Log::info() << "Loading resources from " << Constants::RESOURCE_DIR
+                << "/ directory...";
     bool res = loadResourcesFromDir(Constants::RESOURCE_DIR);
     Log::info() << "Done loading resources!";
 
@@ -38,6 +39,15 @@ ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) con
     }
 
     return mShaderResources.at(name);
+}
+
+AnimationResource::CPtr ResourceSys::getAnimationResource(const std::string& name) const {
+    if(mAnimationResources.find(name) == mAnimationResources.end()) {
+        Log::error() << "Cannot find animation resource '" << name << "'!";
+        throw std::invalid_argument("No animation resource with name '" + name + "'");
+    }
+
+    return mAnimationResources.at(name);
 }
 
 bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
@@ -64,8 +74,8 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     size_t firstDot = name.find('.');
     if(firstDot != std::string::npos) name = name.substr(0, firstDot);
 
-    Log::debug() << "Loading resource '" << name
-        << "' with type '" << type << "' from " << path.string();
+    Log::debug() << "Loading resource '" << name << "' with type '" << type << "' from "
+                 << path.string();
 
     bool alreadyExists = false;
     std::string resourceType;
@@ -73,28 +83,41 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
         if(mObjResources.find(name) != mObjResources.end()) {
             alreadyExists = true;
             resourceType = "object";
-        } else mObjResources.insert({name, ObjResource::create(path)});
+        } else
+            mObjResources.insert({name, ObjResource::create(path)});
     } else if(type == ".glsl") {
         if(mShaderResources.find(name) == mShaderResources.end()) {
             // Don't throw error, since multiple shader sources must have the same name.
             // Find both vertex and fragment shader sources:
-            std::filesystem::path vertexShaderPath = path.parent_path() / (name + ".v.glsl");
-            std::filesystem::path fragmentShaderPath = path.parent_path() / (name + ".f.glsl");
-            
-            if (std::filesystem::exists(vertexShaderPath) && std::filesystem::exists(fragmentShaderPath)) {
-                mShaderResources.insert({name, ShaderResource::create(name, vertexShaderPath, fragmentShaderPath)});
+            std::filesystem::path vertexShaderPath =
+                path.parent_path() / (name + ".v.glsl");
+            std::filesystem::path fragmentShaderPath =
+                path.parent_path() / (name + ".f.glsl");
+
+            if(std::filesystem::exists(vertexShaderPath) &&
+               std::filesystem::exists(fragmentShaderPath)) {
+                mShaderResources.insert(
+                    {name,
+                     ShaderResource::create(name, vertexShaderPath, fragmentShaderPath)});
             } else {
                 Log::error() << "Failed to load shader '" << path.string() << "': "
-                    << "could not find matching vertex/fragment shader!";
+                             << "could not find matching vertex/fragment shader!";
                 return false;
             }
+        }
+    } else if(type == ".gltf" || type == ".glb") {
+        if(mAnimationResources.find(name) != mAnimationResources.end()) {
+            alreadyExists = true;
+            resourceType = "animation";
+        } else {
+            mAnimationResources.insert({name, AnimationResource::create(name, path)});
         }
     }
 
     if(alreadyExists) {
         Log::error() << "Cannot load " << resourceType << " resource '" << path.string()
-            << "': a " << resourceType << " resource with the name '" << name
-            << "' already exists!";
+                     << "': a " << resourceType << " resource with the name '" << name
+                     << "' already exists!";
         return false;
     }
     return true;
