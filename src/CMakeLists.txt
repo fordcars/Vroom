@@ -92,6 +92,12 @@ target_link_libraries(
 	PRIVATE TinyGLTF::TinyGLTF
 )
 
+target_compile_definitions(Vroom
+    PRIVATE
+        # If in debug configuration, define DEBUG
+        $<$<CONFIG:Debug>:IS_DEBUG>
+)
+
 # Copy resources after buildin
 add_custom_command(
     TARGET Vroom POST_BUILD

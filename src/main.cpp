@@ -1,28 +1,29 @@
 #include <iostream>
 #include <string>
+
+#include "Game.hpp"
+#include "Log.hpp"
 #include "Utils/getopt.h"
 
-#include "Log.hpp"
-#include "Game.hpp"
-
 void printHelp(const std::string& progName) {
-    std::cout
-        << "Usage:\n"
-        << "    " << progName << '\n'
-        << "Options:\n"
-        << "    -l        logging level (0: errors only, 3: all)"
-        << std::endl;
+    std::cout << "Usage:\n"
+              << "    " << progName << '\n'
+              << "Options:\n"
+              << "    -l        logging level (0: errors only, 3: all)" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
+#ifdef IS_DEBUG
+    LogLevel loggingLevel = LogLevel::DEBUG;
+#else
     LogLevel loggingLevel = LogLevel::INFO;
+#endif
 
     int c;
     while((c = getopt(argc, argv, "hl:")) != -1) {
         switch(c) {
             case '?':
-            case 'l':
-            {
+            case 'l': {
                 try {
                     loggingLevel = static_cast<LogLevel>(std::stoi(optarg));
                 } catch(const std::invalid_argument& e) {
@@ -44,6 +45,6 @@ int main(int argc, char* argv[]) {
     Log::setLevel(loggingLevel);
     Game game;
     game.start();
-    
+
     return 0;
 }
