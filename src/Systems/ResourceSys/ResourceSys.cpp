@@ -41,15 +41,6 @@ ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) con
     return mShaderResources.at(name);
 }
 
-AnimationResource::CPtr ResourceSys::getAnimationResource(const std::string& name) const {
-    if(mAnimationResources.find(name) == mAnimationResources.end()) {
-        Log::error() << "Cannot find animation resource '" << name << "'!";
-        throw std::invalid_argument("No animation resource with name '" + name + "'");
-    }
-
-    return mAnimationResources.at(name);
-}
-
 bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
     namespace fs = std::filesystem;
     bool success = true;
@@ -104,13 +95,6 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
                              << "could not find matching vertex/fragment shader!";
                 return false;
             }
-        }
-    } else if(type == ".gltf" || type == ".glb") {
-        if(mAnimationResources.find(name) != mAnimationResources.end()) {
-            alreadyExists = true;
-            resourceType = "animation";
-        } else {
-            mAnimationResources.insert({name, AnimationResource::create(name, path)});
         }
     }
 

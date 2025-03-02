@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "GPUBuffer.hpp"
+#include "ObjAnimation.hpp"
 #include "ObjMesh.hpp"
 
 class ObjResource {
@@ -20,6 +21,7 @@ public:
     GPUBuffer materialIdBuffer;
     GPUBuffer materialUniformBuffer;
     std::vector<ObjMesh::Ptr> objMeshes;
+    ObjAnimation::Ptr animation;
 
     static Ptr create(const std::filesystem::path& path) {
         return std::make_shared<ObjResource>(path);

@@ -1,18 +1,18 @@
-#include "AnimationResource.hpp"
+#include "ObjAnimation.hpp"
 
 #include <glm/gtc/type_ptr.hpp> // Required for glm::value_ptr
 
 #include "Log.hpp"
 
-AnimationResource::AnimationResource(const std::string &name,
-                                     const std::filesystem::path &filePath)
-    : mName(name), mFilePath(filePath) {
-    if(!loadGLTFModel()) {
+ObjAnimation::ObjAnimation(const std::filesystem::path &filePath,
+                           const ObjResource &objResource)
+    : mFilePath(filePath) {
+    if(!loadGLTFModel(objResource)) {
         Log::error() << "Failed to load GLTF model from file: " << filePath.string();
     }
 }
 
-void AnimationResource::updateBoneBuffer() {
+void ObjAnimation::updateBoneBuffer() {
     for(size_t i = 0; i < mBones.size(); ++i) {
         Bone &bone = mBones[i];
         int nodeIndex = bone.id;
@@ -43,7 +43,7 @@ void AnimationResource::updateBoneBuffer() {
     mBoneTransformsBuffer.setData(GL_UNIFORM_BUFFER, mBoneTransforms);
 }
 
-bool AnimationResource::loadGLTFModel() {
+bool ObjAnimation::loadGLTFModel(const ObjResource &objResource) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
     std::string err, warn;
@@ -67,12 +67,13 @@ bool AnimationResource::loadGLTFModel() {
         loadNodes(model);
         loadAnimationData(model);
         loadBones(model);
+        loadVertices(objResource, model);
     }
 
     return ret;
 }
 
-void AnimationResource::loadNodes(const tinygltf::Model &model) {
+void ObjAnimation::loadNodes(const tinygltf::Model &model) {
     mNodes.resize(model.nodes.size());
 
     for(size_t i = 0; i < model.nodes.size(); i++) {
@@ -107,7 +108,7 @@ void AnimationResource::loadNodes(const tinygltf::Model &model) {
     }
 }
 
-void AnimationResource::loadAnimationData(const tinygltf::Model &model) {
+void ObjAnimation::loadAnimationData(const tinygltf::Model &model) {
     for(const auto &anim : model.animations) {
         for(size_t i = 0; i < anim.channels.size(); i++) {
             const tinygltf::AnimationChannel &channel = anim.channels[i];
@@ -160,7 +161,7 @@ void AnimationResource::loadAnimationData(const tinygltf::Model &model) {
     }
 }
 
-void AnimationResource::loadBones(const tinygltf::Model &model) {
+void ObjAnimation::loadBones(const tinygltf::Model &model) {
     if(model.skins.empty()) {
         Log::error() << "No skeleton found in GLTF model!";
         return;
@@ -202,4 +203,55 @@ void AnimationResource::loadBones(const tinygltf::Model &model) {
     if(mBones.size() > Constants::MAX_BONES) {
         Log::warn() << "Bone count exceeds maximum limit of " << Constants::MAX_BONES;
     }
+}
+
+void ObjAnimation::loadVertices(const ObjResource &objResource,
+                                const tinygltf::Model &model) {
+    for(const auto &mesh : model.meshes) {
+        loadVertices(objResource, model, mesh);
+    }
+}
+
+void loadVertices(const ObjResource &objResource, const tinygltf::Model &model,
+                  const tinygltf::Mesh &mesh) {
+    Log::debug() << "Loading vertices for mesh: " << mesh.name;
+    if(mesh.primitives.size() > 1) {
+        Log::warn() << "Mesh " << mesh.name
+                    << " has multiple primitives, only loading first one!";
+    }
+
+    auto &primitive = mesh.primitives[0]; // Assume first primitive
+
+    // Look for JOINTS_0 (bone IDs)
+    auto itJoints = primitive.attributes.find("JOINTS_0");
+    if(itJoints != primitive.attributes.end()) {
+        const tinygltf::Accessor &accessor = model.accessors[itJoints->second];
+        const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
+        const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
+
+        const uint16_t *boneData =
+            reinterpret_cast<const uint16_t *>(&buffer.data[bufferView.byteOffset]);
+
+        for(size_t i = 0; i < accessor.count; i++) {
+            vertices[i].boneIDs = glm::ivec4(boneData[i * 4], boneData[i * 4 + 1],
+                                             boneData[i * 4 + 2], boneData[i * 4 + 3]);
+        }
+    }
+
+    // Look for WEIGHTS_0 (bone weights)
+    auto itWeights = primitive.attributes.find("WEIGHTS_0");
+    if(itWeights != primitive.attributes.end()) {
+        const tinygltf::Accessor &accessor = model.accessors[itWeights->second];
+        const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
+        const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
+
+        const float *weightData =
+            reinterpret_cast<const float *>(&buffer.data[bufferView.byteOffset]);
+
+        for(size_t i = 0; i < accessor.count; i++) {
+            vertices[i].weights = glm::vec4(weightData[i * 4], weightData[i * 4 + 1],
+                                            weightData[i * 4 + 2], weightData[i * 4 + 3]);
+        }
+    }
+}
 }

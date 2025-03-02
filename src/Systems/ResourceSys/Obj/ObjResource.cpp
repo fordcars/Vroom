@@ -20,7 +20,7 @@ int duplicateVertex(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& no
 
     return static_cast<int>(vertices.size() - 1);
 }
-}  // namespace
+} // namespace
 
 ObjResource::ObjResource(const std::filesystem::path& path) : mPath(path) { load(); }
 
@@ -44,6 +44,18 @@ bool ObjResource::load() {
     }
 
     loadOnGPU(reader);
+
+    // Check if animation exists for obj
+    auto gltfPath = mPath;
+    gltfPath.replace_extension(".gltf");
+    if(std::filesystem::exists(gltfPath)) {
+        animation = ObjAnimation::create(gltfPath);
+    } else {
+        gltfPath.replace_extension(".glb");
+        if(std::filesystem::exists(gltfPath)) {
+            animation = ObjAnimation::create(gltfPath);
+        }
+    }
     return true;
 }
 
@@ -86,7 +98,9 @@ void ObjResource::loadMeshes(const tinyobj::ObjReader& reader) {
     for(const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
         meshVertexIndices.reserve(shape.mesh.indices.size());
-        size_t originalVertexCount = vertices.size() / 3;  // For logs
+        size_t originalVertexCount = vertices.size() / 3; // For logs
+        Log::debug() << "Loading mesh '" << shape.name << "' with "
+                     << shape.mesh.indices.size() / VERTICES_PER_FACE << " faces.";
 
         for(size_t indexI = 0; indexI < shape.mesh.indices.size(); ++indexI) {
             int vertexI = shape.mesh.indices[indexI].vertex_index;
