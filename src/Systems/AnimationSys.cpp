@@ -32,19 +32,19 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
     animation.currentTime += deltaTime;
 
     if(animation.mode == AnimationMode::OneShot) {
-        if(animation.currentTime > animation.resource.getDuration()) {
-            animation.currentTime = animation.resource.getDuration();
+        if(animation.currentTime > animation.objAnimation.duration) {
+            animation.currentTime = animation.objAnimation.duration;
             return; // Stop updating if the animation is one shot and has finished
         }
     } else if(animation.mode == AnimationMode::Loop) {
-        if(animation.currentTime > animation.resource.getDuration()) {
+        if(animation.currentTime > animation.objAnimation.duration) {
             animation.currentTime =
-                fmod(animation.currentTime, animation.resource.getDuration());
+                fmod(animation.currentTime, animation.objAnimation.duration);
         }
     }
 
-    auto& nodes = animation.resource.getNodes();
-    auto& animationChannels = animation.resource.getAnimationChannels();
+    auto& nodes = animation.objAnimation.nodes;
+    auto& animationChannels = animation.objAnimation.animationChannels;
 
     for(auto& channel : animationChannels) {
         auto& node = nodes[channel.targetNode];
@@ -81,5 +81,5 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
         }
     }
 
-    animation.resource.updateBoneBuffer();
+    animation.objAnimation.updateBoneBuffer();
 }

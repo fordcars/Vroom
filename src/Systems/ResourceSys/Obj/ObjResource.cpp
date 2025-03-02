@@ -49,11 +49,11 @@ bool ObjResource::load() {
     auto gltfPath = mPath;
     gltfPath.replace_extension(".gltf");
     if(std::filesystem::exists(gltfPath)) {
-        animation = ObjAnimation::create(gltfPath);
+        animation = ObjAnimation::create();
     } else {
         gltfPath.replace_extension(".glb");
         if(std::filesystem::exists(gltfPath)) {
-            animation = ObjAnimation::create(gltfPath);
+            animation = ObjAnimation::create();
         }
     }
     return true;

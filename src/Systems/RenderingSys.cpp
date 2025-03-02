@@ -128,7 +128,7 @@ void RenderingSys::renderEntity(
         const AnimationComp& anim = animation->get();
         glBindBufferBase(GL_UNIFORM_BUFFER,
                          renderable.shader->findUniformBlock("BoneTransformsBlock"),
-                         anim.resource.getBoneTransformsUniformBuffer().getId());
+                         anim.objAnimation.boneTransformsBuffer.getId());
     }
 
     glEnableVertexAttribArray(0);

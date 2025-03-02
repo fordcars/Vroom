@@ -4,7 +4,7 @@
 enum class AnimationMode { OneShot, Loop };
 
 struct AnimationComp {
-    ObjAnimation resource; // Copy
+    ObjAnimation objAnimation; // Copy
     float currentTime;
     AnimationMode mode;
 };

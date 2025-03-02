@@ -14,8 +14,8 @@ set(SOURCES
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
+	Systems/ResourceSys/Obj/ObjAnimation.cpp
 	Systems/ResourceSys/ShaderResource.cpp
-	Systems/ResourceSys/ObjAnimation.cpp
 	Systems/PhysicsSys.cpp
 	Systems/AnimationSys.cpp
 
@@ -43,8 +43,8 @@ set(HEADERS
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
+	Systems/ResourceSys/Obj/ObjAnimation.hpp
 	Systems/ResourceSys/ShaderResource.hpp
-	Systems/ResourceSys/ObjAnimation.hpp
 	Systems/PhysicsSys.hpp
 	Systems/AnimationSys.hpp
 
