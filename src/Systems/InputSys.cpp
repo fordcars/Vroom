@@ -38,13 +38,13 @@ void InputSys::handleNeed(InputNeed need, bool isKeyDown) {
 
     switch(need) {
         case InputNeed::Jump:
-            physicsSys.applyImpulse(PlayerEntity::instances[0], {0, speed, 0});
+            physicsSys.applyImpulse(PlayerEntity::instances[0], {0, 2, 0});
             break;
         case InputNeed::WalkLeft:
-            physicsSys.applyImpulse(PlayerEntity::instances[0], {-speed, 0, 0});
+            PlayerEntity::instances[0].get<MotionComp>().velocity.x = -speed;
             break;
         case InputNeed::WalkRight:
-            physicsSys.applyImpulse(PlayerEntity::instances[0], {speed, 0, 0});
+            PlayerEntity::instances[0].get<MotionComp>().velocity.x = speed;
             break;
         case InputNeed::Crouch:
             break;

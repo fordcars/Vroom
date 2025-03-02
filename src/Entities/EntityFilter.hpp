@@ -15,32 +15,25 @@
 #include <tuple>
 #include <type_traits>
 
+#include "Entities/Entity.hpp"
 #include "Entities/EntityRegistry.hpp"
+#include "Utils/TupleUtils.hpp"
 
 namespace EntityFilterInternal {
-// Helper classes for checking if tuple has type
-// https://stackoverflow.com/a/25958302/6222104
-namespace TupleHelpers {
-template <typename T, typename Tuple>
-struct has_type;
 
-template <typename T>
-struct has_type<T, std::tuple<>> : std::false_type {};
-
-template <typename T, typename U, typename... Ts>
-struct has_type<T, std::tuple<U, Ts...>> : has_type<T, std::tuple<Ts...>> {};
-
-template <typename T, typename... Ts>
-struct has_type<T, std::tuple<T, Ts...>> : std::true_type {};
-
-template <typename T, typename Tuple>
-using tuple_contains_type = typename has_type<T, Tuple>::type;
-}  // namespace TupleHelpers
+template <typename... ComponentTs>
+using ReturnedComponentsTuple =
+    std::tuple<decltype(std::declval<Utils::OptionalTupleGetter<ComponentTs>>().get(
+        std::declval<std::tuple<>&>()))...>;
 
 // Get tuple of ComponentTs values from EntityT
-// Ex: If the entity has components A, B, C, D, and
-// ComponentTs are A, D, C, we want to return a
-// std::tuple<A&, D&, C&>.
+// Ex: If the entity has components A, B, C, D, and ComponentTs are A, D, C,
+// we want to return std::tuple<A&, D&, C&>.
+//
+// We also handle optional tuples, so if the entity has components A, B, C, D,
+// and ComponentTs are A, D, std::optional<E>, we want to
+// return std::tuple<A&, D&, std::optional<std::reference_wrapper<E>>.
+// This logic is done in Entity::get<std::optional<E>>().
 template <typename EntityT>
 class ComponentTuple {
 private:
@@ -50,8 +43,8 @@ public:
     ComponentTuple(EntityT& entity) : mEntity(entity) {}
 
     template <typename... ComponentTs>
-    std::tuple<ComponentTs&...> getTuple() {
-        return std::tie(mEntity.get<ComponentTs>()...);
+    ReturnedComponentsTuple<ComponentTs...> getTuple() {
+        return {mEntity.get<ComponentTs>()...};
     }
 };
 
@@ -63,7 +56,7 @@ struct IsValidEntity_Type;
 // Recursive case: check if the first type matches, or check the rest of the tuple
 template <typename EntityT, typename FirstComponentT, typename... RestComponentTs>
 struct IsValidEntity_Type<EntityT, FirstComponentT, RestComponentTs...>
-    : std::conditional<TupleHelpers::tuple_contains_type<
+    : std::conditional<Utils::TupleContainsOptionalType<
                            FirstComponentT, decltype(EntityT::mComponents)>::value,
                        IsValidEntity_Type<EntityT, RestComponentTs...>,
                        std::false_type>::type {};
@@ -81,13 +74,16 @@ concept IsValidEntity =
 // Helper class for getting the next entity with the specified components.
 template <typename... ComponentTs>
 class EntityGetter {
+private:
+    // Is an std::optional of std::tuple
+    using ReturnT = std::optional<ReturnedComponentsTuple<ComponentTs...>>;
+
 public:
     // Find next valid entity
     // Return empty value if there is no next entity
     template <typename... EntityTs>
-    std::optional<std::tuple<ComponentTs&...>> getNextEntity(
-        const EntityRegistry<EntityTs...>&) {
-        std::optional<std::tuple<ComponentTs&...>> returnValue;
+    ReturnT getNextEntity(const EntityRegistry<EntityTs...>&) {
+        ReturnT returnValue;
         if(mReachedEnd) return {};
 
         (..., getNextEntityOfEntityT<EntityTs>(returnValue));
@@ -105,7 +101,7 @@ private:
     bool mReachedEnd = false;
 
     template <typename EntityT>
-    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs&...>>& returnValue)
+    void getNextEntityOfEntityT(ReturnT& returnValue)
         requires IsValidEntity<EntityT, ComponentTs...>
     {
         if(mCurrentEntityVector == nullptr) {
@@ -131,7 +127,7 @@ private:
 
     // SFINAE
     template <typename EntityT>
-    void getNextEntityOfEntityT(std::optional<std::tuple<ComponentTs&...>>& returnValue)
+    void getNextEntityOfEntityT(ReturnT& returnValue)
         requires(!IsValidEntity<EntityT, ComponentTs...>)
     {}
 };
@@ -157,7 +153,7 @@ public:
             }
         }
 
-        std::tuple<ComponentTs&...>& operator*() { return mCurrentEntity.value(); }
+        decltype(auto) operator*() { return mCurrentEntity.value(); }
 
         Iterator& operator++() {
             mCurrentEntity.reset();
@@ -169,10 +165,11 @@ public:
         bool operator!=(const Iterator& other) const { return mIsEnd != other.mIsEnd; }
 
     private:
-        bool mIsEnd;
+        bool mIsEnd = false;
         EntityRegistryDefinition mEntityRegistry;  // This is in reality an empty class
         EntityFilterInternal::EntityGetter<ComponentTs...> mEntityGetter;
-        std::optional<std::tuple<ComponentTs&...>> mCurrentEntity;
+        std::optional<EntityFilterInternal::ReturnedComponentsTuple<ComponentTs...>>
+            mCurrentEntity;
     };
 
     Iterator begin() { return {}; }

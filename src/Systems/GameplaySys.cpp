@@ -28,7 +28,7 @@ void GameplaySys::start() {
 
     // Create player
     PlayerEntity player;
-    auto [position, renderable, velocity] = player.getComponents();
+    auto [position, renderable, motion, frictionComp] = player.getComponents();
     position.coords.x = 10;
     position.coords.y = 0;
     position.coords.z = 10;

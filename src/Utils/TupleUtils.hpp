@@ -1,3 +1,5 @@
+#pragma once
+
 #include <optional>
 #include <tuple>
 
@@ -14,10 +16,6 @@ namespace TupleContainsOptionalTypeInternal {
 template <typename T, typename Tuple>
 struct has_type;
 
-// If T is std::optional, be true
-template <typename T, typename... Ts>
-struct has_type<std::optional<T>, std::tuple<Ts...>> : std::true_type {};
-
 // Empty tuple (we went through entire tuple with no matches)
 template <typename T>
 struct has_type<T, std::tuple<>> : std::false_type {};
@@ -29,6 +27,10 @@ struct has_type<T, std::tuple<U, Ts...>> : has_type<T, std::tuple<Ts...>> {};
 // First type of tuple is T
 template <typename T, typename... Ts>
 struct has_type<T, std::tuple<T, Ts...>> : std::true_type {};
+
+// If T is std::optional, be true
+template <typename T, typename TupleT>
+struct has_type<std::optional<T>, TupleT> : std::true_type {};
 }  // namespace TupleContainsOptionalTypeInternal
 
 template <typename T, typename TupleT>
@@ -36,7 +38,6 @@ using TupleContainsOptionalType =
     typename TupleContainsOptionalTypeInternal::has_type<T, TupleT>::type;
 
 namespace OptionalTupleGetterInternal {
-
 // Getter for non-optional types
 template <typename T>
 struct Getter {
