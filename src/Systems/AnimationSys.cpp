@@ -47,11 +47,12 @@ void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime
         }
     }
 
-    auto& nodes = objAnimation.nodes;
+    auto& nodes = objAnimation->nodes;
     auto& animationChannels = currentAnim->channels;
 
     for(auto& channel : animationChannels) {
         auto& node = nodes[channel.targetNode];
+        if(channel.sampler.timestamps.empty()) continue;
 
         // Find the two closest keyframes
         auto it =
@@ -61,8 +62,9 @@ void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime
 
         if(i == 0) {
             i = 1; // Ensure there's a previous keyframe
-        } else if(i == channel.sampler.timestamps.size()) {
-            i = channel.sampler.timestamps.size() - 1; // Ensure there's a next keyframe
+        }
+        if(i == channel.sampler.timestamps.size()) {
+            continue; // Skip
         }
 
         float t0 = channel.sampler.timestamps[i - 1];
@@ -71,19 +73,19 @@ void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime
                       (t1 - t0); // Normalized time between keyframes
 
         if(channel.targetPath == "translation") {
-            glm::vec3 v0 = glm::vec3(channel.sampler.values[i]);
-            glm::vec3 v1 = glm::vec3(channel.sampler.values[i + 1]);
+            glm::vec3 v0 = glm::vec3(channel.sampler.values[i - 1]);
+            glm::vec3 v1 = glm::vec3(channel.sampler.values[i]);
             node.translation = lerpVec3(v0, v1, alpha);
         } else if(channel.targetPath == "rotation") {
-            glm::quat q0 = glm::quat(channel.sampler.values[i]);
-            glm::quat q1 = glm::quat(channel.sampler.values[i + 1]);
+            glm::quat q0 = glm::quat(channel.sampler.values[i - 1]);
+            glm::quat q1 = glm::quat(channel.sampler.values[i]);
             node.rotation = slerpQuat(q0, q1, alpha);
         } else if(channel.targetPath == "scale") {
-            glm::vec3 s0 = glm::vec3(channel.sampler.values[i]);
-            glm::vec3 s1 = glm::vec3(channel.sampler.values[i + 1]);
+            glm::vec3 s0 = glm::vec3(channel.sampler.values[i - 1]);
+            glm::vec3 s1 = glm::vec3(channel.sampler.values[i]);
             node.scale = lerpVec3(s0, s1, alpha);
         }
     }
 
-    objAnimation.updateBoneBuffer();
+    objAnimation->updateBoneBuffer();
 }

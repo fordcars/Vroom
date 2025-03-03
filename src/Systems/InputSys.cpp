@@ -29,11 +29,12 @@ void InputSys::init() {
     mInputMapping[SDLK_SPACE] = InputNeed::Jump;
     mInputMapping[SDLK_LEFT] = InputNeed::WalkLeft;
     mInputMapping[SDLK_RIGHT] = InputNeed::WalkRight;
-    mInputMapping[SDLK_DOWN] = InputNeed::Crouch;
+    mInputMapping[SDLK_UP] = InputNeed::WalkForward;
+    mInputMapping[SDLK_DOWN] = InputNeed::WalkBackward;
 }
 
 void InputSys::handleNeed(InputNeed need, bool isKeyDown) {
-    const float speed = 1;
+    const float speed = 2;
     auto& physicsSys = PhysicsSys::get();
 
     switch(need) {
@@ -45,6 +46,12 @@ void InputSys::handleNeed(InputNeed need, bool isKeyDown) {
             break;
         case InputNeed::WalkRight:
             PlayerEntity::instances[0].get<MotionComp>().velocity.x = speed;
+            break;
+        case InputNeed::WalkForward:
+            PlayerEntity::instances[0].get<MotionComp>().velocity.z = speed;
+            break;
+        case InputNeed::WalkBackward:
+            PlayerEntity::instances[0].get<MotionComp>().velocity.z = -speed;
             break;
         case InputNeed::Crouch:
             break;

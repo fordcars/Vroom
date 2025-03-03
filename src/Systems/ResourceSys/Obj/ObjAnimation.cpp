@@ -5,6 +5,7 @@
 #include "Log.hpp"
 
 ObjAnimation::ObjAnimation(const tinygltf::Model &model) {
+    Log::debug() << "Loading animation data.";
     loadNodes(model);
     loadAnimationData(model);
     loadBones(model);
@@ -41,6 +42,56 @@ void ObjAnimation::updateBoneBuffer() {
     boneTransformsBuffer.setData(GL_UNIFORM_BUFFER, boneTransforms);
 }
 
+// void ObjAnimation::updateBoneBuffer() {
+//     std::stack<int> processingStack;
+
+//     // Start with root bones (nodes without parents)
+//     for(size_t i = 0; i < bones.size(); i++) {
+//         if(nodes[bones[i].id].parentIndex == -1) {
+//             processingStack.push(i);
+//         }
+//     }
+
+//     while(!processingStack.empty()) {
+//         int i = processingStack.top();
+//         processingStack.pop();
+
+//         Bone &bone = bones[i];
+//         int nodeIndex = bone.id;
+//         Node &node = nodes[nodeIndex];
+
+//         // Compute local transform
+//         glm::mat4 boneTransform = glm::mat4(1.0f);
+//         boneTransform = glm::translate(boneTransform, node.translation);
+//         boneTransform *= glm::mat4_cast(node.rotation);
+//         boneTransform = glm::scale(boneTransform, node.scale);
+
+//         // Apply parent transformation
+//         int parentIndex = node.parentIndex;
+//         if(parentIndex != -1) {
+//             boneTransform = boneTransforms[parentIndex] * boneTransform;
+//         }
+
+//         // Compute final bone transformation
+//         bone.finalTransform = boneTransform * bone.inverseBindMatrix;
+
+//         // Store result in bone transform buffer
+//         if(i < Constants::MAX_BONES) {
+//             boneTransforms[i] = bone.finalTransform;
+//         }
+
+//         // Push child bones onto the stack
+//         for(size_t j = 0; j < bones.size(); j++) {
+//             if(nodes[bones[j].id].parentIndex == nodeIndex) {
+//                 processingStack.push(j);
+//             }
+//         }
+//     }
+
+//     // Upload to GPU
+//     boneTransformsBuffer.setData(GL_UNIFORM_BUFFER, boneTransforms);
+// }
+
 void ObjAnimation::loadNodes(const tinygltf::Model &model) {
     this->nodes.resize(model.nodes.size());
 
@@ -52,6 +103,7 @@ void ObjAnimation::loadNodes(const tinygltf::Model &model) {
         node.translation = glm::vec3(0.0f);
         node.rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
         node.scale = glm::vec3(1.0f);
+        node.parentIndex = -1; // Default to no parent
 
         // Load translation
         if(!gltfNode.translation.empty()) {
@@ -61,17 +113,21 @@ void ObjAnimation::loadNodes(const tinygltf::Model &model) {
 
         // Load rotation
         if(!gltfNode.rotation.empty()) {
-            node.rotation = glm::quat(gltfNode.rotation[3], // w
-                                      gltfNode.rotation[0], // x
-                                      gltfNode.rotation[1], // y
-                                      gltfNode.rotation[2]  // z
-            );
+            node.rotation = glm::quat(gltfNode.rotation[3], gltfNode.rotation[0],
+                                      gltfNode.rotation[1], gltfNode.rotation[2]);
         }
 
         // Load scale
         if(!gltfNode.scale.empty()) {
             node.scale =
                 glm::vec3(gltfNode.scale[0], gltfNode.scale[1], gltfNode.scale[2]);
+        }
+
+        // Store parent node index
+        if(!gltfNode.children.empty()) {
+            for(int childIndex : gltfNode.children) {
+                nodes[childIndex].parentIndex = i;
+            }
         }
     }
 }
@@ -93,8 +149,8 @@ void ObjAnimation::loadAnimationData(const tinygltf::Model &model) {
             const tinygltf::Accessor &input = model.accessors[sampler.input];
             const tinygltf::BufferView &inputView = model.bufferViews[input.bufferView];
             const tinygltf::Buffer &inputBuffer = model.buffers[inputView.buffer];
-            const float *timeData =
-                reinterpret_cast<const float *>(&inputBuffer.data[inputView.byteOffset]);
+            const float *timeData = reinterpret_cast<const float *>(
+                &inputBuffer.data[inputView.byteOffset + input.byteOffset]);
 
             for(size_t j = 0; j < input.count; j++) {
                 animChannel.sampler.timestamps.push_back(timeData[j]);
@@ -105,7 +161,7 @@ void ObjAnimation::loadAnimationData(const tinygltf::Model &model) {
             const tinygltf::BufferView &outputView = model.bufferViews[output.bufferView];
             const tinygltf::Buffer &outputBuffer = model.buffers[outputView.buffer];
             const float *valueData = reinterpret_cast<const float *>(
-                &outputBuffer.data[outputView.byteOffset]);
+                &outputBuffer.data[outputView.byteOffset + output.byteOffset]);
 
             for(size_t j = 0; j < output.count; j++) {
                 if(channel.target_path == "rotation") {

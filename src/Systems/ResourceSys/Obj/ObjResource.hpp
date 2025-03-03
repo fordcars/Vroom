@@ -17,6 +17,10 @@ public:
         glm::vec3 normal;
         glm::vec2 texcoord;
         unsigned int materialId;
+
+        // Animation
+        glm::ivec4 joints;
+        glm::vec4 weights;
     };
 
     GPUBuffer vertexBuffer;

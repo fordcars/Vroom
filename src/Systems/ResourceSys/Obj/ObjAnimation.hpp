@@ -36,6 +36,7 @@ public:
     };
 
     struct Node {
+        int parentIndex;
         glm::vec3 translation;
         glm::quat rotation;
         glm::vec3 scale;

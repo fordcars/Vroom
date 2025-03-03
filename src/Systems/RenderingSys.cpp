@@ -97,8 +97,10 @@ void RenderingSys::renderEntity(
     std::optional<std::reference_wrapper<AnimationComp>> animation) {
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
+    GLsizei stride = sizeof(ObjResource::Vertex);
 
     glUseProgram(shader.getId());
+    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
 
     // Per object uniforms
     glUniform1ui(shader.findUniform("time"), mCurrentTime);
@@ -112,22 +114,24 @@ void RenderingSys::renderEntity(
         const AnimationComp& anim = animation->get();
         glBindBufferBase(GL_UNIFORM_BUFFER,
                          renderable.shader->findUniformBlock("BoneTransformsBlock"),
-                         anim.objAnimation.boneTransformsBuffer.getId());
+                         anim.objAnimation->boneTransformsBuffer.getId());
 
         glEnableVertexAttribArray(3); // Bone IDs
         glEnableVertexAttribArray(4); // Bone weights
-    }
 
-    // Bind the interleaved buffer (Single VBO)
-    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
+        // Joint indices
+        glVertexAttribIPointer(3, 4, GL_UNSIGNED_INT, stride,
+                               (void*)offsetof(ObjResource::Vertex, joints));
+
+        // Weights
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride,
+                              (void*)offsetof(ObjResource::Vertex, weights));
+    }
 
     // Enable vertex attributes
     glEnableVertexAttribArray(0); // Position
     glEnableVertexAttribArray(1); // Normal
     glEnableVertexAttribArray(2); // Material ID
-
-    // Define vertex attribute pointers
-    GLsizei stride = sizeof(ObjResource::Vertex); // Total size of a single vertex
 
     // Position (vec3)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
@@ -173,6 +177,8 @@ void RenderingSys::renderEntity(
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glDisableVertexAttribArray(4);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {

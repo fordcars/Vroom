@@ -23,4 +23,5 @@ private:
                   const glm::mat4& meshTransform);
     glm::mat4 computeNodeTransform(const tinygltf::Node& node, glm::mat4 parentTransform);
     void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
+    void loadAnimation(ObjResource& resource, const tinygltf::Model& model);
 };

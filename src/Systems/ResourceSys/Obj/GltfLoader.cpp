@@ -34,6 +34,12 @@ void extractAttribute(const tinygltf::Primitive& primitive, const tinygltf::Mode
     } else if constexpr(std::is_same<T, glm::vec2>::value) {
         const glm::vec2* data = reinterpret_cast<const glm::vec2*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
+    } else if constexpr(std::is_same<T, glm::ivec4>::value) {
+        const glm::ivec4* data = reinterpret_cast<const glm::ivec4*>(dataPtr);
+        std::copy(data, data + accessor.count, output.begin());
+    } else if constexpr(std::is_same<T, glm::vec4>::value) {
+        const glm::vec4* data = reinterpret_cast<const glm::vec4*>(dataPtr);
+        std::copy(data, data + accessor.count, output.begin());
     }
 }
 
@@ -98,6 +104,10 @@ bool GltfLoader::load(ObjResource& resource) {
     loadMeshes(resource, model);
     loadMaterials(resource, model);
 
+    if(!model.animations.empty()) {
+        loadAnimation(resource, model);
+    }
+
     return true;
 }
 
@@ -152,10 +162,16 @@ void GltfLoader::loadMesh(ObjResource& resource,
         std::vector<glm::vec3> positions;
         std::vector<glm::vec3> normals;
         std::vector<glm::vec2> texcoords;
+        std::vector<glm::ivec4> joints; // New vector for joint indices
+        std::vector<glm::vec4> weights; // New vector for joint weights
 
         extractAttribute(primitive, model, "POSITION", positions);
         extractAttribute(primitive, model, "NORMAL", normals);
         extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
+        extractAttribute(primitive, model, "JOINTS_0",
+                         joints); // New extraction for joints
+        extractAttribute(primitive, model, "WEIGHTS_0",
+                         weights); // New extraction for weights
 
         if(normals.size() != positions.size() || texcoords.size() != positions.size()) {
             Log::error() << "GLTF primitive has inconsistent attribute sizes.";
@@ -169,11 +185,14 @@ void GltfLoader::loadMesh(ObjResource& resource,
         size_t vertexCount = positions.size();
         normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
         texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
+        joints.resize(vertexCount, glm::ivec4(0));      // Default joints if missing
+        weights.resize(vertexCount, glm::vec4(0.0f));   // Default weights if missing
 
         // Create interleaved vertex buffer
         outVertices.reserve(outVertices.size() + vertexCount);
         for(size_t i = 0; i < vertexCount; i++) {
-            outVertices.emplace_back(positions[i], normals[i], texcoords[i], materialId);
+            outVertices.emplace_back(positions[i], normals[i], texcoords[i], materialId,
+                                     joints[i], weights[i]);
         }
 
         // Extract index buffer
@@ -273,4 +292,8 @@ void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& mod
     }
 
     resource.materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
+}
+
+void GltfLoader::loadAnimation(ObjResource& resource, const tinygltf::Model& model) {
+    resource.animation = ObjAnimation::create(model);
 }

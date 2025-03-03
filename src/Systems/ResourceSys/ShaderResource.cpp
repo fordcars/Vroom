@@ -1,8 +1,9 @@
 #include "ShaderResource.hpp"
 
 #include <utility>
-#include "Utils/FileUtils.hpp"
+
 #include "Log.hpp"
+#include "Utils/FileUtils.hpp"
 
 ShaderResource::ShaderResource(const std::string& name,
                                const std::filesystem::path& vertexPath,
@@ -14,7 +15,8 @@ ShaderResource::ShaderResource(const std::string& name,
 
     // Compile
     GLuint vertexShader = compileShader(vertexPath, vertexSource, GL_VERTEX_SHADER);
-    GLuint fragmentShader = compileShader(fragmentPath, fragmentSource, GL_FRAGMENT_SHADER);
+    GLuint fragmentShader =
+        compileShader(fragmentPath, fragmentSource, GL_FRAGMENT_SHADER);
 
     // Link
     if(vertexShader != 0 && fragmentShader != 0) {
@@ -24,13 +26,9 @@ ShaderResource::ShaderResource(const std::string& name,
     registerUniforms(); // For easier access later
 }
 
-ShaderResource::~ShaderResource() {
-    glDeleteProgram(mId);
-}
+ShaderResource::~ShaderResource() { glDeleteProgram(mId); }
 
-ShaderResource::ShaderResource(ShaderResource&& other) noexcept {
-    swap(*this, other);
-}
+ShaderResource::ShaderResource(ShaderResource&& other) noexcept { swap(*this, other); }
 
 ShaderResource& ShaderResource::operator=(ShaderResource&& other) noexcept {
     swap(*this, other);
@@ -43,13 +41,12 @@ void swap(ShaderResource& first, ShaderResource& second) noexcept {
     std::swap(first.mUniformMap, second.mUniformMap);
 }
 
-GLuint ShaderResource::getId() const {
-    return mId;
-}
+GLuint ShaderResource::getId() const { return mId; }
 
 // If uniform is not found, returns -1 (ignored uniform location by OpenGL)
 GLint ShaderResource::findUniform(const std::string& uniformName) const {
-    if(mUniformMap.find(uniformName) != mUniformMap.end()) return mUniformMap.at(uniformName);
+    if(mUniformMap.find(uniformName) != mUniformMap.end())
+        return mUniformMap.at(uniformName);
     return -1;
 }
 
@@ -68,8 +65,7 @@ GLuint ShaderResource::compileShader(const std::filesystem::path& shaderPath,
     std::size_t length = shaderSource.length();
 
     // Weird () syntax to avoid MSVC issue
-    if(length > (std::numeric_limits<unsigned int>::max)() )
-    {
+    if(length > (std::numeric_limits<unsigned int>::max)()) {
         Log::error() << "Shader source " << shaderPath.string() << " too long! ";
         return 0;
     }
@@ -79,16 +75,16 @@ GLuint ShaderResource::compileShader(const std::filesystem::path& shaderPath,
         return 0;
     }
 
-    const char *shaderFiles[] = { shaderSource.c_str() };
-    const int shaderLengths[] = { static_cast<int>(length) };
-    
+    const char* shaderFiles[] = {shaderSource.c_str()};
+    const int shaderLengths[] = {static_cast<int>(length)};
+
     glShaderSource(shader, 1, shaderFiles, shaderLengths);
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &shaderValid);
 
-    if(!shaderValid)
-    {
-        std::string shaderLog = getGLShaderDebugLog(shader, glGetShaderiv, glGetShaderInfoLog);
+    if(!shaderValid) {
+        std::string shaderLog =
+            getGLShaderDebugLog(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);
 
         Log::error() << "Failed to compile shader " << shaderPath.string() << ": ";
@@ -113,9 +109,9 @@ GLuint ShaderResource::linkShaderProgram(const std::string& shaderProgramName,
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    if(!programValid)
-    {
-        std::string shaderLog = getGLShaderDebugLog(program, glGetProgramiv, glGetProgramInfoLog);
+    if(!programValid) {
+        std::string shaderLog =
+            getGLShaderDebugLog(program, glGetProgramiv, glGetProgramInfoLog);
         Log::error() << "Failed to link shader '" << shaderProgramName << "': ";
         Log::error() << shaderLog;
         return 0;
@@ -125,23 +121,22 @@ GLuint ShaderResource::linkShaderProgram(const std::string& shaderProgramName,
 }
 
 // Static
-std::string ShaderResource::getGLShaderDebugLog(GLuint object,
-                                                PFNGLGETSHADERIVPROC glGet_iv,
-                                                PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
+std::string ShaderResource::getGLShaderDebugLog(
+    GLuint object, PFNGLGETSHADERIVPROC glGet_iv,
+    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
     GLint logLength;
     std::string log;
-    
+
     glGet_iv(object, GL_INFO_LOG_LENGTH, &logLength);
     log.resize(logLength);
 
-    if(logLength)
-        glGet__InfoLog(object, logLength, NULL, &log[0]);
+    if(logLength) glGet__InfoLog(object, logLength, NULL, &log[0]);
 
     log.pop_back(); // Remove null terminator (\0) that OpenGL added
 
     // Add indentation to all lines for pretty output
     size_t pos = log.find_last_of('\n');
-    while (pos != std::string::npos) {
+    while(pos != std::string::npos) {
         log.replace(pos, 1, "\n    ");
         if(pos == 0) break;
         pos = log.find_last_of('\n', pos - 1);
@@ -160,57 +155,60 @@ void ShaderResource::registerUniforms() {
     // silently ignored by registerUniforms().
     GLint count;
     glGetProgramiv(mId, GL_ACTIVE_UNIFORMS, &count);
-    for(int i=0; i < count; i++)
-    {
+    for(int i = 0; i < count; i++) {
         GLsizei charCount = 0;
         glGetActiveUniformName(mId, i, bufferSize, &charCount, uniformNameBuffer);
         registerUniform(uniformNameBuffer);
     }
 
     // Uniform blocks
+    GLuint bindingPointCounter = 0;
     glGetProgramiv(mId, GL_ACTIVE_UNIFORM_BLOCKS, &count);
-    for(int i=0; i < count; i++)
-    {
+    for(int i = 0; i < count; i++) {
         GLsizei charCount = 0;
         glGetActiveUniformBlockName(mId, i, bufferSize, &charCount, uniformNameBuffer);
-        registerUniformBlock(uniformNameBuffer);
+        GLuint blockIndex = glGetUniformBlockIndex(mId, uniformNameBuffer);
+
+        // Assign a binding point
+        glUniformBlockBinding(mId, blockIndex, bindingPointCounter);
+
+        Log::debug() << "Uniform block '" << uniformNameBuffer
+                     << "' bound to binding point " << bindingPointCounter;
+
+        // Register the uniform block
+        registerUniformBlock(uniformNameBuffer, bindingPointCounter);
+        bindingPointCounter++;
     }
 }
 
 void ShaderResource::registerUniform(const std::string& uniformName) {
     if(mUniformMap.find(uniformName) != mUniformMap.end()) {
         Log::error() << "Uniform '" << uniformName << "' already exists in shader '"
-            << mName << "' and cannot be added again!";
-            return;
+                     << mName << "' and cannot be added again!";
+        return;
     }
-
 
     GLuint uniformLocation = glGetUniformLocation(mId, uniformName.c_str());
     if(uniformLocation != -1) {
-        Log::debug() << "Registering uniform '" << uniformName << "' in shader '"
-            << mName << "'.";
+        Log::debug() << "Registering uniform '" << uniformName << "' in shader '" << mName
+                     << "'.";
         mUniformMap.insert({uniformName, uniformLocation});
     }
     // Ignore if the uniform location is invalid, it is probably part of a uniform block.
 }
 
-void ShaderResource::registerUniformBlock(const std::string& uniformBlockName) {
+void ShaderResource::registerUniformBlock(const std::string& uniformBlockName,
+                                          GLuint bindingPoint) {
     if(mUniformBlockMap.find(uniformBlockName) != mUniformBlockMap.end()) {
-        Log::error() << "Uniform block '" << uniformBlockName << "' already exists in shader '"
-             << mName << "' and cannot be added again!";
-            return;
+        Log::error() << "Uniform block '" << uniformBlockName
+                     << "' already exists in shader '" << mName
+                     << "' and cannot be added again!";
+        return;
     }
 
     Log::debug() << "Registering uniform block '" << uniformBlockName << "' in shader '"
-        << mName << "'.";
-    GLuint uniformBlockIndex = glGetUniformBlockIndex(mId, uniformBlockName.c_str());
-
-    if(uniformBlockIndex != -1) mUniformBlockMap.insert({uniformBlockName, uniformBlockIndex});
-    else {
-        Log::warn() << "Uniform block '" << uniformBlockName << "' does not exist/is inactive in shader '"
-            << mName << "', but is trying to be registered. We should never get here.";
-        return;
-    }
+                 << mName << "' at binding point " << bindingPoint << ".";
+    mUniformBlockMap.insert({uniformBlockName, bindingPoint});
 
     return;
 }

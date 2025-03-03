@@ -5,6 +5,7 @@
 
 #include "Constants.hpp"
 #include "Log.hpp"
+#include "Systems/AnimationSys.hpp"
 #include "Systems/EventSys.hpp"
 #include "Systems/GameplaySys.hpp"
 #include "Systems/InputSys.hpp"
@@ -67,6 +68,7 @@ void Game::doMainLoop() {
 
     if(!EventSys::get().handleEvents()) quit();
     PhysicsSys::get().update(deltaTime);
+    AnimationSys::get().update(deltaTime);
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
     SDL_Delay(1000 / Constants::FPS);

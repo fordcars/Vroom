@@ -29,27 +29,33 @@ void GameplaySys::start() {
     // Create player
     {
         PlayerEntity player;
-        auto [position, renderable, motion, frictionComp] = player.getComponents();
+        auto [position, renderable, animationComp, motion, frictionComp] =
+            player.getComponents();
         position.coords.x = 10;
         position.coords.y = 0;
         position.coords.z = 10;
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        renderable.shader =
+            ResourceSys::get().getShaderResource("basic_pbr_bone_animation");
+        animationComp.objAnimation = renderable.objectResource->animation;
+        animationComp.currentAnimation =
+            &animationComp.objAnimation->animations["Magic Spell"];
+
         PlayerEntity::instances.emplace_back(player);
     }
 
-    // Create car
-    {
-        PlayerEntity player; // Should probably not be a PlayerEntity
-        auto [position, renderable, motion, frictionComp] = player.getComponents();
-        position.coords.x = 10;
-        position.coords.y = 0;
-        position.coords.z = 10;
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("low_poly_blendered");
-        renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
-        PlayerEntity::instances.emplace_back(player);
-    }
+    // // Create car
+    // {
+    //     PlayerEntity player; // Should probably not be a PlayerEntity
+    //     auto [position, renderable, motion, frictionComp] = player.getComponents();
+    //     position.coords.x = 10;
+    //     position.coords.y = 0;
+    //     position.coords.z = 10;
+    //     renderable.objectResource =
+    //         ResourceSys::get().getObjResource("low_poly_blendered");
+    //     renderable.setMeshes(renderable.objectResource->objMeshes);
+    //     renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+    //     PlayerEntity::instances.emplace_back(player);
+    // }
 }

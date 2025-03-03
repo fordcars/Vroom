@@ -10,7 +10,7 @@ public:
     void init();
     void handleEvent(const SDL_Event& event);
 
-    enum class InputNeed { Jump, WalkLeft, WalkRight, Crouch };
+    enum class InputNeed { Jump, WalkLeft, WalkRight, WalkForward, WalkBackward, Crouch };
 
 private:
     std::unordered_map<SDL_Keycode, InputNeed> mInputMapping;
