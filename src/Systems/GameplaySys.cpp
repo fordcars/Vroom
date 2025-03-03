@@ -22,19 +22,34 @@ void GameplaySys::start() {
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
     info.direction = {10, 0, 10, 1}; //{10, 20, 10, 1};
-    cameraPos.coords = {12, 3, 15};  //{20, 50, 35};
+    cameraPos.coords = {12, 3, 25};  //{20, 50, 35};
 
     CameraEntity::instances.emplace_back(camera);
 
     // Create player
-    PlayerEntity player;
-    auto [position, renderable, motion, frictionComp] = player.getComponents();
-    position.coords.x = 10;
-    position.coords.y = 0;
-    position.coords.z = 10;
-    renderable.objectResource = ResourceSys::get().getObjResource("skelly");
-    renderable.setMeshes(renderable.objectResource->objMeshes);
-    renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+    {
+        PlayerEntity player;
+        auto [position, renderable, motion, frictionComp] = player.getComponents();
+        position.coords.x = 10;
+        position.coords.y = 0;
+        position.coords.z = 10;
+        renderable.objectResource = ResourceSys::get().getObjResource("skelly");
+        renderable.setMeshes(renderable.objectResource->objMeshes);
+        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        PlayerEntity::instances.emplace_back(player);
+    }
 
-    PlayerEntity::instances.emplace_back(player);
+    // Create car
+    {
+        PlayerEntity player; // Should probably not be a PlayerEntity
+        auto [position, renderable, motion, frictionComp] = player.getComponents();
+        position.coords.x = 10;
+        position.coords.y = 0;
+        position.coords.z = 10;
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.setMeshes(renderable.objectResource->objMeshes);
+        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        PlayerEntity::instances.emplace_back(player);
+    }
 }
