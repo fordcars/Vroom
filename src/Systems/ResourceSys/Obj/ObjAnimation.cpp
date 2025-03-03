@@ -4,9 +4,7 @@
 
 #include "Log.hpp"
 
-ObjAnimation::ObjAnimation() {
-    tinygltf::Model model; // TODO: remove obvsiouuss
-
+ObjAnimation::ObjAnimation(const tinygltf::Model &model) {
     loadNodes(model);
     loadAnimationData(model);
     loadBones(model);
@@ -80,6 +78,9 @@ void ObjAnimation::loadNodes(const tinygltf::Model &model) {
 
 void ObjAnimation::loadAnimationData(const tinygltf::Model &model) {
     for(const auto &anim : model.animations) {
+        std::vector<AnimationChannel> channels;
+        Log::debug() << "Loading animation '" << anim.name << "'.";
+
         for(size_t i = 0; i < anim.channels.size(); i++) {
             const tinygltf::AnimationChannel &channel = anim.channels[i];
             const tinygltf::AnimationSampler &sampler = anim.samplers[channel.sampler];
@@ -118,16 +119,16 @@ void ObjAnimation::loadAnimationData(const tinygltf::Model &model) {
                 }
             }
 
-            animationChannels.push_back(animChannel);
+            channels.push_back(animChannel);
         }
-    }
 
-    // Calculate duration
-    for(const auto &channel : animationChannels) {
-        float channelDuration = channel.sampler.timestamps.back();
-        if(channelDuration > duration) {
-            duration = channelDuration;
+        // Calculate duration
+        float maxTime = 0.0f;
+        for(const auto &channel : channels) {
+            float time = channel.sampler.timestamps.back();
+            if(time > maxTime) maxTime = time;
         }
+        animations.emplace(std::pair{anim.name, Animation{anim.name, channels, maxTime}});
     }
 }
 

@@ -9,22 +9,18 @@ in vec3 eyeDirection_cameraspace;
 out vec3 outColor;
 
 struct ObjMaterial {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    vec3 transmittance;
+    vec3 baseColor;
     vec3 emission;
-    float shininess;
-    float dissolve;  // 1 == opaque; 0 == fully transparent
 
-    // PBR extension
-    // http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
-    float roughness;            // [0, 1] default 0
-    float metallic;             // [0, 1] default 0
-    float sheen;                // [0, 1] default 0
-    float p1;
-    float p2;
-    float p3;
+    float alpha;
+    float roughness;
+    float metallic;
+    float sheen;
+
+    int baseColorTextureIndex;
+    int metallicRoughnessTextureIndex;
+    int normalTextureIndex;
+    int emissiveTextureIndex;
 };
 
 layout(std140) uniform ObjMaterialsBlock {
@@ -49,9 +45,10 @@ void main()
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
     float lightPower = 20.0;
 
-    vec3 materialDiffuseColor = objMaterialsBlock.objMaterials[materialId].diffuse;
-    vec3 materialAmbientColor = objMaterialsBlock.objMaterials[materialId].ambient * 0.1;
-    vec3 materialSpecularColor = objMaterialsBlock.objMaterials[materialId].specular;
+    vec3 materialDiffuseColor = objMaterialsBlock.objMaterials[materialId].baseColor;
+    vec3 materialAmbientColor = lightColor * 0.1;
+    vec3 materialSpecularColor = vec3(1.0f, 1.0f, 1.0f) *
+        objMaterialsBlock.objMaterials[materialId].metallic;
     
     float diffuseIntensity = 0.1;
     float specularIntensity = 0.1;

@@ -10,5 +10,5 @@ public:
     void update(float deltaTime);
 
 private:
-    void updateAnimation(AnimationComp& animation, float deltaTime);
+    void updateAnimation(AnimationComp& animationComp, float deltaTime);
 };

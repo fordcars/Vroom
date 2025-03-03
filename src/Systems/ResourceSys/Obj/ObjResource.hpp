@@ -12,10 +12,14 @@ public:
     using Ptr = std::shared_ptr<ObjResource>;
     using CPtr = std::shared_ptr<const ObjResource>;
 
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 texcoord;
+        unsigned int materialId;
+    };
+
     GPUBuffer vertexBuffer;
-    GPUBuffer normalBuffer;
-    GPUBuffer texcoordBuffer;
-    GPUBuffer materialIdBuffer;
     GPUBuffer materialUniformBuffer;
     ObjAnimation::Ptr animation;
     std::vector<ObjMesh::Ptr> objMeshes;

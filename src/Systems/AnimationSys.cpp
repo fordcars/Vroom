@@ -23,28 +23,32 @@ AnimationSys& AnimationSys::get() {
 
 void AnimationSys::update(float deltaTime) {
     EntityFilter<AnimationComp> filter;
-    for(auto& [animation] : filter) {
-        updateAnimation(animation, deltaTime);
+    for(auto& [animationComp] : filter) {
+        updateAnimation(animationComp, deltaTime);
     }
 }
 
-void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
-    animation.currentTime += deltaTime;
+void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime) {
+    auto& objAnimation = animationComp.objAnimation;
+    auto* currentAnim = animationComp.currentAnimation;
+    if(!currentAnim) return;
 
-    if(animation.mode == AnimationMode::OneShot) {
-        if(animation.currentTime > animation.objAnimation.duration) {
-            animation.currentTime = animation.objAnimation.duration;
+    animationComp.currentTime += deltaTime;
+
+    if(animationComp.mode == AnimationMode::OneShot) {
+        if(animationComp.currentTime > currentAnim->duration) {
+            animationComp.currentTime = currentAnim->duration;
             return; // Stop updating if the animation is one shot and has finished
         }
-    } else if(animation.mode == AnimationMode::Loop) {
-        if(animation.currentTime > animation.objAnimation.duration) {
-            animation.currentTime =
-                fmod(animation.currentTime, animation.objAnimation.duration);
+    } else if(animationComp.mode == AnimationMode::Loop) {
+        if(animationComp.currentTime > currentAnim->duration) {
+            animationComp.currentTime =
+                fmod(animationComp.currentTime, currentAnim->duration);
         }
     }
 
-    auto& nodes = animation.objAnimation.nodes;
-    auto& animationChannels = animation.objAnimation.animationChannels;
+    auto& nodes = objAnimation.nodes;
+    auto& animationChannels = currentAnim->channels;
 
     for(auto& channel : animationChannels) {
         auto& node = nodes[channel.targetNode];
@@ -52,7 +56,7 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
         // Find the two closest keyframes
         auto it =
             std::lower_bound(channel.sampler.timestamps.begin(),
-                             channel.sampler.timestamps.end(), animation.currentTime);
+                             channel.sampler.timestamps.end(), animationComp.currentTime);
         size_t i = std::distance(channel.sampler.timestamps.begin(), it);
 
         if(i == 0) {
@@ -63,8 +67,8 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
 
         float t0 = channel.sampler.timestamps[i - 1];
         float t1 = channel.sampler.timestamps[i];
-        float alpha =
-            (animation.currentTime - t0) / (t1 - t0); // Normalized time between keyframes
+        float alpha = (animationComp.currentTime - t0) /
+                      (t1 - t0); // Normalized time between keyframes
 
         if(channel.targetPath == "translation") {
             glm::vec3 v0 = glm::vec3(channel.sampler.values[i]);
@@ -81,5 +85,5 @@ void AnimationSys::updateAnimation(AnimationComp& animation, float deltaTime) {
         }
     }
 
-    animation.objAnimation.updateBoneBuffer();
+    objAnimation.updateBoneBuffer();
 }

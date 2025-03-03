@@ -1,59 +1,21 @@
-// Essentially a simplified version of tinyobj::material_t
 #pragma once
-#include <tiny_obj_loader.h>
+
+#include <glm/glm.hpp>
 
 // std140-compatible struct
 struct ObjMaterial {
-    float ambient[3];
+    glm::vec3 baseColor;
     float p1;
-    float diffuse[3];
+    glm::vec3 emission;
     float p2;
-    float specular[3];
-    float p3;
-    float transmittance[3];
-    float p4;
-    float emission[3];
-    float p5;
-    float shininess;
-    float dissolve;  // 1 == opaque; 0 == fully transparent
 
-    // PBR extension
-    // http://exocortex.com/blog/extending_wavefront_mtl_to_support_pbr
-    float roughness;  // [0, 1] default 0
-    float metallic;   // [0, 1] default 0
-    float sheen;      // [0, 1] default 0
+    float alpha;
+    float roughness;
+    float metallic;
+    float sheen;
 
-    // Struct padding
-    float p6;
-    float p7;
-    float p8;
-
-    ObjMaterial(const tinyobj::material_t& mat) {
-        ambient[0] = mat.ambient[0];
-        ambient[1] = mat.ambient[1];
-        ambient[2] = mat.ambient[2];
-
-        diffuse[0] = mat.diffuse[0];
-        diffuse[1] = mat.diffuse[1];
-        diffuse[2] = mat.diffuse[2];
-
-        specular[0] = mat.specular[0];
-        specular[1] = mat.specular[1];
-        specular[2] = mat.specular[2];
-
-        transmittance[0] = mat.transmittance[0];
-        transmittance[1] = mat.transmittance[1];
-        transmittance[2] = mat.transmittance[2];
-
-        emission[0] = mat.emission[0];
-        emission[1] = mat.emission[1];
-        emission[2] = mat.emission[2];
-
-        shininess = mat.shininess;
-        dissolve = mat.dissolve;
-
-        roughness = mat.roughness;
-        metallic = mat.metallic;
-        sheen = mat.sheen;
-    }
+    int baseColorTextureIndex;
+    int metallicRoughnessTextureIndex;
+    int normalTextureIndex;
+    int emissiveTextureIndex;
 };

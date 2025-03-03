@@ -9,20 +9,6 @@
 #include "ObjMaterial.hpp"
 #include "ObjResource.hpp"
 
-namespace {
-// Returns new vertex index
-int duplicateVertex(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals,
-                    std::vector<glm::vec2>& texcoords, std::vector<GLint>& materialIds,
-                    int vertexI) {
-    vertices.emplace_back(vertices[vertexI]);
-    normals.emplace_back(normals[vertexI]);
-    texcoords.emplace_back(texcoords[vertexI]);
-    materialIds.emplace_back(materialIds[vertexI]);
-
-    return static_cast<int>(vertices.size() - 1);
-}
-} // namespace
-
 WavefrontLoader::WavefrontLoader(const std::filesystem::path& path) : mPath(path) {
     Log::debug() << "Creating WavefrontLoader for '" << mPath.string() << "'.";
 }
@@ -53,11 +39,36 @@ bool WavefrontLoader::load(ObjResource& resource) {
 void WavefrontLoader::loadOnGPU(ObjResource& resource, const tinyobj::ObjReader& reader) {
     loadMeshes(resource, reader);
 
-    // Load materials in uniform buffer
-    std::vector<ObjMaterial> objMaterials(reader.GetMaterials().begin(),
-                                          reader.GetMaterials().end());
-    resource.materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
+    // Convert OBJ materials to PBR-compatible format
+    std::vector<ObjMaterial> objMaterials;
+    for(const tinyobj::material_t& objMat : reader.GetMaterials()) {
+        ObjMaterial mat = {};
 
+        // Convert diffuse to baseColor
+        mat.baseColor =
+            glm::vec3(objMat.diffuse[0], objMat.diffuse[1], objMat.diffuse[2]);
+        mat.alpha = 1.0f - objMat.dissolve; // OBJ uses "dissolve" for transparency
+
+        // Convert specular to roughness/metallic approximation
+        mat.metallic = glm::length(
+            glm::vec3(objMat.specular[0], objMat.specular[1], objMat.specular[2]));
+        mat.roughness = 1.0f - objMat.shininess / 1000.0f; // Roughness approximation
+
+        // Emission (same in both OBJ & PBR)
+        mat.emission =
+            glm::vec3(objMat.emission[0], objMat.emission[1], objMat.emission[2]);
+
+        // Set default texture indices (no textures in OBJ by default)
+        mat.baseColorTextureIndex = -1;
+        mat.metallicRoughnessTextureIndex = -1;
+        mat.normalTextureIndex = -1;
+        mat.emissiveTextureIndex = -1;
+
+        objMaterials.push_back(mat);
+    }
+
+    // Upload materials to GPU
+    resource.materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
     Log::debug() << "Loaded " << objMaterials.size() << " materials.";
 }
 
@@ -75,13 +86,13 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
     // same material id, greatly simplifying the rendering process.
 
     // Copy all attributes :(
-    // Convert all attributes to only use a single index buffer (vertex index).
+    // NOTE: We convert all attributes to only use a single index buffer (vertex index).
     // -1 to identify uninitialized values.
     const auto& attribs = reader.GetAttrib();
-    std::vector<glm::vec3> vertices(attribs.vertices.size() / 3, UNINITIALIZED_VEC3);
-    std::vector<glm::vec3> normals(attribs.vertices.size() / 3, UNINITIALIZED_VEC3);
-    std::vector<glm::vec2> texcoords(attribs.vertices.size() / 3, UNINITIALIZED_VEC2);
-    std::vector<GLint> materialIds(attribs.vertices.size() / 3, -1);
+    std::vector<ObjResource::Vertex> outVertices(
+        attribs.vertices.size() / 3,
+        ObjResource::Vertex{UNINITIALIZED_VEC3, UNINITIALIZED_VEC3, UNINITIALIZED_VEC2,
+                            0});
 
     Log::debug() << "Found " << attribs.vertices.size() << " vertex positions, "
                  << attribs.normals.size() << " normals and " << attribs.texcoords.size()
@@ -90,7 +101,7 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
     for(const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
         meshVertexIndices.reserve(shape.mesh.indices.size());
-        size_t originalVertexCount = vertices.size() / 3; // For logs
+        size_t originalVertexCount = attribs.vertices.size() / 3; // For logs
         Log::debug() << "Loading mesh '" << shape.name << "' with "
                      << shape.mesh.indices.size() / VERTICES_PER_FACE << " faces.";
 
@@ -111,24 +122,21 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
                                         ? glm::vec2(attribs.texcoords[texcoordI * 2],
                                                     attribs.texcoords[texcoordI * 2 + 1])
                                         : glm::vec2(0.0f);
-            GLint newMaterialId = shape.mesh.material_ids[indexI / VERTICES_PER_FACE];
+            GLuint newMaterialId = shape.mesh.material_ids[indexI / VERTICES_PER_FACE];
 
-            if((normals[vertexI] != UNINITIALIZED_VEC3 &&
-                normals[vertexI] != newNormal) ||
-               (texcoords[vertexI] != UNINITIALIZED_VEC2 &&
-                texcoords[vertexI] != newTexcoord) ||
-               (materialIds[vertexI] != -1 && materialIds[vertexI] != newMaterialId)) {
+            if((outVertices[vertexI].normal != UNINITIALIZED_VEC3 &&
+                outVertices[vertexI].normal != newNormal) ||
+               (outVertices[vertexI].texcoord != UNINITIALIZED_VEC2 &&
+                outVertices[vertexI].texcoord != newTexcoord) ||
+               (outVertices[vertexI].materialId != -1 &&
+                outVertices[vertexI].materialId != newMaterialId)) {
                 // Bummer! A previous vertex set the attributes of this vertex.
                 // We must duplicate it.
-                vertexI =
-                    duplicateVertex(vertices, normals, texcoords, materialIds, vertexI);
+                outVertices.push_back(outVertices[vertexI]);
             }
 
             // Move attributes
-            vertices[vertexI] = std::move(newVertex);
-            normals[vertexI] = std::move(newNormal);
-            texcoords[vertexI] = std::move(newTexcoord);
-            materialIds[vertexI] = std::move(newMaterialId);
+            outVertices[vertexI] = {newVertex, newNormal, newTexcoord, newMaterialId};
 
             // Copy our vertex index
             meshVertexIndices.emplace_back(vertexI);
@@ -137,15 +145,12 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
         // Add mesh
         resource.objMeshes.emplace_back(
             ObjMesh::create(resource, shape.name, meshVertexIndices));
-        size_t duplicatedVertices = vertices.size() / 3 - originalVertexCount;
-        Log::debug() << "Duplicated " << duplicatedVertices << " vertices for mesh '"
+        size_t duplicatedVertices = meshVertexIndices.size() - originalVertexCount;
+        Log::debug() << "Duplicated " << outVertices.size() << " vertices for mesh '"
                      << shape.name << "' (originally had " << originalVertexCount
                      << " vertices).";
     }
 
-    // Load attributes
-    resource.vertexBuffer.setData(GL_ARRAY_BUFFER, vertices);
-    resource.normalBuffer.setData(GL_ARRAY_BUFFER, normals);
-    resource.texcoordBuffer.setData(GL_ARRAY_BUFFER, texcoords);
-    resource.materialIdBuffer.setData(GL_ARRAY_BUFFER, materialIds);
+    // Load interleaved attributes
+    resource.vertexBuffer.setData(GL_ARRAY_BUFFER, outVertices);
 }

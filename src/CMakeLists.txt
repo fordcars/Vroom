@@ -13,6 +13,7 @@ set(SOURCES
 	Systems/InputSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/WavefrontLoader.cpp
+	Systems/ResourceSys/Obj/GltfLoader.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/Obj/ObjAnimation.cpp
@@ -43,6 +44,7 @@ set(HEADERS
 	Systems/ResourceSys/Obj/ObjResource.hpp
 	Systems/ResourceSys/Obj/ObjLoader.hpp
 	Systems/ResourceSys/Obj/WavefrontLoader.hpp
+	Systems/ResourceSys/Obj/GltfLoader.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp

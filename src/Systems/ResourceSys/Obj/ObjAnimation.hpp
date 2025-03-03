@@ -29,6 +29,12 @@ public:
         AnimationSampler sampler;
     };
 
+    struct Animation {
+        std::string name;
+        std::vector<AnimationChannel> channels;
+        float duration;
+    };
+
     struct Node {
         glm::vec3 translation;
         glm::quat rotation;
@@ -42,16 +48,17 @@ public:
         glm::mat4 finalTransform;
     };
 
-    float duration;
+    std::unordered_map<std::string, Animation> animations;
     std::vector<Node> nodes; // Store all nodes (skeleton + objects)
-    std::vector<AnimationChannel> animationChannels;
     std::vector<Bone> bones;
     std::vector<glm::mat4> boneTransforms{Constants::MAX_BONES, glm::mat4(1.0f)};
     GPUBuffer boneTransformsBuffer;
 
-    static Ptr create() { return std::make_shared<ObjAnimation>(); }
+    static Ptr create(const tinygltf::Model& model) {
+        return std::make_shared<ObjAnimation>(model);
+    }
 
-    ObjAnimation();
+    ObjAnimation(const tinygltf::Model& model);
     void updateBoneBuffer();
 
 private:

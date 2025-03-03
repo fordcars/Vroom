@@ -134,39 +134,28 @@ void RenderingSys::renderEntity(
         glEnableVertexAttribArray(4); // Bone weights
     }
 
-    // Enable attributes
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
-    // Pass vertex buffer
+    // Bind the interleaved buffer (Single VBO)
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
-    glVertexAttribPointer(0, // Attribute index
-                          3, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                          GL_FLOAT, // Type of data
-                          GL_FALSE, // Normalized?
-                          0,        // Stride
-                          (void*)0  // Array buffer offset
-    );
 
-    // Pass normal buffer
-    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->normalBuffer.getId());
-    glVertexAttribPointer(1, // Attribute index
-                          3, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                          GL_FLOAT, // Type of data
-                          GL_FALSE, // Normalized?
-                          0,        // Stride
-                          (void*)0  // Array buffer offset
-    );
+    // Enable vertex attributes
+    glEnableVertexAttribArray(0); // Position
+    glEnableVertexAttribArray(1); // Normal
+    glEnableVertexAttribArray(2); // Material ID
 
-    // Pass material id buffer
-    glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->materialIdBuffer.getId());
-    glVertexAttribIPointer(2, // Attribute index
-                           1, // Size. Number of values per vertex, must be 1, 2, 3 or 4.
-                           GL_INT,  // Type of data
-                           0,       // Stride
-                           (void*)0 // Array buffer offset
-    );
+    // Define vertex attribute pointers
+    GLsizei stride = sizeof(ObjResource::Vertex); // Total size of a single vertex
+
+    // Position (vec3)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(ObjResource::Vertex, position));
+
+    // Normal (vec3)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(ObjResource::Vertex, normal));
+
+    // Material ID
+    glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, stride,
+                           (void*)offsetof(ObjResource::Vertex, materialId));
 
     // Render all meshes
     for(const auto& mesh : renderable.meshes) {
