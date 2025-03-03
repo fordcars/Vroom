@@ -32,7 +32,7 @@ void GameplaySys::start() {
     position.coords.x = 10;
     position.coords.y = 0;
     position.coords.z = 10;
-    renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
+    renderable.objectResource = ResourceSys::get().getObjResource("skelly");
     renderable.setMeshes(renderable.objectResource->objMeshes);
     renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
 

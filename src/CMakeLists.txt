@@ -13,7 +13,7 @@ set(SOURCES
 	Systems/InputSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
 	Systems/ResourceSys/Obj/WavefrontLoader.cpp
-	Systems/ResourceSys/Obj/GltfLoader.hpp
+	Systems/ResourceSys/Obj/GltfLoader.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/Obj/ObjAnimation.cpp

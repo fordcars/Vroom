@@ -1,7 +1,6 @@
 #include "GltfLoader.hpp"
 
 #include <glad/glad.h>
-#include <tiny_gltf.h>
 
 #include <glm/glm.hpp>
 #include <utility>
@@ -121,7 +120,8 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
             extractAttribute(primitive, model, "NORMAL", normals);
             extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
 
-            if(normals.size() != vertexCount || texcoords.size() != vertexCount) {
+            if(normals.size() != positions.size() ||
+               texcoords.size() != positions.size()) {
                 Log::error() << "GLTF primitive has inconsistent attribute sizes.";
                 continue;
             }
@@ -161,7 +161,7 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
     }
 
     // Upload interleaved vertex data to GPU
-    resource.attributeBuffer.setData(GL_ARRAY_BUFFER, interleavedVertices);
+    resource.vertexBuffer.setData(GL_ARRAY_BUFFER, interleavedVertices);
 }
 
 void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {

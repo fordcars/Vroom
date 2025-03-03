@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tiny_gltf.h>
+
 #include <filesystem>
 
 #include "ObjLoader.hpp"

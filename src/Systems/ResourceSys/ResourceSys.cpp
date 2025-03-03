@@ -5,6 +5,7 @@
 
 #include "Constants.hpp"
 #include "Log.hpp"
+#include "Obj/GltfLoader.hpp"
 #include "Obj/WavefrontLoader.hpp"
 
 // Static
@@ -79,10 +80,10 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
             if(type == ".obj") {
                 mObjResources.insert(
                     {name, ObjResource::create(std::make_unique<WavefrontLoader>(path))});
-            } // else {
-            //     mObjResources.insert(
-            //         {name, ObjResource::create(std::make_unique<GltfLoader>(path))});
-            // }
+            } else {
+                mObjResources.insert(
+                    {name, ObjResource::create(std::make_unique<GltfLoader>(path))});
+            }
         }
     } else if(type == ".glsl") {
         if(mShaderResources.find(name) == mShaderResources.end()) {
