@@ -97,27 +97,11 @@ void RenderingSys::renderEntity(
     std::optional<std::reference_wrapper<AnimationComp>> animation) {
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
-    glm::mat4 modelMatrix = getModelMatrix(position);
-    glm::mat4 viewMatrix = getViewMatrix(camera);
-    glm::mat4 projectionMatrix = getProjectionMatrix(camera);
-
-    glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
-    glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
-    glm::mat4 MVP = projectionMatrix * modelViewMatrix;
 
     glUseProgram(shader.getId());
 
-    // Uniforms
+    // Per object uniforms
     glUniform1ui(shader.findUniform("time"), mCurrentTime);
-    glUniformMatrix4fv(shader.findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(shader.findUniform("modelMatrix"), 1, GL_FALSE,
-                       &modelMatrix[0][0]);
-    glUniformMatrix4fv(shader.findUniform("viewMatrix"), 1, GL_FALSE, &viewMatrix[0][0]);
-    glUniformMatrix4fv(shader.findUniform("projectionMatrix"), 1, GL_FALSE,
-                       &projectionMatrix[0][0]);
-    glUniformMatrix4fv(shader.findUniform("normalMatrix"), 1, GL_FALSE,
-                       &normalMatrix[0][0]);
-
     if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
         glBindBufferBase(GL_UNIFORM_BUFFER,
                          renderable.shader->findUniformBlock("ObjMaterialsBlock"),
@@ -159,6 +143,25 @@ void RenderingSys::renderEntity(
 
     // Render all meshes
     for(const auto& mesh : renderable.meshes) {
+        // Per mesh uniforms
+        glm::mat4 modelMatrix = getModelMatrix(position) * mesh->transform;
+        glm::mat4 viewMatrix = getViewMatrix(camera);
+        glm::mat4 projectionMatrix = getProjectionMatrix(camera);
+
+        glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
+        glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
+        glm::mat4 MVP = projectionMatrix * modelViewMatrix;
+
+        glUniformMatrix4fv(shader.findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(shader.findUniform("modelMatrix"), 1, GL_FALSE,
+                           &modelMatrix[0][0]);
+        glUniformMatrix4fv(shader.findUniform("viewMatrix"), 1, GL_FALSE,
+                           &viewMatrix[0][0]);
+        glUniformMatrix4fv(shader.findUniform("projectionMatrix"), 1, GL_FALSE,
+                           &projectionMatrix[0][0]);
+        glUniformMatrix4fv(shader.findUniform("normalMatrix"), 1, GL_FALSE,
+                           &normalMatrix[0][0]);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(GL_TRIANGLES, // Mode
                        mesh->indexBuffer.getCount(),

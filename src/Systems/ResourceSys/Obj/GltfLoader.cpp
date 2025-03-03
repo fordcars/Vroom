@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <glm/glm.hpp>
+#include <stack>
 #include <utility>
 
 #include "Log.hpp"
@@ -101,67 +102,120 @@ bool GltfLoader::load(ObjResource& resource) {
 }
 
 void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model) {
-    std::vector<ObjResource::Vertex> interleavedVertices;
-    std::vector<unsigned int> indices;
+    std::vector<ObjResource::Vertex> outVertices;
 
-    for(const tinygltf::Mesh& mesh : model.meshes) {
-        for(const tinygltf::Primitive& primitive : mesh.primitives) {
-            if(primitive.mode != TINYGLTF_MODE_TRIANGLES) {
-                Log::warn() << "Skipping non-triangle primitive.";
-                continue;
-            }
+    // Traverse scene graph to apply transforms in the correct order
+    std::stack<std::pair<int, glm::mat4>>
+        nodeStack; // Stack to store {node index, parent transform}
 
-            // Extract vertex attributes
-            std::vector<glm::vec3> positions;
-            std::vector<glm::vec3> normals;
-            std::vector<glm::vec2> texcoords;
+    // Push all root nodes with identity transform
+    for(int rootNodeIndex : model.scenes[0].nodes) {
+        nodeStack.push({rootNodeIndex, glm::mat4(1.0f)});
+    }
 
-            extractAttribute(primitive, model, "POSITION", positions);
-            extractAttribute(primitive, model, "NORMAL", normals);
-            extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
+    while(!nodeStack.empty()) {
+        auto [nodeIndex, parentTransform] = nodeStack.top();
+        nodeStack.pop();
 
-            if(normals.size() != positions.size() ||
-               texcoords.size() != positions.size()) {
-                Log::error() << "GLTF primitive has inconsistent attribute sizes.";
-                continue;
-            }
+        const tinygltf::Node& node = model.nodes[nodeIndex];
 
-            // Get material ID (GLTF assigns materials per primitive)
-            unsigned int materialId = (primitive.material >= 0) ? primitive.material : 0;
+        // Compute the transform for this node
+        glm::mat4 meshTransform = computeNodeTransform(node, parentTransform);
+        if(node.mesh > 0) {
+            loadMesh(resource, outVertices, model, model.meshes[node.mesh],
+                     meshTransform);
+        }
 
-            // Ensure sizes match
-            size_t vertexCount = positions.size();
-            normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
-            texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
-
-            // Create interleaved vertex buffer
-            size_t baseIndex = interleavedVertices.size();
-            interleavedVertices.reserve(interleavedVertices.size() + vertexCount);
-            for(size_t i = 0; i < vertexCount; i++) {
-                interleavedVertices.emplace_back(positions[i], normals[i], texcoords[i],
-                                                 materialId);
-            }
-
-            // Extract index buffer
-            std::vector<unsigned int> primitiveIndices;
-            extractIndices(primitive, model, primitiveIndices);
-
-            // Adjust indices to match interleavedVertices
-            for(unsigned int& index : primitiveIndices) {
-                index += baseIndex;
-            }
-            indices.reserve(indices.size() + primitiveIndices.size());
-            indices.insert(indices.end(), primitiveIndices.begin(),
-                           primitiveIndices.end());
-
-            // Store index buffer in ObjMesh
-            resource.objMeshes.push_back(
-                ObjMesh::create(resource, mesh.name, primitiveIndices));
+        for(int childIndex : node.children) {
+            nodeStack.push(
+                {childIndex, meshTransform}); // Push child node with inherited transform
         }
     }
 
     // Upload interleaved vertex data to GPU
-    resource.vertexBuffer.setData(GL_ARRAY_BUFFER, interleavedVertices);
+    resource.vertexBuffer.setData(GL_ARRAY_BUFFER, outVertices);
+}
+
+void GltfLoader::loadMesh(ObjResource& resource,
+                          std::vector<ObjResource::Vertex>& outVertices,
+                          const tinygltf::Model& model, const tinygltf::Mesh& mesh,
+                          const glm::mat4& meshTransform) {
+    for(const tinygltf::Primitive& primitive : mesh.primitives) {
+        if(primitive.mode != TINYGLTF_MODE_TRIANGLES) {
+            Log::warn() << "Skipping non-triangle primitive.";
+            continue;
+        }
+
+        size_t baseIndex = outVertices.size(); // Offset for this mesh's indices
+
+        // Extract vertex attributes
+        std::vector<glm::vec3> positions;
+        std::vector<glm::vec3> normals;
+        std::vector<glm::vec2> texcoords;
+
+        extractAttribute(primitive, model, "POSITION", positions);
+        extractAttribute(primitive, model, "NORMAL", normals);
+        extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
+
+        if(normals.size() != positions.size() || texcoords.size() != positions.size()) {
+            Log::error() << "GLTF primitive has inconsistent attribute sizes.";
+            continue;
+        }
+
+        // Get material ID (GLTF assigns materials per primitive)
+        unsigned int materialId = (primitive.material >= 0) ? primitive.material : 0;
+
+        // Ensure sizes match
+        size_t vertexCount = positions.size();
+        normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
+        texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
+
+        // Create interleaved vertex buffer
+        outVertices.reserve(outVertices.size() + vertexCount);
+        for(size_t i = 0; i < vertexCount; i++) {
+            outVertices.emplace_back(positions[i], normals[i], texcoords[i], materialId);
+        }
+
+        // Extract index buffer
+        std::vector<unsigned int> primitiveIndices;
+        extractIndices(primitive, model, primitiveIndices);
+
+        // Adjust indices to match the current vertex offset
+        for(unsigned int& index : primitiveIndices) {
+            index += baseIndex;
+        }
+
+        // Store index buffer in ObjMesh
+        resource.objMeshes.push_back(
+            ObjMesh::create(resource, mesh.name, primitiveIndices, meshTransform));
+    }
+}
+
+glm::mat4 GltfLoader::computeNodeTransform(const tinygltf::Node& node,
+                                           glm::mat4 parentTransform) {
+    glm::mat4 localTransform = glm::mat4(1.0f);
+
+    // Apply translation
+    if(!node.translation.empty()) {
+        glm::vec3 pos(node.translation[0], node.translation[1], node.translation[2]);
+        localTransform = glm::translate(localTransform, pos);
+    }
+
+    // Apply rotation
+    if(!node.rotation.empty()) {
+        glm::quat rot(node.rotation[3], node.rotation[0], node.rotation[1],
+                      node.rotation[2]);
+        localTransform *= glm::mat4_cast(rot);
+    }
+
+    // Apply scale
+    if(!node.scale.empty()) {
+        glm::vec3 scale(node.scale[0], node.scale[1], node.scale[2]);
+        localTransform = glm::scale(localTransform, scale);
+    }
+
+    // Combine with parent
+    return parentTransform * localTransform;
 }
 
 void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {
