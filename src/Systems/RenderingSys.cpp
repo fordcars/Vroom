@@ -129,8 +129,12 @@ void RenderingSys::renderEntity(
         glBindBufferBase(GL_UNIFORM_BUFFER,
                          renderable.shader->findUniformBlock("BoneTransformsBlock"),
                          anim.objAnimation.boneTransformsBuffer.getId());
+
+        glEnableVertexAttribArray(3); // Bone IDs
+        glEnableVertexAttribArray(4); // Bone weights
     }
 
+    // Enable attributes
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);

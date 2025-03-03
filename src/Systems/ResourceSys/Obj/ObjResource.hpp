@@ -1,13 +1,10 @@
 #pragma once
 
-#include <tiny_obj_loader.h>
-
-#include <filesystem>
 #include <memory>
-#include <vector>
 
 #include "GPUBuffer.hpp"
 #include "ObjAnimation.hpp"
+#include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
 
 class ObjResource {
@@ -20,19 +17,12 @@ public:
     GPUBuffer texcoordBuffer;
     GPUBuffer materialIdBuffer;
     GPUBuffer materialUniformBuffer;
-    std::vector<ObjMesh::Ptr> objMeshes;
     ObjAnimation::Ptr animation;
+    std::vector<ObjMesh::Ptr> objMeshes;
 
-    static Ptr create(const std::filesystem::path& path) {
-        return std::make_shared<ObjResource>(path);
+    static Ptr create(std::unique_ptr<ObjLoader> loader) {
+        return std::make_shared<ObjResource>(std::move(loader));
     }
 
-    ObjResource(const std::filesystem::path& path);
-
-private:
-    std::filesystem::path mPath;
-
-    bool load();
-    void loadOnGPU(const tinyobj::ObjReader& reader);
-    void loadMeshes(const tinyobj::ObjReader& reader);
+    ObjResource(std::unique_ptr<ObjLoader> loader);
 };

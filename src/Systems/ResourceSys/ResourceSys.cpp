@@ -5,6 +5,7 @@
 
 #include "Constants.hpp"
 #include "Log.hpp"
+#include "Obj/WavefrontLoader.hpp"
 
 // Static
 ResourceSys& ResourceSys::get() {
@@ -70,12 +71,19 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
 
     bool alreadyExists = false;
     std::string resourceType;
-    if(type == ".obj") {
+    if(type == ".obj" || type == ".gltf" || type == ".glb") {
         if(mObjResources.find(name) != mObjResources.end()) {
             alreadyExists = true;
             resourceType = "object";
-        } else
-            mObjResources.insert({name, ObjResource::create(path)});
+        } else {
+            if(type == ".obj") {
+                mObjResources.insert(
+                    {name, ObjResource::create(std::make_unique<WavefrontLoader>(path))});
+            } // else {
+            //     mObjResources.insert(
+            //         {name, ObjResource::create(std::make_unique<GltfLoader>(path))});
+            // }
+        }
     } else if(type == ".glsl") {
         if(mShaderResources.find(name) == mShaderResources.end()) {
             // Don't throw error, since multiple shader sources must have the same name.

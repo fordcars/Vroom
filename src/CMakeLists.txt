@@ -12,6 +12,7 @@ set(SOURCES
 	Systems/EventSys.cpp
 	Systems/InputSys.cpp
 	Systems/ResourceSys/Obj/ObjResource.cpp
+	Systems/ResourceSys/Obj/WavefrontLoader.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/Obj/ObjAnimation.cpp
@@ -40,6 +41,8 @@ set(HEADERS
 	Systems/InputSys.hpp
 	Systems/ResourceSys/ResourceSys.hpp
 	Systems/ResourceSys/Obj/ObjResource.hpp
+	Systems/ResourceSys/Obj/ObjLoader.hpp
+	Systems/ResourceSys/Obj/WavefrontLoader.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
