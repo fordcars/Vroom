@@ -11,32 +11,52 @@
 Skin::Skin(AnimationContainer &container, const tinygltf::Model &model,
            const tinygltf::Skin &skin) {
     load(container, model, skin);
+    updateTransformBuffer();
 }
 
 void Skin::updateTransformBuffer() {
-    std::vector<glm::mat4> transforms;
+    std::vector<glm::mat4> outTransforms;
+    std::unordered_map<AnimationNode *, glm::mat4> cachedTransforms;
+    outTransforms.reserve(mJoints.size());
 
-    // Apply all joints transformations (and their parents)
+    // Apply all joints transformations, from root to joint[i]
     for(std::size_t i = 0; i < mJoints.size(); i++) {
-        glm::mat4 transform = glm::mat4(1.0f);
+        std::stack<AnimationNode *> stack;
+        glm::mat4 accumulatedTransform = glm::mat4(1.0f);
         AnimationNode *joint = mJoints[i];
 
+        // Go up the hierarchy
+        // If we hit a joint that has already been processed, we can use its cached
+        // transform
         while(joint != nullptr) {
-            glm::mat4 localTransform = glm::mat4(1.0f);
+            if(cachedTransforms.find(joint) != cachedTransforms.end()) {
+                accumulatedTransform = cachedTransforms[joint];
+                break;
+            }
 
+            stack.push(joint);
+            joint = joint->parent;
+        }
+
+        // Apply from root (or after last cached) to joint
+        while(!stack.empty()) {
+            joint = stack.top();
+            stack.pop();
+
+            glm::mat4 localTransform = glm::mat4(1.0f);
             localTransform = glm::translate(glm::mat4(1.0f), joint->translation) *
                              glm::mat4_cast(joint->rotation) *
                              glm::scale(glm::mat4(1.0f), joint->scale);
 
-            // Apply from child to root
-            transform = localTransform * transform;
+            accumulatedTransform = accumulatedTransform * localTransform;
+            cachedTransforms.insert({joint, accumulatedTransform});
             joint = joint->parent;
         }
 
-        transform = transform * mInverseBindMatrices[i];
-        transforms.push_back(transform);
+        accumulatedTransform = accumulatedTransform * mInverseBindMatrices[i];
+        outTransforms.push_back(accumulatedTransform);
     }
-    mTransformBuffer.setData(GL_UNIFORM_BUFFER, transforms);
+    mTransformBuffer.setData(GL_UNIFORM_BUFFER, outTransforms);
 }
 
 void Skin::load(AnimationContainer &container, const tinygltf::Model &model,
