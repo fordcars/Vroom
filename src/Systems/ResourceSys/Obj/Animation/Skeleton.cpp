@@ -9,8 +9,8 @@
 #include "Log.hpp"
 
 Skeleton::Skeleton(AnimationContainer &container, const tinygltf::Model &model,
-                   int nodeIndex) {
-    load(container, model, nodeIndex);
+                   int skinNodeIndex) {
+    load(container, model, skinNodeIndex);
 }
 
 void Skeleton::updateTransformBuffer() {
@@ -33,8 +33,8 @@ void Skeleton::updateTransformBuffer() {
 }
 
 void Skeleton::load(AnimationContainer &container, const tinygltf::Model &model,
-                    int nodeIndex) {
-    const tinygltf::Node &node = model.nodes[nodeIndex];
+                    int skinNodeIndex) {
+    const tinygltf::Node &node = model.nodes[skinNodeIndex];
 
     if(node.skin < 0) {
         Log::debug() << "No skeleton data found!";
@@ -44,7 +44,6 @@ void Skeleton::load(AnimationContainer &container, const tinygltf::Model &model,
     }
 
     const tinygltf::Skin &skin = model.skins[node.skin];
-    mRootNode = container.getNode(nodeIndex);
 
     // Load joints
     for(const auto &joint : skin.joints) {

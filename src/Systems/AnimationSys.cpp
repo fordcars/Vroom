@@ -61,33 +61,37 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
         size_t i = std::distance(channel.sampler.timestamps.begin(), it);
 
         if(i == 0) {
-            i = 1; // Ensure there's a previous keyframe
-        }
-        if(i == channel.sampler.timestamps.size()) {
-            continue; // Skip
+            i = 1;
+        } else if(i >= channel.sampler.timestamps.size()) {
+            i = channel.sampler.timestamps.size() - 1;
         }
 
         float t0 = channel.sampler.timestamps[i - 1];
         float t1 = channel.sampler.timestamps[i];
-        float alpha = (animationComp.currentTime - t0) /
-                      (t1 - t0); // Normalized time between keyframes
+        const glm::vec4& v0 = channel.sampler.values[i - 1];
+        const glm::vec4& v1 = channel.sampler.values[i];
+
+        // Avoid division by zero (if two keyframes have the same time)
+        float alpha = (t1 > t0) ? (animationComp.currentTime - t0) / (t1 - t0) : 0.0f;
 
         if(channel.targetPath == Animation::TargetPath::Translation) {
-            glm::vec3 v0 = glm::vec3(channel.sampler.values[i - 1]);
-            glm::vec3 v1 = glm::vec3(channel.sampler.values[i]);
             node->translation = lerpVec3(v0, v1, alpha);
         } else if(channel.targetPath == Animation::TargetPath::Rotation) {
-            glm::quat q0 = glm::quat(channel.sampler.values[i - 1]);
-            glm::quat q1 = glm::quat(channel.sampler.values[i]);
+            glm::quat q0 = glm::quat(v0.w, v0.x, v0.y, v0.z);
+            glm::quat q1 = glm::quat(v1.w, v1.x, v1.y, v1.z);
             node->rotation = slerpQuat(q0, q1, alpha);
         } else if(channel.targetPath == Animation::TargetPath::Scale) {
-            glm::vec3 s0 = glm::vec3(channel.sampler.values[i - 1]);
-            glm::vec3 s1 = glm::vec3(channel.sampler.values[i]);
-            node->scale = lerpVec3(s0, s1, alpha);
+            node->scale = lerpVec3(v0, v1, alpha);
         }
     }
 
-    for(auto& skeleton : animationContainer->getSkeletons()) {
-        skeleton->updateTransformBuffer();
+    // Update bones
+    for(auto& mesh : renderableComp.objectResource->objMeshes) {
+        mesh->updateMeshTransform();
     }
+
+    // // Update skins
+    // for(auto& skeleton : animationContainer->getSkeletons()) {
+    //     skeleton->updateTransformBuffer();
+    // }
 }

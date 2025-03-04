@@ -42,17 +42,25 @@ void Animation::loadAnimationData(AnimationContainer &container,
         const tinygltf::Accessor &output = model.accessors[sampler.output];
         const tinygltf::BufferView &outputView = model.bufferViews[output.bufferView];
         const tinygltf::Buffer &outputBuffer = model.buffers[outputView.buffer];
-        const float *valueData = reinterpret_cast<const float *>(
-            &outputBuffer.data[outputView.byteOffset + output.byteOffset]);
+
+        const unsigned char *dataPtr =
+            outputBuffer.data.data() + outputView.byteOffset + output.byteOffset;
+        size_t stride =
+            (outputView.byteStride == 0)
+                ? tinygltf::GetComponentSizeInBytes(output.componentType) * output.type
+                : outputView.byteStride;
 
         for(size_t j = 0; j < output.count; j++) {
+            size_t indexOffset = j * stride / sizeof(float);
+            const float *valueData =
+                reinterpret_cast<const float *>(dataPtr + j * stride);
+
             if(channel.target_path == "rotation") {
                 animChannel.sampler.values.push_back(
-                    glm::vec4(valueData[j * 4], valueData[j * 4 + 1],
-                              valueData[j * 4 + 2], valueData[j * 4 + 3]));
+                    glm::vec4(valueData[0], valueData[1], valueData[2], valueData[3]));
             } else {
-                animChannel.sampler.values.push_back(glm::vec4(
-                    valueData[j * 3], valueData[j * 3 + 1], valueData[j * 3 + 2], 0.0f));
+                animChannel.sampler.values.push_back(
+                    glm::vec4(valueData[0], valueData[1], valueData[2], 0.0f));
             }
         }
 

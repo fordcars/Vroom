@@ -62,16 +62,21 @@ void Game::quit() {
 }
 
 void Game::doMainLoop() {
-    Uint32 currentFrameTime = SDL_GetTicks();
-    float deltaTime = (currentFrameTime - mLastFrameTime) / 1000.0f;
-    mLastFrameTime = currentFrameTime;
+    Uint32 startFrameTime = SDL_GetTicks();
+    float deltaTime = (startFrameTime - mLastFrameTime) / 1000.0f;
+    mLastFrameTime = startFrameTime;
 
     if(!EventSys::get().handleEvents()) quit();
     PhysicsSys::get().update(deltaTime);
     AnimationSys::get().update(deltaTime);
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
-    SDL_Delay(1000 / Constants::FPS);
+
+    Uint32 endFrameTime = SDL_GetTicks() - startFrameTime;
+    if(endFrameTime < (1000 / Constants::TARGET_UPDATE_FREQ)) {
+        // Wait remaining time
+        SDL_Delay((1000 / Constants::TARGET_UPDATE_FREQ) - endFrameTime);
+    }
 }
 
 void Game::checkForErrors() {

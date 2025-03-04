@@ -40,6 +40,11 @@ public:
         return it == mGltfNodeIndexToNode.end() ? nullptr : it->second;
     }
 
+    const AnimationNode* getNode(int gltfNodeIndex) const {
+        auto it = mGltfNodeIndexToNode.find(gltfNodeIndex);
+        return it == mGltfNodeIndexToNode.end() ? nullptr : it->second;
+    }
+
     Skeleton::Ptr getSkeleton(int gltfSkinIndex) {
         auto it = mGltfSkinIndexToSkeleton.find(gltfSkinIndex);
         return it == mGltfSkinIndexToSkeleton.end() ? nullptr : it->second;

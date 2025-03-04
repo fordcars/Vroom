@@ -1,12 +1,11 @@
 #pragma once
 
-#include <tiny_obj_loader.h>
-
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "Animation/AnimationNode.hpp"
 #include "Animation/Skeleton.hpp"
 #include "GPUBuffer.hpp"
 
@@ -20,15 +19,17 @@ public:
     ObjResource& parent;
     GPUBuffer indexBuffer;
     glm::mat4 transform{1.0f};
-    Skeleton::Ptr skeleton; // Optional
+    AnimationNode* node = nullptr; // Optional
+    Skeleton::Ptr skeleton;        // Optional
 
     static Ptr create(ObjResource& parent, const std::string& name,
                       const std::vector<unsigned int>& indices,
-                      const glm::mat4& transform = glm::mat4(1.0f)) {
-        return std::make_shared<ObjMesh>(parent, name, indices, transform);
+                      AnimationNode* node = nullptr) {
+        return std::make_shared<ObjMesh>(parent, name, indices, node);
     }
 
     ObjMesh(ObjResource& parent, const std::string& name,
-            const std::vector<unsigned int>& indices,
-            glm::mat4 transform = glm::mat4(1.0f));
+            const std::vector<unsigned int>& indices, AnimationNode* node = nullptr);
+
+    void updateMeshTransform();
 };

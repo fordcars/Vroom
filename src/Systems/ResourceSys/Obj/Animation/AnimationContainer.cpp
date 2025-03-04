@@ -65,9 +65,9 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
         }
         mVisitedInputNodes.insert(nodeIndex);
 
-        if(node.skin >= 0) {
-            loadSkeleton(model, nodeIndex);
-        }
+        // if(node.skin >= 0) {
+        //     loadSkeleton(model, nodeIndex);
+        // }
     }
 }
 

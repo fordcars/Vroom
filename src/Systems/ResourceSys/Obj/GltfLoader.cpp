@@ -126,8 +126,8 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
     std::vector<ObjResource::Vertex> outVertices;
 
     // Traverse scene graph to apply transforms in the correct order
-    std::stack<std::tuple<int, glm::mat4, int>>
-        nodeStack; // Stack to store {node index, parent transform, parent skin}
+    std::stack<std::tuple<int, int>>
+        nodeStack; // Stack to store {node index, parent skin}
 
     if(model.scenes.size() > 1) {
         Log::warn() << "GLTF file has multiple scenes. Only the first will be loaded.";
@@ -135,41 +135,46 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
 
     // Push all root nodes with identity transform
     for(int rootNodeIndex : model.scenes[0].nodes) {
-        nodeStack.push({rootNodeIndex, glm::mat4(1.0f), model.nodes[rootNodeIndex].skin});
+        nodeStack.push({rootNodeIndex, model.nodes[rootNodeIndex].skin});
     }
 
     while(!nodeStack.empty()) {
-        auto [nodeIndex, parentTransform, parentSkin] = nodeStack.top();
+        auto [nodeIndex, parentSkin] = nodeStack.top();
         int currentSkin = parentSkin;
         nodeStack.pop();
 
         const tinygltf::Node& node = model.nodes[nodeIndex];
-
-        // Compute the transform for this node
-        glm::mat4 meshTransform = computeNodeTransform(node, parentTransform);
         if(node.skin >= 0) {
             currentSkin = node.skin;
         }
 
         if(node.mesh >= 0) {
-            Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
-            auto objMesh = loadMesh(resource, outVertices, model, model.meshes[node.mesh],
-                                    meshTransform);
+            if(resource.animationContainer) {
+                AnimationContainer& animation = *resource.animationContainer;
+                Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name
+                             << "' with animation.";
+                auto objMesh =
+                    loadMesh(resource, outVertices, model, model.meshes[node.mesh],
+                             animation.getNode(nodeIndex));
 
-            if(resource.animationContainer && objMesh && currentSkin >= 0) {
-                Log::debug() << "Loading skeleton skin " << currentSkin << " for mesh '"
-                             << objMesh->name << "'.";
-                objMesh->skeleton = resource.animationContainer->getSkeleton(currentSkin);
-                if(!objMesh->skeleton) {
-                    Log::warn() << "Failed to find skeleton with index " << currentSkin
-                                << " for mesh '" << objMesh->name << "'.";
-                }
+                // if(objMesh && currentSkin >= 0) {
+                //     Log::debug() << "Fetching skin " << currentSkin << " for mesh '"
+                //                  << objMesh->name << "'.";
+                //     objMesh->skeleton = animation->getSkeleton(currentSkin);
+                //     if(!objMesh->skeleton) {
+                //         Log::warn() << "Failed to find skin with index " << currentSkin
+                //                     << " for mesh '" << objMesh->name << "'.";
+                //     }
+                // }
+            } else {
+                Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
+                loadMesh(resource, outVertices, model, model.meshes[node.mesh]);
             }
         }
 
         for(int childIndex : node.children) {
-            nodeStack.push({childIndex, meshTransform,
-                            currentSkin}); // Push child node with inherited transform
+            nodeStack.push(
+                {childIndex, currentSkin}); // Push child node with inherited skin
         }
     }
 
@@ -181,8 +186,7 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
 ObjMesh::Ptr GltfLoader::loadMesh(ObjResource& resource,
                                   std::vector<ObjResource::Vertex>& outVertices,
                                   const tinygltf::Model& model,
-                                  const tinygltf::Mesh& mesh,
-                                  const glm::mat4& meshTransform) {
+                                  const tinygltf::Mesh& mesh, AnimationNode* node) {
     if(mesh.primitives.size() > 1) {
         Log::warn() << "Mesh has multiple primitives. Only the first will be loaded.";
     }
@@ -243,36 +247,9 @@ ObjMesh::Ptr GltfLoader::loadMesh(ObjResource& resource,
     }
 
     // Store index buffer in ObjMesh
-    auto objMesh = ObjMesh::create(resource, mesh.name, primitiveIndices, meshTransform);
+    auto objMesh = ObjMesh::create(resource, mesh.name, primitiveIndices, node);
     resource.objMeshes.emplace_back(objMesh);
     return objMesh;
-}
-
-glm::mat4 GltfLoader::computeNodeTransform(const tinygltf::Node& node,
-                                           glm::mat4 parentTransform) {
-    glm::mat4 localTransform = glm::mat4(1.0f);
-
-    // Apply translation
-    if(!node.translation.empty()) {
-        glm::vec3 pos(node.translation[0], node.translation[1], node.translation[2]);
-        localTransform = glm::translate(localTransform, pos);
-    }
-
-    // Apply rotation
-    if(!node.rotation.empty()) {
-        glm::quat rot(node.rotation[3], node.rotation[0], node.rotation[1],
-                      node.rotation[2]);
-        localTransform *= glm::mat4_cast(rot);
-    }
-
-    // Apply scale
-    if(!node.scale.empty()) {
-        glm::vec3 scale(node.scale[0], node.scale[1], node.scale[2]);
-        localTransform = glm::scale(localTransform, scale);
-    }
-
-    // Combine with parent
-    return parentTransform * localTransform;
 }
 
 void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {

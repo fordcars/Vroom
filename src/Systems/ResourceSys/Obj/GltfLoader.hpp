@@ -21,7 +21,6 @@ private:
     ObjMesh::Ptr loadMesh(ObjResource& resource,
                           std::vector<ObjResource::Vertex>& outVertices,
                           const tinygltf::Model& model, const tinygltf::Mesh& mesh,
-                          const glm::mat4& meshTransform);
-    glm::mat4 computeNodeTransform(const tinygltf::Node& node, glm::mat4 parentTransform);
+                          AnimationNode* node = nullptr);
     void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
 };

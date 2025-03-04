@@ -34,10 +34,10 @@ public:
     const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }
 
 private:
-    AnimationNode* mRootNode = nullptr;
     std::vector<AnimationNode*> mJoints;         // Nodes in the skeleton
     std::vector<glm::mat4> mInverseBindMatrices; // Inverse bind matrices for each joint
     GPUBuffer mTransformBuffer;                  // Transform matrices for each joint
 
-    void load(AnimationContainer& container, const tinygltf::Model& model, int nodeIndex);
+    void load(AnimationContainer& container, const tinygltf::Model& model,
+              int skinNodeIndex);
 };
