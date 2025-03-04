@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "Animation/AnimationNode.hpp"
-#include "Animation/Skeleton.hpp"
+#include "Animation/Skin.hpp"
 #include "GPUBuffer.hpp"
 
 class ObjResource;
@@ -20,7 +20,7 @@ public:
     GPUBuffer indexBuffer;
     glm::mat4 transform{1.0f};
     AnimationNode* node = nullptr; // Optional
-    Skeleton::Ptr skeleton;        // Optional
+    Skin::Ptr skin;                // Optional
 
     static Ptr create(ObjResource& parent, const std::string& name,
                       const std::vector<unsigned int>& indices,

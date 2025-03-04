@@ -90,8 +90,8 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
         mesh->updateMeshTransform();
     }
 
-    // // Update skins
-    // for(auto& skeleton : animationContainer->getSkeletons()) {
-    //     skeleton->updateTransformBuffer();
-    // }
+    // Update skins
+    for(auto& skin : animationContainer->getSkins()) {
+        skin->updateTransformBuffer();
+    }
 }

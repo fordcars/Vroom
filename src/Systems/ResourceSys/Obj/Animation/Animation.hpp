@@ -11,7 +11,6 @@
 
 #include "AnimationNode.hpp"
 #include "Constants.hpp"
-#include "Skeleton.hpp"
 
 class AnimationContainer;
 class Animation {

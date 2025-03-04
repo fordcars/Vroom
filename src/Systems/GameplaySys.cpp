@@ -36,7 +36,7 @@ void GameplaySys::start() {
         position.coords.z = 10;
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr_skinned");
         animationComp.currentAnimation = "Magic Spell";
 
         PlayerEntity::instances.emplace_back(player);

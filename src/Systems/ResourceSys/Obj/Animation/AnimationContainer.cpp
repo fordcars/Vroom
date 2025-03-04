@@ -12,6 +12,7 @@ AnimationContainer::AnimationContainer(const tinygltf::Model &model) {
         for(auto &node : model.scenes[0].nodes) {
             loadNodes(model, node);
         }
+        loadSkins(model);
         loadAnimations(model);
     }
 }
@@ -64,21 +65,22 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
             stack.push({childIndex, newNodePtr});
         }
         mVisitedInputNodes.insert(nodeIndex);
-
-        // if(node.skin >= 0) {
-        //     loadSkeleton(model, nodeIndex);
-        // }
     }
 }
 
-void AnimationContainer::loadSkeleton(const tinygltf::Model &model, int nodeIndex) {
-    const tinygltf::Node &node = model.nodes[nodeIndex];
-    Skeleton::Ptr skeleton = Skeleton::create(*this, model, nodeIndex);
-    mSkeletons.push_back(skeleton);
-    mGltfSkinIndexToSkeleton.insert({node.skin, skeleton});
+void AnimationContainer::loadSkins(const tinygltf::Model &model) {
+    Log::debug() << "Loading " << model.skins.size() << " skins.";
+    for(int i = 0; i < model.skins.size(); i++) {
+        const tinygltf::Skin &skin = model.skins[i];
+        Skin::Ptr newSkin = Skin::create(*this, model, skin);
+
+        mSkins.push_back(newSkin);
+        mGltfSkinIndexToSkin.insert({i, newSkin});
+    }
 }
 
 void AnimationContainer::loadAnimations(const tinygltf::Model &model) {
+    Log::debug() << "Loading " << model.animations.size() << " animations.";
     for(const auto &anim : model.animations) {
         Animation::Ptr animation = Animation::create(*this, model, anim);
         mAnimations.insert({anim.name, animation});

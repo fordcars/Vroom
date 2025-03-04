@@ -7,6 +7,7 @@
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
+#include "ResourceSys/Obj/Animation/Skin.hpp"
 #include "ResourceSys/Obj/ObjResource.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
@@ -58,9 +59,9 @@ void RenderingSys::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 void RenderingSys::render(SDL_Window* window) {
     mCurrentTime = SDL_GetTicks();
-    EntityFilter<PositionComp, RenderableComp, std::optional<AnimationComp>> filter;
-    for(const auto& [position, renderable, animation] : filter) {
-        renderEntity(position, renderable, animation);
+    EntityFilter<PositionComp, RenderableComp> filter;
+    for(const auto& [position, renderable] : filter) {
+        renderEntity(position, renderable);
     }
 
     // Check for gl error
@@ -93,17 +94,18 @@ void RenderingSys::initGL(SDL_Window* window) {
     glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
 }
 
-void RenderingSys::renderEntity(
-    const PositionComp& position, const RenderableComp& renderable,
-    std::optional<std::reference_wrapper<AnimationComp>> animation) {
+void RenderingSys::renderEntity(const PositionComp& position,
+                                const RenderableComp& renderable) {
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
     const GLsizei stride = sizeof(ObjResource::Vertex);
 
-    GLint skeletonTransformUnformBlock = -1;
-    bool hasAnimation =
-        animation && (skeletonTransformUnformBlock = renderable.shader->findUniformBlock(
-                          "SkeletonTransformBlock")) != -1;
+    GLint skinTransformUnformBlock = -1;
+    GLint isSkinnedUniform = -1;
+    bool isSkinnedShader =
+        (skinTransformUnformBlock =
+             renderable.shader->findUniformBlock("SkinTransformBlock")) != -1 &&
+        (isSkinnedUniform = renderable.shader->findUniform("isSkinned")) != -1;
 
     glUseProgram(shader.getId());
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
@@ -116,7 +118,7 @@ void RenderingSys::renderEntity(
                          renderable.objectResource->materialUniformBuffer.getId());
     }
 
-    if(hasAnimation) {
+    if(isSkinnedShader) {
         glEnableVertexAttribArray(3); // Bone IDs
         glEnableVertexAttribArray(4); // Bone weights
 
@@ -167,9 +169,14 @@ void RenderingSys::renderEntity(
         glUniformMatrix4fv(shader.findUniform("normalMatrix"), 1, GL_FALSE,
                            &normalMatrix[0][0]);
 
-        if(hasAnimation && mesh->skeleton) {
-            glBindBufferBase(GL_UNIFORM_BUFFER, skeletonTransformUnformBlock,
-                             mesh->skeleton->getTransformBuffer().getId());
+        if(isSkinnedShader) {
+            if(mesh->skin) {
+                glUniform1i(isSkinnedUniform, 1);
+                glBindBufferBase(GL_UNIFORM_BUFFER, skinTransformUnformBlock,
+                                 mesh->skin->getTransformBuffer().getId());
+            } else {
+                glUniform1i(isSkinnedUniform, 0);
+            }
         }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());

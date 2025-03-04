@@ -157,15 +157,15 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
                     loadMesh(resource, outVertices, model, model.meshes[node.mesh],
                              animation.getNode(nodeIndex));
 
-                // if(objMesh && currentSkin >= 0) {
-                //     Log::debug() << "Fetching skin " << currentSkin << " for mesh '"
-                //                  << objMesh->name << "'.";
-                //     objMesh->skeleton = animation->getSkeleton(currentSkin);
-                //     if(!objMesh->skeleton) {
-                //         Log::warn() << "Failed to find skin with index " << currentSkin
-                //                     << " for mesh '" << objMesh->name << "'.";
-                //     }
-                // }
+                if(objMesh && currentSkin >= 0) {
+                    Log::debug() << "Fetching skin " << currentSkin << " for mesh '"
+                                 << objMesh->name << "'.";
+                    objMesh->skin = animation.getSkin(currentSkin);
+                    if(!objMesh->skin) {
+                        Log::warn() << "Failed to find skin with index " << currentSkin
+                                    << " for mesh '" << objMesh->name << "'.";
+                    }
+                }
             } else {
                 Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
                 loadMesh(resource, outVertices, model, model.meshes[node.mesh]);

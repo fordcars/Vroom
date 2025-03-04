@@ -19,15 +19,12 @@ void ObjMesh::updateMeshTransform() {
     while(joint != nullptr) {
         glm::mat4 localTransform = glm::mat4(1.0f);
 
-        // ✅ Correct transformation order: Rotation → Translation → Scale
-        localTransform = glm::translate(glm::mat4(1.0f),
-                                        joint->translation) * // Move to correct position
-                         glm::mat4_cast(joint->rotation) *    // Rotate in place
-                         glm::scale(glm::mat4(1.0f), joint->scale); // Scale in place
+        localTransform = glm::translate(glm::mat4(1.0f), joint->translation) *
+                         glm::mat4_cast(joint->rotation) *
+                         glm::scale(glm::mat4(1.0f), joint->scale);
 
-        // ✅ Apply from child to root (ensures proper accumulation)
+        // Apply from child to root
         transform = localTransform * transform;
-
         joint = joint->parent;
     }
 }

@@ -17,17 +17,18 @@
 
 class AnimationContainer;
 class Node;
-class Skeleton {
+class Skin {
 public:
-    using Ptr = std::shared_ptr<Skeleton>;
-    using CPtr = std::shared_ptr<const Skeleton>;
+    using Ptr = std::shared_ptr<Skin>;
+    using CPtr = std::shared_ptr<const Skin>;
 
     static Ptr create(AnimationContainer& container, const tinygltf::Model& model,
-                      int nodeIndex) {
-        return std::make_shared<Skeleton>(container, model, nodeIndex);
+                      const tinygltf::Skin& skin) {
+        return std::make_shared<Skin>(container, model, skin);
     }
 
-    Skeleton(AnimationContainer& container, const tinygltf::Model& model, int nodeIndex);
+    Skin(AnimationContainer& container, const tinygltf::Model& model,
+         const tinygltf::Skin& skin);
     void updateTransformBuffer();
 
     const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
@@ -39,5 +40,5 @@ private:
     GPUBuffer mTransformBuffer;                  // Transform matrices for each joint
 
     void load(AnimationContainer& container, const tinygltf::Model& model,
-              int skinNodeIndex);
+              const tinygltf::Skin& skin);
 };

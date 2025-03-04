@@ -18,5 +18,5 @@ const float HORIZ_FOV = glm::radians(90.0f); // In radians
 
 constexpr glm::vec3 BG_COLOR(0.78f, 0.78f, 1.0f);
 
-constexpr unsigned MAX_BONES = 500;
+constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
 } // namespace Constants

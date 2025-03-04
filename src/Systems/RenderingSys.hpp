@@ -4,11 +4,9 @@
 #include <glm/glm.hpp>
 #include <optional>
 
-#include "Components/AnimationComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
 #include "Entities/CameraEntity.hpp"
-#include "ResourceSys/Obj/Animation/Skeleton.hpp"
 
 class RenderingSys {
 public:
@@ -30,8 +28,7 @@ private:
     RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
-    void renderEntity(const PositionComp& position, const RenderableComp& renderable,
-                      std::optional<std::reference_wrapper<AnimationComp>> animation);
+    void renderEntity(const PositionComp& position, const RenderableComp& renderable);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
     glm::mat4 getProjectionMatrix(const CameraEntity& camera);

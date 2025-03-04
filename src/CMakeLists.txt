@@ -18,7 +18,7 @@ set(SOURCES
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/Obj/Animation/AnimationContainer.cpp
 	Systems/ResourceSys/Obj/Animation/Animation.cpp
-	Systems/ResourceSys/Obj/Animation/Skeleton.cpp
+	Systems/ResourceSys/Obj/Animation/Skin.cpp
 	Systems/ResourceSys/ShaderResource.cpp
 	Systems/PhysicsSys.cpp
 	Systems/AnimationSys.cpp
@@ -54,7 +54,7 @@ set(HEADERS
 	Systems/ResourceSys/Obj/Animation/AnimationNode.hpp
 	Systems/ResourceSys/Obj/Animation/AnimationContainer.hpp
 	Systems/ResourceSys/Obj/Animation/Animation.hpp
-	Systems/ResourceSys/Obj/Animation/Skeleton.hpp
+	Systems/ResourceSys/Obj/Animation/Skin.hpp
 	Systems/ResourceSys/ShaderResource.hpp
 	Systems/PhysicsSys.hpp
 	Systems/AnimationSys.hpp
