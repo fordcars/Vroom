@@ -3,6 +3,7 @@
 #include "Constants.hpp"
 #include "Entities/CameraEntity.hpp"
 #include "Entities/PlayerEntity.hpp"
+#include "Entities/PropEntity.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
@@ -42,17 +43,17 @@ void GameplaySys::start() {
         PlayerEntity::instances.emplace_back(player);
     }
 
-    // // Create car
-    // {
-    //     PlayerEntity player; // Should probably not be a PlayerEntity
-    //     auto [position, renderable, motion, frictionComp] = player.getComponents();
-    //     position.coords.x = 10;
-    //     position.coords.y = 0;
-    //     position.coords.z = 10;
-    //     renderable.objectResource =
-    //         ResourceSys::get().getObjResource("low_poly_blendered");
-    //     renderable.setMeshes(renderable.objectResource->objMeshes);
-    //     renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
-    //     PlayerEntity::instances.emplace_back(player);
-    // }
+    // Create car
+    {
+        PropEntity car;
+        auto [position, renderable, motion, frictionComp] = car.getComponents();
+        position.coords.x = 10;
+        position.coords.y = 0;
+        position.coords.z = 10;
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.setMeshes(renderable.objectResource->objMeshes);
+        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        PropEntity::instances.emplace_back(car);
+    }
 }

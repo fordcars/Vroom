@@ -112,9 +112,10 @@ void RenderingSys::renderEntity(const PositionComp& position,
 
     // Per object uniforms
     glUniform1ui(shader.findUniform("time"), mCurrentTime);
-    if(renderable.shader->findUniformBlock("ObjMaterialsBlock") != -1) {
-        glBindBufferBase(GL_UNIFORM_BUFFER,
-                         renderable.shader->findUniformBlock("ObjMaterialsBlock"),
+    GLint materialsBlock = -1;
+    if((materialsBlock = renderable.shader->findUniformBlock("ObjMaterialsBlock")) !=
+       -1) {
+        glBindBufferBase(GL_UNIFORM_BUFFER, materialsBlock,
                          renderable.objectResource->materialUniformBuffer.getId());
     }
 

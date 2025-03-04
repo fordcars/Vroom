@@ -41,8 +41,6 @@ void swap(ShaderResource& first, ShaderResource& second) noexcept {
     std::swap(first.mUniformMap, second.mUniformMap);
 }
 
-GLuint ShaderResource::getId() const { return mId; }
-
 // If uniform is not found, returns -1 (ignored uniform location by OpenGL)
 GLint ShaderResource::findUniform(const std::string& uniformName) const {
     if(mUniformMap.find(uniformName) != mUniformMap.end())

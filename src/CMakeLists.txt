@@ -24,8 +24,9 @@ set(SOURCES
 	Systems/AnimationSys.cpp
 
 	# Entities
-	Entities/PlayerEntity.cpp
 	Entities/CameraEntity.cpp
+	Entities/PlayerEntity.cpp
+	Entities/PropEntity.cpp
 )
 
 set(HEADERS
@@ -63,8 +64,9 @@ set(HEADERS
 	Entities/Entity.hpp
 	Entities/EntityRegistry.hpp
 	Entities/EntityFilter.hpp
-	Entities/PlayerEntity.hpp
 	Entities/CameraEntity.hpp
+	Entities/PlayerEntity.hpp
+	Entities/PropEntity.hpp
 
 	# Components
 	Components/PositionComp.hpp

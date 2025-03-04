@@ -25,7 +25,8 @@ public:
     ShaderResource& operator=(ShaderResource&& other) noexcept;
     friend void swap(ShaderResource& first, ShaderResource& second) noexcept;
 
-    GLuint getId() const;
+    GLuint getId() const { return mId; }
+    const std::string& getName() const { return mName; }
     GLint findUniform(const std::string& uniformName) const;
     GLint findUniformBlock(const std::string& uniformBlockName) const;
 
