@@ -19,7 +19,7 @@ public:
         unsigned int materialId;
 
         // Animation
-        glm::ivec4 joints;
+        glm::uvec4 joints;
         glm::vec4 weights;
     };
 

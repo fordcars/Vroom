@@ -72,9 +72,10 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
 }
 
 void AnimationContainer::loadSkeleton(const tinygltf::Model &model, int nodeIndex) {
+    const tinygltf::Node &node = model.nodes[nodeIndex];
     Skeleton::Ptr skeleton = Skeleton::create(*this, model, nodeIndex);
     mSkeletons.push_back(skeleton);
-    mGltfNodeIndexToSkeleton.insert({nodeIndex, skeleton});
+    mGltfSkinIndexToSkeleton.insert({node.skin, skeleton});
 }
 
 void AnimationContainer::loadAnimations(const tinygltf::Model &model) {

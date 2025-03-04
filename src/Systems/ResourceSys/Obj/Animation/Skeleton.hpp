@@ -30,6 +30,7 @@ public:
     Skeleton(AnimationContainer& container, const tinygltf::Model& model, int nodeIndex);
     void updateTransformBuffer();
 
+    const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
     const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }
 
 private:

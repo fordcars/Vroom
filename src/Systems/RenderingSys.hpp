@@ -8,6 +8,7 @@
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
 #include "Entities/CameraEntity.hpp"
+#include "ResourceSys/Obj/Animation/Skeleton.hpp"
 
 class RenderingSys {
 public:

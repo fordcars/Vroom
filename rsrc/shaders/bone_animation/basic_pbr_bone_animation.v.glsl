@@ -5,7 +5,7 @@ layout(location = 1) in vec3 vertexNormal_modelspace;
 layout(location = 2) in int vertexMaterialId;
 
 // Animation
-layout(location = 3) in ivec4 boneIDs;  // Joint indices
+layout(location = 3) in uvec4 boneIDs;  // Joint indices
 layout(location = 4) in vec4 weights;   // Weights
 
 // Matrices

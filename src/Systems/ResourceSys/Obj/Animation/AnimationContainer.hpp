@@ -40,9 +40,9 @@ public:
         return it == mGltfNodeIndexToNode.end() ? nullptr : it->second;
     }
 
-    Skeleton::Ptr getSkeleton(int gltfNodeIndex) {
-        auto it = mGltfNodeIndexToSkeleton.find(gltfNodeIndex);
-        return it == mGltfNodeIndexToSkeleton.end() ? nullptr : it->second;
+    Skeleton::Ptr getSkeleton(int gltfSkinIndex) {
+        auto it = mGltfSkinIndexToSkeleton.find(gltfSkinIndex);
+        return it == mGltfSkinIndexToSkeleton.end() ? nullptr : it->second;
     }
 
     std::vector<Skeleton::Ptr>& getSkeletons() { return mSkeletons; }
@@ -53,7 +53,7 @@ private:
     std::unordered_set<int> mVisitedInputNodes;
     std::unordered_map<int, AnimationNode*> mGltfNodeIndexToNode;
     std::vector<Skeleton::Ptr> mSkeletons; // All skeletons
-    std::unordered_map<int, Skeleton::Ptr> mGltfNodeIndexToSkeleton;
+    std::unordered_map<int, Skeleton::Ptr> mGltfSkinIndexToSkeleton;
     std::unordered_map<std::string, Animation::Ptr>
         mAnimations; // Animations mapped by name
 

@@ -8,6 +8,7 @@
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
 #include "ResourceSys/Obj/ObjResource.hpp"
+#include "ResourceSys/ResourceSys.hpp"
 
 // Static
 RenderingSys& RenderingSys::get() {
@@ -97,7 +98,7 @@ void RenderingSys::renderEntity(
     std::optional<std::reference_wrapper<AnimationComp>> animation) {
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
-    GLsizei stride = sizeof(ObjResource::Vertex);
+    const GLsizei stride = sizeof(ObjResource::Vertex);
 
     GLint skeletonTransformUnformBlock = -1;
     bool hasAnimation =

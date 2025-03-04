@@ -34,9 +34,22 @@ void extractAttribute(const tinygltf::Primitive& primitive, const tinygltf::Mode
     } else if constexpr(std::is_same<T, glm::vec2>::value) {
         const glm::vec2* data = reinterpret_cast<const glm::vec2*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
-    } else if constexpr(std::is_same<T, glm::ivec4>::value) {
-        const glm::ivec4* data = reinterpret_cast<const glm::ivec4*>(dataPtr);
-        std::copy(data, data + accessor.count, output.begin());
+    } else if constexpr(std::is_same<T, glm::uvec4>::value) {
+        if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+            const uint8_t* data = reinterpret_cast<const uint8_t*>(dataPtr);
+            for(size_t i = 0; i < accessor.count; i++) {
+                output[i] = glm::uvec4(data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2],
+                                       data[i * 4 + 3]);
+            }
+        } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+            const uint16_t* data = reinterpret_cast<const uint16_t*>(dataPtr);
+            for(size_t i = 0; i < accessor.count; i++) {
+                output[i] = glm::uvec4(data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2],
+                                       data[i * 4 + 3]);
+            }
+        } else {
+            Log::debug() << "Unsupported component type for JOINTS_0.";
+        }
     } else if constexpr(std::is_same<T, glm::vec4>::value) {
         const glm::vec4* data = reinterpret_cast<const glm::vec4*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
@@ -134,7 +147,8 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
                                     meshTransform);
 
             if(resource.animationContainer && node.skin >= 0 && objMesh) {
-                objMesh->skeleton = resource.animationContainer->getSkeleton(nodeIndex);
+                Log::debug() << "Loading skeleton for mesh '" << objMesh->name << "'.";
+                objMesh->skeleton = resource.animationContainer->getSkeleton(node.skin);
                 if(!objMesh->skeleton) {
                     Log::warn()
                         << "Failed to find skeleton for mesh '" << objMesh->name << "'.";
@@ -175,7 +189,7 @@ ObjMesh::Ptr GltfLoader::loadMesh(ObjResource& resource,
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texcoords;
-    std::vector<glm::ivec4> joints; // New vector for joint indices
+    std::vector<glm::uvec4> joints; // New vector for joint indices
     std::vector<glm::vec4> weights; // New vector for joint weights
 
     extractAttribute(primitive, model, "POSITION", positions);
@@ -198,7 +212,7 @@ ObjMesh::Ptr GltfLoader::loadMesh(ObjResource& resource,
     size_t vertexCount = positions.size();
     normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
     texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
-    joints.resize(vertexCount, glm::ivec4(0));      // Default joints if missing
+    joints.resize(vertexCount, glm::uvec4(0));      // Default joints if missing
     weights.resize(vertexCount, glm::vec4(0.0f));   // Default weights if missing
 
     // Create interleaved vertex buffer
