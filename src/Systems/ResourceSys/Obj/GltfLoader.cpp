@@ -126,39 +126,50 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
     std::vector<ObjResource::Vertex> outVertices;
 
     // Traverse scene graph to apply transforms in the correct order
-    std::stack<std::pair<int, glm::mat4>>
-        nodeStack; // Stack to store {node index, parent transform}
+    std::stack<std::tuple<int, glm::mat4, int>>
+        nodeStack; // Stack to store {node index, parent transform, parent skin}
+
+    if(model.scenes.size() > 1) {
+        Log::warn() << "GLTF file has multiple scenes. Only the first will be loaded.";
+    }
 
     // Push all root nodes with identity transform
     for(int rootNodeIndex : model.scenes[0].nodes) {
-        nodeStack.push({rootNodeIndex, glm::mat4(1.0f)});
+        nodeStack.push({rootNodeIndex, glm::mat4(1.0f), model.nodes[rootNodeIndex].skin});
     }
 
     while(!nodeStack.empty()) {
-        auto [nodeIndex, parentTransform] = nodeStack.top();
+        auto [nodeIndex, parentTransform, parentSkin] = nodeStack.top();
+        int currentSkin = parentSkin;
         nodeStack.pop();
 
         const tinygltf::Node& node = model.nodes[nodeIndex];
 
         // Compute the transform for this node
         glm::mat4 meshTransform = computeNodeTransform(node, parentTransform);
-        if(node.mesh > 0) {
+        if(node.mesh >= 0) {
+            Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
             auto objMesh = loadMesh(resource, outVertices, model, model.meshes[node.mesh],
                                     meshTransform);
 
-            if(resource.animationContainer && node.skin >= 0 && objMesh) {
-                Log::debug() << "Loading skeleton for mesh '" << objMesh->name << "'.";
-                objMesh->skeleton = resource.animationContainer->getSkeleton(node.skin);
+            if(node.skin >= 0) {
+                currentSkin = node.skin;
+            }
+
+            if(resource.animationContainer && objMesh && currentSkin >= 0) {
+                Log::debug() << "Loading skeleton skin " << currentSkin << " for mesh '"
+                             << objMesh->name << "'.";
+                objMesh->skeleton = resource.animationContainer->getSkeleton(currentSkin);
                 if(!objMesh->skeleton) {
-                    Log::warn()
-                        << "Failed to find skeleton for mesh '" << objMesh->name << "'.";
+                    Log::warn() << "Failed to find skeleton with index " << currentSkin
+                                << " for mesh '" << objMesh->name << "'.";
                 }
             }
         }
 
         for(int childIndex : node.children) {
-            nodeStack.push(
-                {childIndex, meshTransform}); // Push child node with inherited transform
+            nodeStack.push({childIndex, meshTransform,
+                            currentSkin}); // Push child node with inherited transform
         }
     }
 
