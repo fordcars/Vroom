@@ -147,14 +147,14 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
 
         // Compute the transform for this node
         glm::mat4 meshTransform = computeNodeTransform(node, parentTransform);
+        if(node.skin >= 0) {
+            currentSkin = node.skin;
+        }
+
         if(node.mesh >= 0) {
             Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
             auto objMesh = loadMesh(resource, outVertices, model, model.meshes[node.mesh],
                                     meshTransform);
-
-            if(node.skin >= 0) {
-                currentSkin = node.skin;
-            }
 
             if(resource.animationContainer && objMesh && currentSkin >= 0) {
                 Log::debug() << "Loading skeleton skin " << currentSkin << " for mesh '"
