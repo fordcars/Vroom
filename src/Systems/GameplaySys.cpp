@@ -45,8 +45,8 @@ void GameplaySys::start() {
 
     // Create car
     {
-        PropEntity car;
-        auto [position, renderable, motion, frictionComp] = car.getComponents();
+        PropEntity prop;
+        auto [position, renderable, motion, frictionComp] = prop.getComponents();
         position.coords.x = 10;
         position.coords.y = 0;
         position.coords.z = 10;
@@ -54,6 +54,19 @@ void GameplaySys::start() {
             ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
-        PropEntity::instances.emplace_back(car);
+        PropEntity::instances.emplace_back(prop);
+    }
+
+    // Create teapot
+    {
+        PropEntity prop;
+        auto [position, renderable, motion, frictionComp] = prop.getComponents();
+        position.coords.x = 5;
+        position.coords.y = -5;
+        position.coords.z = 15;
+        renderable.objectResource = ResourceSys::get().getObjResource("cow");
+        renderable.setMeshes(renderable.objectResource->objMeshes);
+        renderable.shader = ResourceSys::get().getShaderResource("basic");
+        PropEntity::instances.emplace_back(prop);
     }
 }
