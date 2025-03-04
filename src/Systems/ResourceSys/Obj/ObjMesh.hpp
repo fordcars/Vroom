@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "Animation/Skeleton.hpp"
 #include "GPUBuffer.hpp"
 
 class ObjResource;
@@ -19,6 +20,7 @@ public:
     ObjResource& parent;
     GPUBuffer indexBuffer;
     glm::mat4 transform{1.0f};
+    Skeleton::Ptr skeleton; // Optional
 
     static Ptr create(ObjResource& parent, const std::string& name,
                       const std::vector<unsigned int>& indices,

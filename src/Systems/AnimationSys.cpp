@@ -2,7 +2,7 @@
 
 #include <glm/gtc/quaternion.hpp>
 
-#include "Components/AnimationComp.hpp" // Include the header for AnimationComp
+#include "ResourceSys/Obj/Animation/Animation.hpp"
 
 namespace {
 // Interpolation helper
@@ -22,37 +22,37 @@ AnimationSys& AnimationSys::get() {
 }
 
 void AnimationSys::update(float deltaTime) {
-    EntityFilter<AnimationComp> filter;
-    for(auto& [animationComp] : filter) {
-        updateAnimation(animationComp, deltaTime);
+    EntityFilter<RenderableComp, AnimationComp> filter;
+    for(auto& [renderableComp, animationComp] : filter) {
+        updateAnimation(renderableComp, animationComp, deltaTime);
     }
 }
 
-void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime) {
-    auto& objAnimation = animationComp.objAnimation;
-    auto* currentAnim = animationComp.currentAnimation;
+void AnimationSys::updateAnimation(RenderableComp& renderableComp,
+                                   AnimationComp& animationComp, float deltaTime) {
+    if(!renderableComp.objectResource->animationContainer) return;
+
+    auto animationContainer = renderableComp.objectResource->animationContainer;
+    auto currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
     if(!currentAnim) return;
 
     animationComp.currentTime += deltaTime;
 
     if(animationComp.mode == AnimationMode::OneShot) {
-        if(animationComp.currentTime > currentAnim->duration) {
-            animationComp.currentTime = currentAnim->duration;
+        if(animationComp.currentTime > currentAnim->getDuration()) {
+            animationComp.currentTime = currentAnim->getDuration();
             return; // Stop updating if the animation is one shot and has finished
         }
     } else if(animationComp.mode == AnimationMode::Loop) {
-        if(animationComp.currentTime > currentAnim->duration) {
+        if(animationComp.currentTime > currentAnim->getDuration()) {
             animationComp.currentTime =
-                fmod(animationComp.currentTime, currentAnim->duration);
+                fmod(animationComp.currentTime, currentAnim->getDuration());
         }
     }
 
-    auto& nodes = objAnimation->nodes;
-    auto& animationChannels = currentAnim->channels;
-
-    for(auto& channel : animationChannels) {
-        auto& node = nodes[channel.targetNode];
-        if(channel.sampler.timestamps.empty()) continue;
+    for(auto& channel : currentAnim->getChannels()) {
+        auto* node = channel.targetNode;
+        if(!node || channel.sampler.timestamps.empty()) continue;
 
         // Find the two closest keyframes
         auto it =
@@ -72,20 +72,22 @@ void AnimationSys::updateAnimation(AnimationComp& animationComp, float deltaTime
         float alpha = (animationComp.currentTime - t0) /
                       (t1 - t0); // Normalized time between keyframes
 
-        if(channel.targetPath == "translation") {
+        if(channel.targetPath == Animation::TargetPath::Translation) {
             glm::vec3 v0 = glm::vec3(channel.sampler.values[i - 1]);
             glm::vec3 v1 = glm::vec3(channel.sampler.values[i]);
-            node.translation = lerpVec3(v0, v1, alpha);
-        } else if(channel.targetPath == "rotation") {
+            node->translation = lerpVec3(v0, v1, alpha);
+        } else if(channel.targetPath == Animation::TargetPath::Rotation) {
             glm::quat q0 = glm::quat(channel.sampler.values[i - 1]);
             glm::quat q1 = glm::quat(channel.sampler.values[i]);
-            node.rotation = slerpQuat(q0, q1, alpha);
-        } else if(channel.targetPath == "scale") {
+            node->rotation = slerpQuat(q0, q1, alpha);
+        } else if(channel.targetPath == Animation::TargetPath::Scale) {
             glm::vec3 s0 = glm::vec3(channel.sampler.values[i - 1]);
             glm::vec3 s1 = glm::vec3(channel.sampler.values[i]);
-            node.scale = lerpVec3(s0, s1, alpha);
+            node->scale = lerpVec3(s0, s1, alpha);
         }
     }
 
-    objAnimation->updateBoneBuffer();
+    for(auto& skeleton : animationContainer->getSkeletons()) {
+        skeleton->updateTransformBuffer();
+    }
 }

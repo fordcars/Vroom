@@ -101,7 +101,8 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
     for(const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
         meshVertexIndices.reserve(shape.mesh.indices.size());
-        size_t originalVertexCount = attribs.vertices.size() / 3; // For logs
+        size_t originalVertexCount = attribs.vertices.size() / VERTICES_PER_FACE;
+        size_t duplicatedVertices = 0; // For logs
         Log::debug() << "Loading mesh '" << shape.name << "' with "
                      << shape.mesh.indices.size() / VERTICES_PER_FACE << " faces.";
 
@@ -133,6 +134,7 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
                 // Bummer! A previous vertex set the attributes of this vertex.
                 // We must duplicate it.
                 outVertices.push_back(outVertices[vertexI]);
+                ++duplicatedVertices;
             }
 
             // Move attributes
@@ -145,8 +147,7 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
         // Add mesh
         resource.objMeshes.emplace_back(
             ObjMesh::create(resource, shape.name, meshVertexIndices));
-        size_t duplicatedVertices = meshVertexIndices.size() - originalVertexCount;
-        Log::debug() << "Duplicated " << outVertices.size() << " vertices for mesh '"
+        Log::debug() << "Duplicated " << duplicatedVertices << " vertices for mesh '"
                      << shape.name << "' (originally had " << originalVertexCount
                      << " vertices).";
     }

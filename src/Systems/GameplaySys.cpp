@@ -38,9 +38,7 @@ void GameplaySys::start() {
         renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader =
             ResourceSys::get().getShaderResource("basic_pbr_bone_animation");
-        animationComp.objAnimation = renderable.objectResource->animation;
-        animationComp.currentAnimation =
-            &animationComp.objAnimation->animations["Magic Spell"];
+        animationComp.currentAnimation = "Magic Spell";
 
         PlayerEntity::instances.emplace_back(player);
     }

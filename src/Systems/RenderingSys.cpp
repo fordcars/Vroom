@@ -99,6 +99,11 @@ void RenderingSys::renderEntity(
     const CameraEntity& camera = CameraEntity::instances[0];
     GLsizei stride = sizeof(ObjResource::Vertex);
 
+    GLint skeletonTransformUnformBlock = -1;
+    bool hasAnimation =
+        animation && (skeletonTransformUnformBlock = renderable.shader->findUniformBlock(
+                          "SkeletonTransformBlock")) != -1;
+
     glUseProgram(shader.getId());
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
 
@@ -110,12 +115,7 @@ void RenderingSys::renderEntity(
                          renderable.objectResource->materialUniformBuffer.getId());
     }
 
-    if(animation && renderable.shader->findUniformBlock("BoneTransformsBlock") != -1) {
-        const AnimationComp& anim = animation->get();
-        glBindBufferBase(GL_UNIFORM_BUFFER,
-                         renderable.shader->findUniformBlock("BoneTransformsBlock"),
-                         anim.objAnimation->boneTransformsBuffer.getId());
-
+    if(hasAnimation) {
         glEnableVertexAttribArray(3); // Bone IDs
         glEnableVertexAttribArray(4); // Bone weights
 
@@ -165,6 +165,11 @@ void RenderingSys::renderEntity(
                            &projectionMatrix[0][0]);
         glUniformMatrix4fv(shader.findUniform("normalMatrix"), 1, GL_FALSE,
                            &normalMatrix[0][0]);
+
+        if(hasAnimation && mesh->skeleton) {
+            glBindBufferBase(GL_UNIFORM_BUFFER, skeletonTransformUnformBlock,
+                             mesh->skeleton->getTransformBuffer().getId());
+        }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(GL_TRIANGLES, // Mode

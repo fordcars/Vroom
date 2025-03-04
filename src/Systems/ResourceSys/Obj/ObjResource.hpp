@@ -2,8 +2,8 @@
 
 #include <memory>
 
+#include "Animation/AnimationContainer.hpp"
 #include "GPUBuffer.hpp"
-#include "ObjAnimation.hpp"
 #include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
 
@@ -25,7 +25,7 @@ public:
 
     GPUBuffer vertexBuffer;
     GPUBuffer materialUniformBuffer;
-    ObjAnimation::Ptr animation;
+    AnimationContainer::Ptr animationContainer;
     std::vector<ObjMesh::Ptr> objMeshes;
 
     static Ptr create(std::unique_ptr<ObjLoader> loader) {

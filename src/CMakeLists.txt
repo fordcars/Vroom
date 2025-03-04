@@ -16,7 +16,9 @@ set(SOURCES
 	Systems/ResourceSys/Obj/GltfLoader.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
-	Systems/ResourceSys/Obj/ObjAnimation.cpp
+	Systems/ResourceSys/Obj/Animation/AnimationContainer.cpp
+	Systems/ResourceSys/Obj/Animation/Animation.cpp
+	Systems/ResourceSys/Obj/Animation/Skeleton.cpp
 	Systems/ResourceSys/ShaderResource.cpp
 	Systems/PhysicsSys.cpp
 	Systems/AnimationSys.cpp
@@ -31,6 +33,7 @@ set(HEADERS
 	Log.hpp
 	Constants.hpp
 
+	Utils/Identifiable.hpp
 	Utils/getopt.h
 	Utils/FileUtils.hpp
 	Utils/TupleUtils.hpp
@@ -48,7 +51,10 @@ set(HEADERS
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
-	Systems/ResourceSys/Obj/ObjAnimation.hpp
+	Systems/ResourceSys/Obj/Animation/AnimationNode.hpp
+	Systems/ResourceSys/Obj/Animation/AnimationContainer.hpp
+	Systems/ResourceSys/Obj/Animation/Animation.hpp
+	Systems/ResourceSys/Obj/Animation/Skeleton.hpp
 	Systems/ResourceSys/ShaderResource.hpp
 	Systems/PhysicsSys.hpp
 	Systems/AnimationSys.hpp

@@ -18,10 +18,10 @@ private:
     const std::filesystem::path mPath;
 
     void loadMeshes(ObjResource& resource, const tinygltf::Model& model);
-    void loadMesh(ObjResource& resource, std::vector<ObjResource::Vertex>& outVertices,
-                  const tinygltf::Model& model, const tinygltf::Mesh& mesh,
-                  const glm::mat4& meshTransform);
+    ObjMesh::Ptr loadMesh(ObjResource& resource,
+                          std::vector<ObjResource::Vertex>& outVertices,
+                          const tinygltf::Model& model, const tinygltf::Mesh& mesh,
+                          const glm::mat4& meshTransform);
     glm::mat4 computeNodeTransform(const tinygltf::Node& node, glm::mat4 parentTransform);
     void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
-    void loadAnimation(ObjResource& resource, const tinygltf::Model& model);
 };

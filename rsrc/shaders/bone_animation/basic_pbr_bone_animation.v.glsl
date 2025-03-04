@@ -15,8 +15,8 @@ uniform mat4 viewMatrix;
 uniform mat4 normalMatrix;
 
 // Uniform Block for Bone Matrices
-layout(std140) uniform BoneTransformsBlock {
-    mat4 boneTransforms[500];  // MAX_BONES = 500
+layout(std140) uniform SkeletonTransformBlock {
+    mat4 skeletonTransforms[500];  // MAX_BONES = 500
 };
 
 flat out int materialId;
@@ -30,10 +30,10 @@ void main()
     vec3 lightPosition_worldspace = vec3(60, 60, 40);
 
     mat4 skinMatrix = 
-          weights.x * boneTransforms[boneIDs.x] +
-          weights.y * boneTransforms[boneIDs.y] +
-          weights.z * boneTransforms[boneIDs.z] +
-          weights.w * boneTransforms[boneIDs.w];
+          weights.x * skeletonTransforms[boneIDs.x] +
+          weights.y * skeletonTransforms[boneIDs.y] +
+          weights.z * skeletonTransforms[boneIDs.z] +
+          weights.w * skeletonTransforms[boneIDs.w];
 
     vec4 skinnedPosition = skinMatrix * vec4(vertexPosition_modelspace, 1.0);
     vec4 skinnedNormal = skinMatrix * vec4(vertexNormal_modelspace, 0.0);
