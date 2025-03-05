@@ -11,6 +11,8 @@ public:
     void update(float deltaTime);
 
 private:
+    void applyAnimationChannels(AnimationComp& animationComp, Animation& currentAnim,
+                                float blendFactor, float deltaTime);
     void updateAnimation(RenderableComp& renderableComp, AnimationComp& animationComp,
                          float deltaTime);
 };

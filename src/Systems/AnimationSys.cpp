@@ -28,29 +28,10 @@ void AnimationSys::update(float deltaTime) {
     }
 }
 
-void AnimationSys::updateAnimation(RenderableComp& renderableComp,
-                                   AnimationComp& animationComp, float deltaTime) {
-    if(!renderableComp.objectResource->animationContainer) return;
-
-    auto animationContainer = renderableComp.objectResource->animationContainer;
-    auto currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
-    if(!currentAnim) return;
-
-    animationComp.currentTime += deltaTime;
-
-    if(animationComp.mode == AnimationMode::OneShot) {
-        if(animationComp.currentTime > currentAnim->getDuration()) {
-            animationComp.currentTime = currentAnim->getDuration();
-            return; // Stop updating if the animation is one shot and has finished
-        }
-    } else if(animationComp.mode == AnimationMode::Loop) {
-        if(animationComp.currentTime > currentAnim->getDuration()) {
-            animationComp.currentTime =
-                fmod(animationComp.currentTime, currentAnim->getDuration());
-        }
-    }
-
-    for(auto& channel : currentAnim->getChannels()) {
+void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
+                                          Animation& currentAnim, float blendFactor,
+                                          float deltaTime) {
+    for(auto& channel : currentAnim.getChannels()) {
         auto* node = channel.targetNode;
         if(!node || channel.sampler.timestamps.empty()) continue;
 
@@ -75,14 +56,56 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
         float alpha = (t1 > t0) ? (animationComp.currentTime - t0) / (t1 - t0) : 0.0f;
 
         if(channel.targetPath == Animation::TargetPath::Translation) {
-            node->translation = lerpVec3(v0, v1, alpha);
+            node->translation = lerpVec3(v0, v1, alpha) * blendFactor +
+                                node->translation * (1.0f - blendFactor);
         } else if(channel.targetPath == Animation::TargetPath::Rotation) {
             glm::quat q0 = glm::quat(v0.w, v0.x, v0.y, v0.z);
             glm::quat q1 = glm::quat(v1.w, v1.x, v1.y, v1.z);
-            node->rotation = slerpQuat(q0, q1, alpha);
+            node->rotation = slerpQuat(q0, q1, alpha) * blendFactor +
+                             node->rotation * (1.0f - blendFactor);
         } else if(channel.targetPath == Animation::TargetPath::Scale) {
-            node->scale = lerpVec3(v0, v1, alpha);
+            node->scale = lerpVec3(v0, v1, alpha) * blendFactor +
+                          node->scale * (1.0f - blendFactor);
         }
+    }
+}
+
+void AnimationSys::updateAnimation(RenderableComp& renderableComp,
+                                   AnimationComp& animationComp, float deltaTime) {
+    // Detect animation change and initialize crossfade
+    if(animationComp.currentAnimation != animationComp.previousAnimation) {
+        animationComp.previousAnimation = animationComp.currentAnimation;
+        animationComp.crossfadeTime = animationComp.crossfadeDuration;
+    }
+
+    if(!renderableComp.objectResource->animationContainer) return;
+
+    auto animationContainer = renderableComp.objectResource->animationContainer;
+    auto currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
+    if(!currentAnim) return;
+
+    animationComp.currentTime += deltaTime;
+
+    if(animationComp.mode == AnimationMode::OneShot) {
+        if(animationComp.currentTime > currentAnim->getDuration()) {
+            animationComp.currentTime = currentAnim->getDuration();
+            return; // Stop updating if the animation is one shot and has finished
+        }
+    } else if(animationComp.mode == AnimationMode::Loop) {
+        if(animationComp.currentTime > currentAnim->getDuration()) {
+            animationComp.currentTime =
+                fmod(animationComp.currentTime, currentAnim->getDuration());
+        }
+    }
+
+    // During crossfade, interpolate between old and new animations
+    if(animationComp.crossfadeTime > 0.0f) {
+        float blendFactor =
+            1.0f - (animationComp.crossfadeTime / animationComp.crossfadeDuration);
+        animationComp.crossfadeTime -= deltaTime;
+        applyAnimationChannels(animationComp, *currentAnim, blendFactor, deltaTime);
+    } else {
+        applyAnimationChannels(animationComp, *currentAnim, 1.0f, deltaTime);
     }
 
     // Update bones
