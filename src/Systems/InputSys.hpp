@@ -10,16 +10,25 @@ public:
     static InputSys& get();
     InputSys() = default;
     void init();
-    void update();
+    void update(float deltaTime);
     void handleEvent(const SDL_Event& event);
 
-    enum class InputNeed { Jump, WalkLeft, WalkRight, WalkForward, WalkBackward, Crouch };
+    enum class InputNeed {
+        Jump,
+        WalkLeft,
+        WalkRight,
+        WalkForward,
+        WalkBackward,
+        Run,
+        Crouch
+    };
 
 private:
     std::unordered_map<SDL_Keycode, InputNeed> mInputMapping;
     std::unordered_set<SDL_Keycode> mHeldKeys;
 
     glm::vec3 mUpdateWalkDirection{}; // Walk direction for current step
+    bool mRunning = false;
 
     void handleNeed(InputNeed need, bool isKeyDown);
     void handleDownNeed(InputNeed need);
@@ -28,7 +37,7 @@ private:
     void handleHoldNeed(InputNeed need);
 
     void handleMouseInput(const SDL_Event& event);
-    void handleWalking();
+    void handleWalking(float deltaTime);
 
     InputSys(const InputSys&) = delete;
     InputSys& operator=(const InputSys&) = delete;

@@ -84,7 +84,13 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
     auto currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
     if(!currentAnim) return;
 
-    animationComp.currentTime += deltaTime;
+    float scaledDelta = deltaTime * animationComp.speed;
+    animationComp.currentTime += scaledDelta;
+
+    if(animationComp.startTime >= 0.0f &&
+       animationComp.currentTime < animationComp.startTime) {
+        animationComp.currentTime = animationComp.startTime;
+    }
 
     if(animationComp.mode == AnimationMode::OneShot) {
         if(animationComp.currentTime > currentAnim->getDuration()) {
@@ -98,6 +104,14 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
         }
     }
 
+    if(animationComp.endTime >= 0.0f &&
+       animationComp.currentTime > animationComp.endTime) {
+        animationComp.currentTime = animationComp.endTime;
+        if(animationComp.mode == AnimationMode::OneShot) {
+            return;
+        }
+    }
+
     // During crossfade, interpolate between old and new animations
     if(animationComp.crossfadeTime > 0.0f) {
         float blendFactor =
@@ -108,12 +122,11 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
         applyAnimationChannels(animationComp, *currentAnim, 1.0f, deltaTime);
     }
 
-    // Update bones
+    // Update mesh and skin transforms with new node transforms
     for(auto& mesh : renderableComp.objectResource->objMeshes) {
         mesh->updateMeshTransform();
     }
 
-    // Update skins
     for(auto& skin : animationContainer->getSkins()) {
         skin->updateTransformBuffer();
     }

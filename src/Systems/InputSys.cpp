@@ -22,11 +22,13 @@ void InputSys::init() {
     mInputMapping[SDLK_RIGHT] = InputNeed::WalkRight;
     mInputMapping[SDLK_UP] = InputNeed::WalkForward;
     mInputMapping[SDLK_DOWN] = InputNeed::WalkBackward;
+    mInputMapping[SDLK_LSHIFT] = InputNeed::Run;
     mInputMapping[SDLK_LCTRL] = InputNeed::Crouch;
 }
 
-void InputSys::update() {
+void InputSys::update(float deltaTime) {
     mUpdateWalkDirection = {};
+    mRunning = false;
 
     for(auto key : mHeldKeys) {
         auto it = mInputMapping.find(key);
@@ -35,7 +37,7 @@ void InputSys::update() {
         }
     }
 
-    handleWalking();
+    handleWalking(deltaTime);
 }
 
 void InputSys::handleEvent(const SDL_Event& event) {
@@ -92,6 +94,9 @@ void InputSys::handleHoldNeed(InputNeed need) {
         case InputNeed::WalkBackward:
             mUpdateWalkDirection.z = 1;
             break;
+        case InputNeed::Run:
+            mRunning = true;
+            break;
         case InputNeed::Crouch:
             PlayerEntity::instances[0].get<PositionComp>().coords.y -= speed / 60;
             break;
@@ -102,11 +107,16 @@ void InputSys::handleMouseInput(const SDL_Event& event) {
     // Handle mouse input
 }
 
-void InputSys::handleWalking() {
-    const float MAX_SPEED = 4;
-    const float MAX_SPEED_SQ = MAX_SPEED * MAX_SPEED;
+void InputSys::handleWalking(float deltaTime) {
+    const float TARGET_WALK_SPEED = 6.0f;
+    const float TARGET_RUN_SPEED = 15.0f;
+    const float WALK_ACCELERATION = 50.0f;
+    const float RUN_ACCELERATION = 130.0f;
 
-    const float ACCELERATION = 0.4;
+    float targetSpeed = mRunning ? TARGET_RUN_SPEED : TARGET_WALK_SPEED;
+    float targetSpeedSq = targetSpeed * targetSpeed;
+    float acceleration = mRunning ? RUN_ACCELERATION : WALK_ACCELERATION;
+
     auto& motionComp = PlayerEntity::instances[0].get<MotionComp>();
     auto& animationComp = PlayerEntity::instances[0].get<AnimationComp>();
     auto& positionComp = PlayerEntity::instances[0].get<PositionComp>();
@@ -118,15 +128,14 @@ void InputSys::handleWalking() {
            Utils::floatsEqualish(motionComp.velocity.z, 0, 0.3)) {
             // Add a small amount of velocity in the current direction to
             // prevent a jarring rotation transition. Also is more realistic.
-            Log::debug() << "Adding initial velocity";
             float angle = positionComp.rotation.y * M_PI / 180;
             motionComp.velocity += glm::vec3{std::sin(angle), 0, std::cos(angle)} * 1.0f;
         }
         mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
 
         // Apply walk acceleration
-        if(currentSpeedSq < MAX_SPEED_SQ) {
-            motionComp.velocity += mUpdateWalkDirection * ACCELERATION;
+        if(currentSpeedSq < targetSpeedSq) {
+            motionComp.velocity += (mUpdateWalkDirection * acceleration) * deltaTime;
         }
 
         // Set rotation based on velocity direction
@@ -136,9 +145,11 @@ void InputSys::handleWalking() {
         }
     }
 
-    if(currentSpeedSq < 0.01) {
+    if(currentSpeedSq < 0.4) {
         animationComp.currentAnimation = "Happy";
+        animationComp.speed = 1.0f;
     } else {
         animationComp.currentAnimation = "Normal Walk";
+        animationComp.speed = currentSpeedSq / (TARGET_WALK_SPEED * TARGET_WALK_SPEED);
     }
 }

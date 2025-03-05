@@ -67,7 +67,7 @@ void Game::doMainLoop() {
     mLastFrameTime = startFrameTime;
 
     if(!EventSys::get().handleEvents()) quit();
-    InputSys::get().update();
+    InputSys::get().update(deltaTime);
     PhysicsSys::get().update(deltaTime);
     GameplaySys::get().update(deltaTime);
     AnimationSys::get().update(deltaTime);
