@@ -14,4 +14,14 @@ struct AnimationComp {
     float speed = 1.0f;
     float crossfadeTime = 0.0f;
     float crossfadeDuration = 0.25f;
+
+    void setAnimation(const std::string& animName,
+                      AnimationMode mode = AnimationMode::Loop) {
+        if(currentAnimation != animName) {
+            currentAnimation = animName;
+            currentTime = 0.0f;
+        }
+
+        this->mode = mode;
+    }
 };

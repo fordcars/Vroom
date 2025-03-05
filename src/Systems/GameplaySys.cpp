@@ -38,7 +38,7 @@ void GameplaySys::start() {
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("basic_pbr_skinned");
-        animationComp.currentAnimation = "Happy";
+        animationComp.setAnimation("Happy");
         animationComp.startTime =
             0.09; // The walk animation isn't a perfect loop, this helps
 

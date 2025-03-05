@@ -146,10 +146,10 @@ void InputSys::handleWalking(float deltaTime) {
     }
 
     if(currentSpeedSq < 0.4) {
-        animationComp.currentAnimation = "Happy";
+        animationComp.setAnimation("Happy");
         animationComp.speed = 1.0f;
     } else {
-        animationComp.currentAnimation = "Normal Walk";
+        animationComp.setAnimation("Normal Walk");
         animationComp.speed = currentSpeedSq / (TARGET_WALK_SPEED * TARGET_WALK_SPEED);
     }
 }
