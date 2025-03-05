@@ -87,10 +87,10 @@ void InputSys::handleHoldNeed(InputNeed need) {
             mUpdateWalkDirection.x = 1;
             break;
         case InputNeed::WalkForward:
-            mUpdateWalkDirection.z = 1;
+            mUpdateWalkDirection.z = -1;
             break;
         case InputNeed::WalkBackward:
-            mUpdateWalkDirection.z = -1;
+            mUpdateWalkDirection.z = 1;
             break;
         case InputNeed::Crouch:
             PlayerEntity::instances[0].get<PositionComp>().coords.y -= speed / 60;
@@ -114,6 +114,14 @@ void InputSys::handleWalking() {
     float currentSpeedSq = glm::length2(motionComp.velocity);
 
     if(mUpdateWalkDirection.x != 0 || mUpdateWalkDirection.z != 0) {
+        if(Utils::floatsEqualish(motionComp.velocity.x, 0, 0.3) &&
+           Utils::floatsEqualish(motionComp.velocity.z, 0, 0.3)) {
+            // Add a small amount of velocity in the current direction to
+            // prevent a jarring rotation transition. Also is more realistic.
+            Log::debug() << "Adding initial velocity";
+            float angle = positionComp.rotation.y * M_PI / 180;
+            motionComp.velocity += glm::vec3{std::sin(angle), 0, std::cos(angle)} * 1.0f;
+        }
         mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
 
         // Apply walk acceleration

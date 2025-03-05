@@ -22,8 +22,8 @@ void GameplaySys::start() {
     info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
-    info.direction = {10, 0, 10, 1}; //{10, 20, 10, 1};
-    cameraPos.coords = {12, 3, 25};  //{20, 50, 35};
+    info.direction = {10, 0, 10, 1};
+    cameraPos.coords = {12, 10, 25};
 
     CameraEntity::instances.emplace_back(camera);
 
@@ -69,4 +69,10 @@ void GameplaySys::start() {
         renderable.shader = ResourceSys::get().getShaderResource("basic");
         PropEntity::instances.emplace_back(prop);
     }
+}
+
+void GameplaySys::update(float deltaTime) {
+    auto& playerPosition = PlayerEntity::instances[0].get<PositionComp>().coords;
+    CameraEntity::instances[0].get<CameraInfoComp>().direction =
+        glm::vec4(playerPosition, 1);
 }

@@ -69,6 +69,7 @@ void Game::doMainLoop() {
     if(!EventSys::get().handleEvents()) quit();
     InputSys::get().update();
     PhysicsSys::get().update(deltaTime);
+    GameplaySys::get().update(deltaTime);
     AnimationSys::get().update(deltaTime);
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
