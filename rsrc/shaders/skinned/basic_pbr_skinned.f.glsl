@@ -30,7 +30,7 @@ layout(std140) uniform ObjMaterialsBlock {
 vec2 blinnPhongDir(vec3 lightDir, float lightInt, float diffuseIntensity, float specularIntensity, float shininess)
 {
     vec3 s = normalize(lightDir);
-    vec3 v = normalize(-vertexPosition_worldspace);
+    vec3 v = normalize(eyeDirection_cameraspace);
     vec3 n = normalize(normal_cameraspace);
     vec3 h = normalize(v+s);
     
@@ -43,16 +43,17 @@ vec2 blinnPhongDir(vec3 lightDir, float lightInt, float diffuseIntensity, float 
 void main()
 {
     vec3 lightColor = vec3(1.0, 1.0, 1.0);
-    float lightPower = 20.0;
+    float lightPower = 5.0;
 
     vec3 materialDiffuseColor = objMaterialsBlock.objMaterials[materialId].baseColor;
-    vec3 materialAmbientColor = lightColor * 0.1;
+    vec3 materialAmbientColor = lightColor * 0.12;
     vec3 materialSpecularColor = vec3(1.0f, 1.0f, 1.0f) *
         objMaterialsBlock.objMaterials[materialId].metallic;
     
     float diffuseIntensity = 0.1;
     float specularIntensity = 0.1;
-    float shininess = 10.0;
+    float roughness = objMaterialsBlock.objMaterials[materialId].roughness;
+    float shininess = exp2((1.0 - roughness) * 10.0);
     vec2 lighting = blinnPhongDir(lightDirection_cameraspace, lightPower, diffuseIntensity, specularIntensity, shininess);
     
     outColor =

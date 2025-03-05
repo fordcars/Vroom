@@ -32,12 +32,12 @@ void calculateCameraspaceStuff(vec4 position, vec4 normal, vec3 lightPosition)
     
     vec3 vertexPosition_cameraspace = (viewMatrix * modelMatrix * position).xyz;
     // Vector from vertex to camera
-    eyeDirection_cameraspace = vec3(0, 0, 0) - vertexPosition_cameraspace;
+    eyeDirection_cameraspace = -vertexPosition_cameraspace;
     
     vec3 lightPosition_cameraspace = (viewMatrix * vec4(lightPosition, 1)).xyz;
-    lightDirection_cameraspace = lightPosition_cameraspace + eyeDirection_cameraspace; // Vector from vertex to light
+    lightDirection_cameraspace = lightPosition_cameraspace - vertexPosition_cameraspace;
     
-    normal_cameraspace = (normalMatrix * modelMatrix * normal).xyz;
+    normal_cameraspace = (normalMatrix * normal).xyz;
 }
 
 void main()
@@ -65,6 +65,5 @@ void main()
 
     calculateCameraspaceStuff(position, normal, lightPosition_worldspace);
     gl_Position = MVP * position;
-
     materialId = vertexMaterialId;
 }
