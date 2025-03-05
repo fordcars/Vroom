@@ -28,12 +28,15 @@ void AnimationSys::update(float deltaTime) {
     }
 }
 
+// Blend factor dictates how much the current pose is blended with the new pose.
+// A blend factor of 0 means the current pose is unchanged, while a blend factor
+// of 1 means the current pose is completely replaced by the new pose.
 void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
                                           Animation& currentAnim, float blendFactor,
                                           float deltaTime) {
     for(auto& channel : currentAnim.getChannels()) {
         auto* node = channel.targetNode;
-        if(!node || channel.sampler.timestamps.empty()) continue;
+        if(!node || channel.sampler.timestamps.size() < 2) continue;
 
         // Find the two closest keyframes
         auto it =
@@ -41,16 +44,28 @@ void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
                              channel.sampler.timestamps.end(), animationComp.currentTime);
         size_t i = std::distance(channel.sampler.timestamps.begin(), it);
 
+        size_t i0 = 0;
+        size_t i1 = 0;
         if(i == 0) {
-            i = 1;
+            if(animationComp.mode == AnimationMode::Loop) {
+                i0 = channel.sampler.timestamps.size() - 1;
+                i1 = 0;
+            } else {
+                i0 = 0;
+                i1 = 1;
+            }
         } else if(i >= channel.sampler.timestamps.size()) {
-            i = channel.sampler.timestamps.size() - 1;
+            i1 = channel.sampler.timestamps.size() - 1;
+            i0 = i1 - 1;
+        } else {
+            i0 = i - 1;
+            i1 = i;
         }
 
-        float t0 = channel.sampler.timestamps[i - 1];
-        float t1 = channel.sampler.timestamps[i];
-        const glm::vec4& v0 = channel.sampler.values[i - 1];
-        const glm::vec4& v1 = channel.sampler.values[i];
+        float t0 = channel.sampler.timestamps[i0];
+        float t1 = channel.sampler.timestamps[i1];
+        const glm::vec4& v0 = channel.sampler.values[i0];
+        const glm::vec4& v1 = channel.sampler.values[i1];
 
         // Avoid division by zero (if two keyframes have the same time)
         float alpha = (t1 > t0) ? (animationComp.currentTime - t0) / (t1 - t0) : 0.0f;

@@ -39,6 +39,8 @@ void GameplaySys::start() {
         renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("basic_pbr_skinned");
         animationComp.currentAnimation = "Happy";
+        animationComp.startTime =
+            0.09; // The walk animation isn't a perfect loop, this helps
 
         PlayerEntity::instances.emplace_back(player);
     }
