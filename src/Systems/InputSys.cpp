@@ -1,10 +1,14 @@
 #include "InputSys.hpp"
 
+#include <cmath>
+#include <glm/gtx/norm.hpp>
 #include <memory>
 
+#include "Components/AnimationComp.hpp"
 #include "Components/MotionComp.hpp"
 #include "Entities/PlayerEntity.hpp"
 #include "Systems/PhysicsSys.hpp"
+#include "Utils/MathUtils.hpp"
 
 // Static
 InputSys& InputSys::get() {
@@ -22,12 +26,16 @@ void InputSys::init() {
 }
 
 void InputSys::update() {
+    mUpdateWalkDirection = {};
+
     for(auto key : mHeldKeys) {
         auto it = mInputMapping.find(key);
         if(it != mInputMapping.end()) {
             handleHoldNeed(it->second);
         }
     }
+
+    handleWalking();
 }
 
 void InputSys::handleEvent(const SDL_Event& event) {
@@ -63,13 +71,7 @@ void InputSys::handleDownNeed(InputNeed need) {
 // Handle key up event
 void InputSys::handleUpNeed(InputNeed need) {
     switch(need) {
-        case InputNeed::WalkLeft:
-        case InputNeed::WalkRight:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.x = 0;
-            break;
-        case InputNeed::WalkForward:
-        case InputNeed::WalkBackward:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.z = 0;
+        default:
             break;
     }
 }
@@ -79,16 +81,16 @@ void InputSys::handleHoldNeed(InputNeed need) {
     const float speed = 2;
     switch(need) {
         case InputNeed::WalkLeft:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.x = -speed;
+            mUpdateWalkDirection.x = -1;
             break;
         case InputNeed::WalkRight:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.x = speed;
+            mUpdateWalkDirection.x = 1;
             break;
         case InputNeed::WalkForward:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.z = speed;
+            mUpdateWalkDirection.z = 1;
             break;
         case InputNeed::WalkBackward:
-            PlayerEntity::instances[0].get<MotionComp>().velocity.z = -speed;
+            mUpdateWalkDirection.z = -1;
             break;
         case InputNeed::Crouch:
             PlayerEntity::instances[0].get<PositionComp>().coords.y -= speed / 60;
@@ -98,4 +100,37 @@ void InputSys::handleHoldNeed(InputNeed need) {
 
 void InputSys::handleMouseInput(const SDL_Event& event) {
     // Handle mouse input
+}
+
+void InputSys::handleWalking() {
+    const float MAX_SPEED = 4;
+    const float MAX_SPEED_SQ = MAX_SPEED * MAX_SPEED;
+
+    const float ACCELERATION = 0.4;
+    auto& motionComp = PlayerEntity::instances[0].get<MotionComp>();
+    auto& animationComp = PlayerEntity::instances[0].get<AnimationComp>();
+    auto& positionComp = PlayerEntity::instances[0].get<PositionComp>();
+
+    float currentSpeedSq = glm::length2(motionComp.velocity);
+
+    if(mUpdateWalkDirection.x != 0 || mUpdateWalkDirection.z != 0) {
+        mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
+
+        // Apply walk acceleration
+        if(currentSpeedSq < MAX_SPEED_SQ) {
+            motionComp.velocity += mUpdateWalkDirection * ACCELERATION;
+        }
+
+        // Set rotation based on velocity direction
+        if(motionComp.velocity.x != 0 || motionComp.velocity.z != 0) {
+            positionComp.rotation.y =
+                std::atan2(motionComp.velocity.x, motionComp.velocity.z) * 180 / M_PI;
+        }
+    }
+
+    if(currentSpeedSq < 0.01) {
+        animationComp.currentAnimation = "Happy";
+    } else {
+        animationComp.currentAnimation = "Normal Walk";
+    }
 }

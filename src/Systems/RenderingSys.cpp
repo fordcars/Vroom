@@ -196,7 +196,7 @@ void RenderingSys::renderEntity(const PositionComp& position,
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
-    return glm::translate(glm::mat4(1.0f), position.coords);
+    return position.getTransform();
 }
 
 glm::mat4 RenderingSys::getViewMatrix(const CameraEntity& camera) {

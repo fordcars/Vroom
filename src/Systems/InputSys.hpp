@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
 
+#include <glm/glm.hpp>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -17,12 +18,17 @@ public:
 private:
     std::unordered_map<SDL_Keycode, InputNeed> mInputMapping;
     std::unordered_set<SDL_Keycode> mHeldKeys;
+
+    glm::vec3 mUpdateWalkDirection{}; // Walk direction for current step
+
     void handleNeed(InputNeed need, bool isKeyDown);
-    void handleMouseInput(const SDL_Event& event);
     void handleDownNeed(InputNeed need);
     void handleUpNeed(InputNeed need);
     void handlePressNeed(InputNeed need);
     void handleHoldNeed(InputNeed need);
+
+    void handleMouseInput(const SDL_Event& event);
+    void handleWalking();
 
     InputSys(const InputSys&) = delete;
     InputSys& operator=(const InputSys&) = delete;
