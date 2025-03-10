@@ -2,6 +2,7 @@
 
 #include <tiny_gltf.h>
 
+#include <array>
 #include <filesystem>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
@@ -26,13 +27,20 @@ public:
 
     AnimationContainer(const tinygltf::Model& model);
 
-    Animation* getAnimation(const std::string& name) {
-        auto it = mAnimations.find(name);
-        if(it == mAnimations.end()) {
-            Log::warn() << "Animation '" << name << "' not found.";
+    Animation* getAnimation(std::size_t nameIndex) {
+        if(nameIndex >= mAnimations.size()) {
+            Log::error() << "Animation " << nameIndex << " out of bounds.";
             return nullptr;
         }
-        return it == mAnimations.end() ? nullptr : it->second.get();
+        if(!mAnimations[nameIndex]) {
+            auto name = Constants::AnimationName::runtimeGet(nameIndex);
+            if(name.has_value()) {
+                Log::error() << "Animation " << name.value()
+                             << " not found in container.";
+            }
+            return nullptr;
+        }
+        return mAnimations[nameIndex].get();
     }
 
     AnimationNode* getNode(int gltfNodeIndex) {
@@ -59,8 +67,8 @@ private:
     std::unordered_map<int, AnimationNode*> mGltfNodeIndexToNode;
     std::vector<Skin::Ptr> mSkins; // All skins
     std::unordered_map<int, Skin::Ptr> mGltfSkinIndexToSkin;
-    std::unordered_map<std::string, Animation::Ptr>
-        mAnimations; // Animations mapped by name
+    std::array<Animation::Ptr, Constants::AnimationName::size()>
+        mAnimations{}; // Animations mapped by name index
 
     void loadNodes(const tinygltf::Model& model, int parentNodeIndex);
     void loadSkins(const tinygltf::Model& model);

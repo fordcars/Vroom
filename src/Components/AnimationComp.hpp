@@ -1,11 +1,12 @@
 #pragma once
-#include <string>
+
+#include <cstddef>
 
 enum class AnimationMode { OneShot, Loop };
 
 struct AnimationComp {
-    std::string currentAnimation;
-    std::string previousAnimation;
+    std::size_t currentAnimation;
+    std::size_t previousAnimation;
     AnimationMode mode = AnimationMode::Loop;
 
     float currentTime = 0.0;
@@ -15,10 +16,10 @@ struct AnimationComp {
     float crossfadeTime = 0.0f;
     float crossfadeDuration = 1.00f;
 
-    void setAnimation(const std::string& animName,
+    void setAnimation(std::size_t animNameIndex,
                       AnimationMode mode = AnimationMode::Loop) {
-        if(currentAnimation != animName) {
-            currentAnimation = animName;
+        if(currentAnimation != animNameIndex) {
+            currentAnimation = animNameIndex;
             currentTime = 0.0f;
         }
 

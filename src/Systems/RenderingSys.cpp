@@ -96,25 +96,26 @@ void RenderingSys::initGL(SDL_Window* window) {
 
 void RenderingSys::renderEntity(const PositionComp& position,
                                 const RenderableComp& renderable) {
+    using namespace Constants;
     const ShaderResource& shader = *renderable.shader;
     const CameraEntity& camera = CameraEntity::instances[0];
     const GLsizei stride = sizeof(ObjResource::Vertex);
 
     GLint skinTransformUnformBlock = -1;
     GLint isSkinnedUniform = -1;
-    bool isSkinnedShader =
-        (skinTransformUnformBlock =
-             renderable.shader->findUniformBlock("SkinTransformBlock")) != -1 &&
-        (isSkinnedUniform = renderable.shader->findUniform("isSkinned")) != -1;
+    bool isSkinnedShader = (skinTransformUnformBlock = renderable.shader->getUniformBlock(
+                                UniformBlockName::get<"SkinTransformBlock">())) != -1 &&
+                           (isSkinnedUniform = renderable.shader->getUniform(
+                                UniformName::get<"isSkinned">())) != -1;
 
     glUseProgram(shader.getId());
     glBindBuffer(GL_ARRAY_BUFFER, renderable.objectResource->vertexBuffer.getId());
 
     // Per object uniforms
-    glUniform1ui(shader.findUniform("time"), mCurrentTime);
+    glUniform1ui(shader.getUniform(UniformName::get<"time">()), mCurrentTime);
     GLint materialsBlock = -1;
-    if((materialsBlock = renderable.shader->findUniformBlock("ObjMaterialsBlock")) !=
-       -1) {
+    if((materialsBlock = renderable.shader->getUniformBlock(
+            UniformBlockName::get<"ObjMaterialsBlock">())) != -1) {
         glBindBufferBase(GL_UNIFORM_BUFFER, materialsBlock,
                          renderable.objectResource->materialUniformBuffer.getId());
     }
@@ -160,15 +161,16 @@ void RenderingSys::renderEntity(const PositionComp& position,
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
         glm::mat4 MVP = projectionMatrix * modelViewMatrix;
 
-        glUniformMatrix4fv(shader.findUniform("MVP"), 1, GL_FALSE, &MVP[0][0]);
-        glUniformMatrix4fv(shader.findUniform("modelMatrix"), 1, GL_FALSE,
-                           &modelMatrix[0][0]);
-        glUniformMatrix4fv(shader.findUniform("viewMatrix"), 1, GL_FALSE,
-                           &viewMatrix[0][0]);
-        glUniformMatrix4fv(shader.findUniform("projectionMatrix"), 1, GL_FALSE,
-                           &projectionMatrix[0][0]);
-        glUniformMatrix4fv(shader.findUniform("normalMatrix"), 1, GL_FALSE,
-                           &normalMatrix[0][0]);
+        glUniformMatrix4fv(shader.getUniform(UniformName::get<"MVP">()), 1, GL_FALSE,
+                           &MVP[0][0]);
+        glUniformMatrix4fv(shader.getUniform(UniformName::get<"modelMatrix">()), 1,
+                           GL_FALSE, &modelMatrix[0][0]);
+        glUniformMatrix4fv(shader.getUniform(UniformName::get<"viewMatrix">()), 1,
+                           GL_FALSE, &viewMatrix[0][0]);
+        glUniformMatrix4fv(shader.getUniform(UniformName::get<"projectionMatrix">()), 1,
+                           GL_FALSE, &projectionMatrix[0][0]);
+        glUniformMatrix4fv(shader.getUniform(UniformName::get<"normalMatrix">()), 1,
+                           GL_FALSE, &normalMatrix[0][0]);
 
         if(isSkinnedShader) {
             if(mesh->skin) {

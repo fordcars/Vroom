@@ -1,10 +1,12 @@
 #pragma once
 #include <glad/glad.h>
 
+#include <array>
 #include <filesystem>
 #include <memory>
 #include <string>
-#include <unordered_map>
+
+#include "Constants.hpp"
 
 class ShaderResource {
 public:
@@ -27,16 +29,14 @@ public:
 
     GLuint getId() const { return mId; }
     const std::string& getName() const { return mName; }
-    GLint findUniform(const std::string& uniformName) const;
-    GLint findUniformBlock(const std::string& uniformBlockName) const;
+    GLint getUniform(std::size_t uniformNameIndex) const;
+    GLint getUniformBlock(std::size_t uniformBlockNameIndex) const;
 
 private:
     std::string mName; // Useful for logs
     GLuint mId = 0;
-    std::unordered_map<std::string, GLuint>
-        mUniformMap; // mUniformMap[uniformName] = uniform location
-    std::unordered_map<std::string, GLuint>
-        mUniformBlockMap; // Same, but for uniform block indices
+    std::array<GLint, Constants::UniformName::size()> mUniformLocations;
+    std::array<GLint, Constants::UniformBlockName::size()> mUniformBlockLocations;
 
     static GLuint compileShader(const std::filesystem::path& shaderPath,
                                 const std::string& shaderSource, GLenum type);

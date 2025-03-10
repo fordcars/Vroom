@@ -4,6 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include "Utils/StringIndexor.hpp"
+
 namespace Constants {
 constexpr const char* GAME_NAME = "Vroom!";
 constexpr const char* RESOURCE_DIR = "rsrc";
@@ -19,4 +21,14 @@ const float HORIZ_FOV = glm::radians(90.0f); // In radians
 constexpr glm::vec3 BG_COLOR(0.78f, 0.78f, 1.0f);
 
 constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
+
+// Strings used as map keys, but known at compile time
+// are defined here; prefer to use a simple array with
+// these values instead of a map of std::strings.
+using UniformName =
+    Utils::StringIndexor<"MVP", "modelMatrix", "viewMatrix", "projectionMatrix",
+                         "normalMatrix", "time", "isSkinned">;
+using UniformBlockName = Utils::StringIndexor<"ObjMaterialsBlock", "SkinTransformBlock">;
+using AnimationName = Utils::StringIndexor<"Normal Walk", "Zombie Walk", "Happy">;
+
 } // namespace Constants

@@ -9,6 +9,9 @@ ShaderResource::ShaderResource(const std::string& name,
                                const std::filesystem::path& vertexPath,
                                const std::filesystem::path& fragmentPath)
     : mName(name) {
+    mUniformLocations.fill(-1);
+    mUniformBlockLocations.fill(-1);
+
     // Get source
     std::string vertexSource = Utils::getFileContents(vertexPath);
     std::string fragmentSource = Utils::getFileContents(fragmentPath);
@@ -38,20 +41,27 @@ ShaderResource& ShaderResource::operator=(ShaderResource&& other) noexcept {
 void swap(ShaderResource& first, ShaderResource& second) noexcept {
     std::swap(first.mName, second.mName);
     std::swap(first.mId, second.mId);
-    std::swap(first.mUniformMap, second.mUniformMap);
+    std::swap(first.mUniformLocations, second.mUniformLocations);
+    std::swap(first.mUniformBlockLocations, second.mUniformBlockLocations);
 }
 
 // If uniform is not found, returns -1 (ignored uniform location by OpenGL)
-GLint ShaderResource::findUniform(const std::string& uniformName) const {
-    if(mUniformMap.find(uniformName) != mUniformMap.end())
-        return mUniformMap.at(uniformName);
-    return -1;
+GLint ShaderResource::getUniform(std::size_t uniformNameIndex) const {
+    if(uniformNameIndex >= mUniformLocations.size()) {
+        Log::error() << "Uniform name index " << uniformNameIndex << " out of bounds.";
+        return -1;
+    }
+    return mUniformLocations[uniformNameIndex];
 }
 
-GLint ShaderResource::findUniformBlock(const std::string& uniformBlockName) const {
-    if(mUniformBlockMap.find(uniformBlockName) != mUniformBlockMap.end())
-        return mUniformBlockMap.at(uniformBlockName);
-    return -1;
+// If uniform block is not found, returns -1 (ignored uniform location by OpenGL)
+GLint ShaderResource::getUniformBlock(std::size_t uniformBlockNameIndex) const {
+    if(uniformBlockNameIndex >= mUniformBlockLocations.size()) {
+        Log::error() << "Uniform block name index " << uniformBlockNameIndex
+                     << " out of bounds.";
+        return -1;
+    }
+    return mUniformBlockLocations[uniformBlockNameIndex];
 }
 
 // Static
@@ -180,33 +190,43 @@ void ShaderResource::registerUniforms() {
 }
 
 void ShaderResource::registerUniform(const std::string& uniformName) {
-    if(mUniformMap.find(uniformName) != mUniformMap.end()) {
-        Log::error() << "Uniform '" << uniformName << "' already exists in shader '"
-                     << mName << "' and cannot be added again!";
+    auto uniformNameIndex = Constants::UniformName::runtimeGet(uniformName);
+    if(uniformNameIndex.has_value()) {
+        if(mUniformLocations[uniformNameIndex.value()] != -1) {
+            Log::warn() << "Uniform '" << uniformName
+                        << "' already registered for shader '" << mName << "'.";
+            return;
+        }
+
+        GLuint uniformLocation = glGetUniformLocation(mId, uniformName.c_str());
+        if(uniformLocation != -1) {
+            Log::debug() << "Registering uniform '" << uniformName << "' in shader '"
+                         << mName << "'.";
+            mUniformLocations[uniformNameIndex.value()] = uniformLocation;
+        }
+
         return;
     }
 
-    GLuint uniformLocation = glGetUniformLocation(mId, uniformName.c_str());
-    if(uniformLocation != -1) {
-        Log::debug() << "Registering uniform '" << uniformName << "' in shader '" << mName
-                     << "'.";
-        mUniformMap.insert({uniformName, uniformLocation});
-    }
-    // Ignore if the uniform location is invalid, it is probably part of a uniform block.
+    // Silently skip unknown uniform names; these are probably part of uniform block
 }
 
 void ShaderResource::registerUniformBlock(const std::string& uniformBlockName,
                                           GLuint bindingPoint) {
-    if(mUniformBlockMap.find(uniformBlockName) != mUniformBlockMap.end()) {
-        Log::error() << "Uniform block '" << uniformBlockName
-                     << "' already exists in shader '" << mName
-                     << "' and cannot be added again!";
+    auto uniformBlockNameIndex =
+        Constants::UniformBlockName::runtimeGet(uniformBlockName);
+    if(uniformBlockNameIndex.has_value()) {
+        if(mUniformBlockLocations[uniformBlockNameIndex.value()] != -1) {
+            Log::warn() << "Uniform block '" << uniformBlockName
+                        << "' already registered for shader '" << mName << "'.";
+            return;
+        }
+        Log::debug() << "Registering uniform block '" << uniformBlockName
+                     << "' in shader'" << mName << "' at binding point " << bindingPoint
+                     << ".";
+        mUniformBlockLocations[uniformBlockNameIndex.value()] = bindingPoint;
         return;
     }
 
-    Log::debug() << "Registering uniform block '" << uniformBlockName << "' in shader '"
-                 << mName << "' at binding point " << bindingPoint << ".";
-    mUniformBlockMap.insert({uniformBlockName, bindingPoint});
-
-    return;
+    Log::debug() << "Skipping unknown uniform block name '" << uniformBlockName << "'.";
 }

@@ -34,11 +34,12 @@ set(HEADERS
 	Log.hpp
 	Constants.hpp
 
-	Utils/Identifiable.hpp
-	Utils/getopt.h
 	Utils/FileUtils.hpp
-	Utils/TupleUtils.hpp
+	Utils/getopt.h
+	Utils/Identifiable.hpp
 	Utils/MathUtils.hpp
+	Utils/StringIndexor.hpp
+	Utils/TupleUtils.hpp
 
 	# Systems
 	Systems/RenderingSys.hpp

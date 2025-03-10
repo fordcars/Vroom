@@ -82,7 +82,15 @@ void AnimationContainer::loadSkins(const tinygltf::Model &model) {
 void AnimationContainer::loadAnimations(const tinygltf::Model &model) {
     Log::debug() << "Loading " << model.animations.size() << " animations.";
     for(const auto &anim : model.animations) {
-        Animation::Ptr animation = Animation::create(*this, model, anim);
-        mAnimations.insert({anim.name, animation});
+        std::optional<std::size_t> nameIndex =
+            Constants::AnimationName::runtimeGet(anim.name);
+        if(nameIndex.has_value()) {
+            Animation::Ptr animation = Animation::create(*this, model, anim);
+            mAnimations[nameIndex.value()] = animation;
+        } else {
+            Log::debug() << "Animation name '" << anim.name
+                         << "' not recognized, skipping.";
+            continue;
+        }
     }
 }
