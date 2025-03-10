@@ -112,6 +112,7 @@ void InputSys::handleWalking(float deltaTime) {
     const float TARGET_RUN_SPEED = 15.0f;
     const float WALK_ACCELERATION = 50.0f;
     const float RUN_ACCELERATION = 130.0f;
+    const float ANTI_JARRING = 3.0f;
 
     float targetSpeed = mRunning ? TARGET_RUN_SPEED : TARGET_WALK_SPEED;
     float targetSpeedSq = targetSpeed * targetSpeed;
@@ -129,7 +130,8 @@ void InputSys::handleWalking(float deltaTime) {
             // Add a small amount of velocity in the current direction to
             // prevent a jarring rotation transition. Also is more realistic.
             float angle = positionComp.rotation.y * M_PI / 180;
-            motionComp.velocity += glm::vec3{std::sin(angle), 0, std::cos(angle)} * 1.0f;
+            motionComp.velocity +=
+                glm::vec3{std::sin(angle), 0, std::cos(angle)} * ANTI_JARRING;
         }
         mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
 

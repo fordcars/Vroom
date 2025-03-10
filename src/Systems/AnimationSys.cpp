@@ -76,8 +76,8 @@ void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
         } else if(channel.targetPath == Animation::TargetPath::Rotation) {
             glm::quat q0 = glm::quat(v0.w, v0.x, v0.y, v0.z);
             glm::quat q1 = glm::quat(v1.w, v1.x, v1.y, v1.z);
-            node->rotation = slerpQuat(q0, q1, alpha) * blendFactor +
-                             node->rotation * (1.0f - blendFactor);
+            node->rotation =
+                slerpQuat(node->rotation, slerpQuat(q0, q1, alpha), blendFactor);
         } else if(channel.targetPath == Animation::TargetPath::Scale) {
             node->scale = lerpVec3(v0, v1, alpha) * blendFactor +
                           node->scale * (1.0f - blendFactor);

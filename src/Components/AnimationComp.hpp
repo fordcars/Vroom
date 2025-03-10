@@ -13,7 +13,7 @@ struct AnimationComp {
     float endTime = -1.0f;
     float speed = 1.0f;
     float crossfadeTime = 0.0f;
-    float crossfadeDuration = 0.25f;
+    float crossfadeDuration = 1.00f;
 
     void setAnimation(const std::string& animName,
                       AnimationMode mode = AnimationMode::Loop) {
