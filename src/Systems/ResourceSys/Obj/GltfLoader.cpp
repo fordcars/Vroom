@@ -155,27 +155,7 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
         }
 
         if(node.mesh >= 0) {
-            if(resource.animationContainer) {
-                AnimationContainer& animation = *resource.animationContainer;
-                Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name
-                             << "' with animation.";
-                auto objMesh =
-                    loadMesh(resource, outVertices, model, model.meshes[node.mesh],
-                             animation.getNode(nodeIndex));
-
-                if(objMesh && currentSkin >= 0) {
-                    Log::debug() << "Fetching skin " << currentSkin << " for mesh '"
-                                 << objMesh->name << "'.";
-                    objMesh->skin = animation.getSkin(currentSkin);
-                    if(!objMesh->skin) {
-                        Log::warn() << "Failed to find skin with index " << currentSkin
-                                    << " for mesh '" << objMesh->name << "'.";
-                    }
-                }
-            } else {
-                Log::debug() << "Loading mesh '" << model.meshes[node.mesh].name << "'.";
-                loadMesh(resource, outVertices, model, model.meshes[node.mesh]);
-            }
+            loadPrimitives(resource, outVertices, model, nodeIndex, currentSkin);
         }
 
         for(int childIndex : node.children) {
@@ -188,74 +168,100 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
     resource.vertexBuffer.setData(GL_ARRAY_BUFFER, outVertices);
 }
 
-// Returns the ID of the created mesh
-ObjMesh::Ptr GltfLoader::loadMesh(ObjResource& resource,
-                                  std::vector<ObjResource::Vertex>& outVertices,
-                                  const tinygltf::Model& model,
-                                  const tinygltf::Mesh& mesh, AnimationNode* node) {
-    if(mesh.primitives.size() > 1) {
-        Log::warn() << "Mesh has multiple primitives. Only the first will be loaded.";
+// Each glTF primitive will generate an ObjMesh
+void GltfLoader::loadPrimitives(ObjResource& resource,
+                                std::vector<ObjResource::Vertex>& outVertices,
+                                const tinygltf::Model& model, int gltfNodeIndex,
+                                int gltfSkinIndex) {
+    const tinygltf::Node& node = model.nodes[gltfNodeIndex];
+    if(node.mesh < 0) {
+        Log::warn() << "Node " << gltfNodeIndex << " has no mesh.";
+        return;
+    }
+    const tinygltf::Mesh& mesh = model.meshes[node.mesh];
+
+    // Get animation node if mesh is animated
+    AnimationNode* animationNode = nullptr;
+    if(resource.animationContainer) {
+        animationNode = resource.animationContainer->getNode(gltfNodeIndex);
+        Log::debug() << "Loading animated mesh '" << mesh.name << "' with "
+                     << mesh.primitives.size() << " primitives.";
+    } else {
+        Log::debug() << "Loading mesh '" << mesh.name << "' with "
+                     << mesh.primitives.size() << " primitives.";
     }
 
-    const tinygltf::Primitive& primitive =
-        mesh.primitives[0]; // Assume one primitive per mesh
-    if(primitive.mode != TINYGLTF_MODE_TRIANGLES) {
-        Log::warn() << "Skipping non-triangle primitive.";
-        return {};
+    // Get skin if present
+    Skin::Ptr skin = nullptr;
+    if(resource.animationContainer && gltfSkinIndex >= 0) {
+        Log::debug() << "Fetching skin " << gltfSkinIndex << " for mesh '" << mesh.name
+                     << "'.";
+        skin = resource.animationContainer->getSkin(gltfSkinIndex);
+        if(!skin) {
+            Log::warn() << "Failed to find skin with index " << gltfSkinIndex
+                        << " for mesh '" << mesh.name << "'.";
+        }
     }
 
-    size_t baseIndex = outVertices.size(); // Offset for this mesh's indices
+    for(size_t i = 0; i < mesh.primitives.size(); i++) {
+        const tinygltf::Primitive& primitive = mesh.primitives[i];
 
-    // Extract vertex attributes
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> texcoords;
-    std::vector<glm::uvec4> joints; // New vector for joint indices
-    std::vector<glm::vec4> weights; // New vector for joint weights
+        if(primitive.mode != TINYGLTF_MODE_TRIANGLES) {
+            Log::warn() << "Skipping non-triangle primitive.";
+            continue;
+        }
 
-    extractAttribute(primitive, model, "POSITION", positions);
-    extractAttribute(primitive, model, "NORMAL", normals);
-    extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
-    extractAttribute(primitive, model, "JOINTS_0",
-                     joints); // New extraction for joints
-    extractAttribute(primitive, model, "WEIGHTS_0",
-                     weights); // New extraction for weights
+        size_t baseIndex = outVertices.size(); // Offset for this mesh's indices
 
-    if(normals.size() != positions.size() || texcoords.size() != positions.size()) {
-        Log::warn() << "GLTF primitive has inconsistent attribute sizes.";
-        return {};
+        // Extract vertex attributes
+        std::vector<glm::vec3> positions;
+        std::vector<glm::vec3> normals;
+        std::vector<glm::vec2> texcoords;
+        std::vector<glm::uvec4> joints;
+        std::vector<glm::vec4> weights;
+
+        extractAttribute(primitive, model, "POSITION", positions);
+        extractAttribute(primitive, model, "NORMAL", normals);
+        extractAttribute(primitive, model, "TEXCOORD_0", texcoords);
+        extractAttribute(primitive, model, "JOINTS_0", joints);
+        extractAttribute(primitive, model, "WEIGHTS_0", weights);
+
+        if(normals.size() != positions.size() || texcoords.size() != positions.size()) {
+            Log::warn() << "GLTF primitive has inconsistent attribute sizes.";
+            return;
+        }
+
+        // Get material ID (GLTF assigns materials per primitive)
+        unsigned int materialId = (primitive.material >= 0) ? primitive.material : 0;
+
+        // Resize vectors to make sure they have the same size
+        size_t vertexCount = positions.size();
+        normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
+        texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
+        joints.resize(vertexCount, glm::uvec4(0));      // Default joints if missing
+        weights.resize(vertexCount, glm::vec4(0.0f));   // Default weights if missing
+
+        // Create interleaved vertex buffer
+        outVertices.reserve(outVertices.size() + vertexCount);
+        for(size_t i = 0; i < vertexCount; i++) {
+            outVertices.emplace_back(positions[i], normals[i], texcoords[i], materialId,
+                                     joints[i], weights[i]);
+        }
+
+        // Extract index buffer
+        std::vector<unsigned int> primitiveIndices;
+        extractIndices(primitive, model, primitiveIndices);
+
+        // Adjust indices to match the current vertex offset
+        for(unsigned int& index : primitiveIndices) {
+            index += baseIndex;
+        }
+
+        // Store index buffer in ObjMesh
+        auto objMesh = ObjMesh::create(resource, mesh.name + "_p" + std::to_string(i),
+                                       primitiveIndices, animationNode, skin);
+        resource.objMeshes.emplace_back(objMesh);
     }
-
-    // Get material ID (GLTF assigns materials per primitive)
-    unsigned int materialId = (primitive.material >= 0) ? primitive.material : 0;
-
-    // Ensure sizes match
-    size_t vertexCount = positions.size();
-    normals.resize(vertexCount, glm::vec3(0.0f));   // Default normal if missing
-    texcoords.resize(vertexCount, glm::vec2(0.0f)); // Default texcoord if missing
-    joints.resize(vertexCount, glm::uvec4(0));      // Default joints if missing
-    weights.resize(vertexCount, glm::vec4(0.0f));   // Default weights if missing
-
-    // Create interleaved vertex buffer
-    outVertices.reserve(outVertices.size() + vertexCount);
-    for(size_t i = 0; i < vertexCount; i++) {
-        outVertices.emplace_back(positions[i], normals[i], texcoords[i], materialId,
-                                 joints[i], weights[i]);
-    }
-
-    // Extract index buffer
-    std::vector<unsigned int> primitiveIndices;
-    extractIndices(primitive, model, primitiveIndices);
-
-    // Adjust indices to match the current vertex offset
-    for(unsigned int& index : primitiveIndices) {
-        index += baseIndex;
-    }
-
-    // Store index buffer in ObjMesh
-    auto objMesh = ObjMesh::create(resource, mesh.name, primitiveIndices, node);
-    resource.objMeshes.emplace_back(objMesh);
-    return objMesh;
 }
 
 void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {

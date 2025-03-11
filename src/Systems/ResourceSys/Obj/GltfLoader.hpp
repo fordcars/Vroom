@@ -18,9 +18,9 @@ private:
     const std::filesystem::path mPath;
 
     void loadMeshes(ObjResource& resource, const tinygltf::Model& model);
-    ObjMesh::Ptr loadMesh(ObjResource& resource,
-                          std::vector<ObjResource::Vertex>& outVertices,
-                          const tinygltf::Model& model, const tinygltf::Mesh& mesh,
-                          AnimationNode* node = nullptr);
+    void loadPrimitives(ObjResource& resource,
+                        std::vector<ObjResource::Vertex>& outVertices,
+                        const tinygltf::Model& model, int gltfNodeIndex,
+                        int gltfSkinIndex);
     void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
 };

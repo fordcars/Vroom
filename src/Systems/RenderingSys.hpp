@@ -28,7 +28,8 @@ private:
     RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
-    void renderEntity(const PositionComp& position, const RenderableComp& renderable);
+    void renderEntity(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
+                      const PositionComp& position, const RenderableComp& renderable);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
     glm::mat4 getProjectionMatrix(const CameraEntity& camera);

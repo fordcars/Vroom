@@ -19,17 +19,16 @@ public:
     ObjResource& parent;
     GPUBuffer indexBuffer;
     glm::mat4 transform{1.0f};
-    AnimationNode* node = nullptr; // Optional
-    Skin::Ptr skin;                // Optional
+    AnimationNode* animationNode = nullptr; // Optional
+    Skin::Ptr skin;                         // Optional
 
     static Ptr create(ObjResource& parent, const std::string& name,
                       const std::vector<unsigned int>& indices,
-                      AnimationNode* node = nullptr) {
-        return std::make_shared<ObjMesh>(parent, name, indices, node);
+                      AnimationNode* animationNode = nullptr, Skin::Ptr skin = nullptr) {
+        return std::make_shared<ObjMesh>(parent, name, indices, animationNode, skin);
     }
 
     ObjMesh(ObjResource& parent, const std::string& name,
-            const std::vector<unsigned int>& indices, AnimationNode* node = nullptr);
-
-    void updateMeshTransform();
+            const std::vector<unsigned int>& indices,
+            AnimationNode* animationNode = nullptr, Skin::Ptr skin = nullptr);
 };

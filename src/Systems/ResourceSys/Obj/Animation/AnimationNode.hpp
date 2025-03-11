@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+// In glTF, represents a node in the scene graph
 struct AnimationNode {
     using Ptr = std::unique_ptr<AnimationNode>;
     using CPtr = std::unique_ptr<const AnimationNode>;

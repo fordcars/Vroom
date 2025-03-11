@@ -1,6 +1,7 @@
 #include "AnimationSys.hpp"
 
 #include <glm/gtc/quaternion.hpp>
+#include <stack>
 
 #include "ResourceSys/Obj/Animation/Animation.hpp"
 
@@ -138,11 +139,51 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
     }
 
     // Update mesh and skin transforms with new node transforms
-    for(auto& mesh : renderableComp.objectResource->objMeshes) {
-        mesh->updateMeshTransform();
-    }
-
+    updateMeshTransforms(*renderableComp.objectResource.get());
     for(auto& skin : animationContainer->getSkins()) {
         skin->updateTransformBuffer();
+    }
+}
+
+// Handles skeletal (not skinned) animation
+void AnimationSys::updateMeshTransforms(const ObjResource& objResource) {
+    std::unordered_map<AnimationNode*, glm::mat4> cachedTransforms;
+
+    // Apply all joints transformations, from root to animationNode, for each mesh
+    for(auto& mesh : objResource.objMeshes) {
+        if(!mesh->animationNode) continue;
+        AnimationNode* joint = mesh->animationNode;
+        std::stack<AnimationNode*> stack;
+        glm::mat4 accumulatedTransform = glm::mat4(1.0f);
+
+        // Go up the hierarchy
+        // If we hit a joint that has already been processed, we can use its cached
+        // transform
+        while(joint != nullptr) {
+            if(cachedTransforms.find(joint) != cachedTransforms.end()) {
+                accumulatedTransform = cachedTransforms[joint];
+                break;
+            }
+
+            stack.push(joint);
+            joint = joint->parent;
+        }
+
+        // Apply from root (or after last cached) to joint
+        while(!stack.empty()) {
+            joint = stack.top();
+            stack.pop();
+
+            glm::mat4 localTransform = glm::mat4(1.0f);
+            localTransform = glm::translate(glm::mat4(1.0f), joint->translation) *
+                             glm::mat4_cast(joint->rotation) *
+                             glm::scale(glm::mat4(1.0f), joint->scale);
+
+            accumulatedTransform = accumulatedTransform * localTransform;
+            cachedTransforms.insert({joint, accumulatedTransform});
+            joint = joint->parent;
+        }
+
+        mesh->transform = accumulatedTransform;
     }
 }

@@ -15,4 +15,5 @@ private:
                                 float blendFactor, float deltaTime);
     void updateAnimation(RenderableComp& renderableComp, AnimationComp& animationComp,
                          float deltaTime);
+    void updateMeshTransforms(const ObjResource& objResource);
 };

@@ -58,10 +58,14 @@ bool RenderingSys::init(SDL_Window* window) {
 void RenderingSys::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 
 void RenderingSys::render(SDL_Window* window) {
+    const CameraEntity& camera = CameraEntity::instances[0];
+    glm::mat4 viewMatrix = getViewMatrix(camera);
+    glm::mat4 projectionMatrix = getProjectionMatrix(camera);
+
     mCurrentTime = SDL_GetTicks();
     EntityFilter<PositionComp, RenderableComp> filter;
     for(const auto& [position, renderable] : filter) {
-        renderEntity(position, renderable);
+        renderEntity(viewMatrix, projectionMatrix, position, renderable);
     }
 
     // Check for gl error
@@ -94,11 +98,12 @@ void RenderingSys::initGL(SDL_Window* window) {
     glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
 }
 
-void RenderingSys::renderEntity(const PositionComp& position,
+void RenderingSys::renderEntity(const glm::mat4& viewMatrix,
+                                const glm::mat4& projectionMatrix,
+                                const PositionComp& position,
                                 const RenderableComp& renderable) {
     using namespace Constants;
     const ShaderResource& shader = *renderable.shader;
-    const CameraEntity& camera = CameraEntity::instances[0];
     const GLsizei stride = sizeof(ObjResource::Vertex);
 
     GLint skinTransformUnformBlock = -1;
@@ -154,8 +159,6 @@ void RenderingSys::renderEntity(const PositionComp& position,
     for(const auto& mesh : renderable.meshes) {
         // Per mesh uniforms
         glm::mat4 modelMatrix = getModelMatrix(position) * mesh->transform;
-        glm::mat4 viewMatrix = getViewMatrix(camera);
-        glm::mat4 projectionMatrix = getProjectionMatrix(camera);
 
         glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
