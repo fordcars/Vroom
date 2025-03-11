@@ -1,6 +1,7 @@
 #include "GltfLoader.hpp"
 
 #include <glad/glad.h>
+#include <stb_image.h> // Used by TinyGLTF
 
 #include <glm/glm.hpp>
 #include <stack>
@@ -107,10 +108,15 @@ bool GltfLoader::load(ObjResource& resource) {
         ret = loader.LoadBinaryFromFile(&model, &err, &warn, mPath.string());
     }
     if(!warn.empty()) {
+        warn.pop_back(); // Remove trailing newline
         Log::warn() << "TinyGLTF warning: " << warn;
     }
-    if(!ret) {
+    if(!ret && !err.empty()) {
+        err.pop_back(); // Remove trailing newline
         Log::error() << "TinyGLTF error: " << err;
+        if(stbi_failure_reason()) {
+            Log::error() << "STB Image error: " << stbi_failure_reason();
+        }
         return false;
     }
 
