@@ -50,8 +50,9 @@ void WavefrontLoader::loadOnGPU(ObjResource& resource, const tinyobj::ObjReader&
         mat.alpha = 1.0f - objMat.dissolve; // OBJ uses "dissolve" for transparency
 
         // Convert specular to roughness/metallic approximation
-        mat.metallic = glm::length(
-            glm::vec3(objMat.specular[0], objMat.specular[1], objMat.specular[2]));
+        mat.metallic = glm::length(glm::vec3(objMat.specular[0], objMat.specular[1],
+                                             objMat.specular[2])) *
+                       0.8f;
         mat.roughness = 1.0f - objMat.shininess / 1000.0f; // Roughness approximation
 
         // Emission (same in both OBJ & PBR)

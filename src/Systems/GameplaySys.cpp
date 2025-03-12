@@ -2,6 +2,7 @@
 
 #include "Constants.hpp"
 #include "Entities/CameraEntity.hpp"
+#include "Entities/LightEntity.hpp"
 #include "Entities/PlayerEntity.hpp"
 #include "Entities/PropEntity.hpp"
 #include "ResourceSys/ResourceSys.hpp"
@@ -37,7 +38,7 @@ void GameplaySys::start() {
         position.coords.z = 10;
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr_skinned");
+        renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr_skinned");
         animationComp.setAnimation(Constants::AnimationName::get<"Happy">());
         animationComp.startTime =
             0.09; // The walk animation isn't a perfect loop, this helps
@@ -55,21 +56,20 @@ void GameplaySys::start() {
         renderable.objectResource =
             ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic_pbr");
+        renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(prop);
     }
 
-    // Create teapot
+    // Create light
     {
-        PropEntity prop;
-        auto [position, renderable, motion, frictionComp] = prop.getComponents();
-        position.coords.x = 5;
-        position.coords.y = -5;
+        LightEntity mainLight;
+        auto [position, light, motion] = mainLight.getComponents();
+        position.coords.x = 10;
+        position.coords.y = 20;
         position.coords.z = 15;
-        renderable.objectResource = ResourceSys::get().getObjResource("cow");
-        renderable.setMeshes(renderable.objectResource->objMeshes);
-        renderable.shader = ResourceSys::get().getShaderResource("basic");
-        PropEntity::instances.emplace_back(prop);
+        light.shader = ResourceSys::get().getShaderResource("light_pbr");
+        light.intensity = 8.0f;
+        LightEntity::instances.emplace_back(mainLight);
     }
 }
 
@@ -77,4 +77,17 @@ void GameplaySys::update(float deltaTime) {
     auto& playerPosition = PlayerEntity::instances[0].get<PositionComp>().coords;
     CameraEntity::instances[0].get<CameraInfoComp>().direction =
         glm::vec4(playerPosition, 1);
+
+    PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
+    PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
+    PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
+
+    // Multicolor light
+    float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
+    glm::vec3 lightColor;
+    lightColor.r = (sin(time * 2.0f) + 1.0f) / 2.0f;
+    lightColor.g = (sin(time * 0.7f) + 1.0f) / 2.0f;
+    lightColor.b = (sin(time * 1.3f) + 1.0f) / 2.0f;
+    LightEntity::instances[0].get<LightComp>().diffuse = lightColor;
+    LightEntity::instances[0].get<LightComp>().specular = lightColor;
 }

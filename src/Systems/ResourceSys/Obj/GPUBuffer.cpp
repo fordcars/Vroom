@@ -6,14 +6,20 @@ GPUBuffer::GPUBuffer() { glGenBuffers(1, &mId); }
 
 GPUBuffer::~GPUBuffer() { glDeleteBuffers(1, &mId); }
 
-GPUBuffer::GPUBuffer(const GPUBuffer& other) {
+GPUBuffer::GPUBuffer(const GPUBuffer& other) : mSize(other.mSize) {
     glGenBuffers(1, &mId);
-    if(other.mSize == 0) return;
+    if(mSize == 0) return;
 
+    // Bind the source buffer for reading
     glBindBuffer(GL_COPY_READ_BUFFER, other.mId);
+    // Allocate data for the new buffer
     glBindBuffer(GL_COPY_WRITE_BUFFER, mId);
+    glBufferData(GL_COPY_WRITE_BUFFER, mSize, nullptr, GL_STATIC_DRAW);
 
+    // Copy data
     glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, mSize);
+
+    // Unbind buffers
     glBindBuffer(GL_COPY_READ_BUFFER, 0);
     glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 }

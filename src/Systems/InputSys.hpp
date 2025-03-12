@@ -20,7 +20,8 @@ public:
         WalkForward,
         WalkBackward,
         Run,
-        Crouch
+        Crouch,
+        ChangeDebugRenderMode
     };
 
 private:
@@ -29,6 +30,7 @@ private:
 
     glm::vec3 mUpdateWalkDirection{}; // Walk direction for current step
     bool mRunning = false;
+    int mDebugRenderMode = 0;
 
     void handleNeed(InputNeed need, bool isKeyDown);
     void handleDownNeed(InputNeed need);

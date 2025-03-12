@@ -185,10 +185,10 @@ void GltfLoader::loadPrimitives(ObjResource& resource,
     if(resource.animationContainer) {
         animationNode = resource.animationContainer->getNode(gltfNodeIndex);
         Log::debug() << "Loading animated mesh '" << mesh.name << "' with "
-                     << mesh.primitives.size() << " primitives.";
+                     << mesh.primitives.size() << " primitive(s).";
     } else {
         Log::debug() << "Loading mesh '" << mesh.name << "' with "
-                     << mesh.primitives.size() << " primitives.";
+                     << mesh.primitives.size() << " primitive(s).";
     }
 
     // Get skin if present

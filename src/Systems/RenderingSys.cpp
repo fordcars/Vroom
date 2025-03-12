@@ -17,7 +17,10 @@ RenderingSys& RenderingSys::get() {
     return *instance;
 }
 
-RenderingSys::~RenderingSys() { SDL_GL_DeleteContext(mContext); }
+RenderingSys::~RenderingSys() {
+    SDL_GL_DeleteContext(mContext);
+    glDeleteTextures(GBufferTexture::COUNT, mDeferredTextures);
+}
 
 bool RenderingSys::init(SDL_Window* window) {
     Log::info() << "Initializing graphics...";
@@ -55,17 +58,40 @@ bool RenderingSys::init(SDL_Window* window) {
     return true;
 }
 
-void RenderingSys::clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+void RenderingSys::clear() {
+    // Must clear framebuffers to black, since we are using additive blending
+    glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
 void RenderingSys::render(SDL_Window* window) {
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 viewMatrix = getViewMatrix(camera);
     glm::mat4 projectionMatrix = getProjectionMatrix(camera);
-
     mCurrentTime = SDL_GetTicks();
-    EntityFilter<PositionComp, RenderableComp> filter;
-    for(const auto& [position, renderable] : filter) {
-        renderEntity(viewMatrix, projectionMatrix, position, renderable);
+
+    // First pass: render entities to GBuffer
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
+
+    EntityFilter<PositionComp, RenderableComp> renderableFilter;
+    for(const auto& [position, renderable] : renderableFilter) {
+        renderRenderable(viewMatrix, projectionMatrix, position, renderable);
+    }
+
+    // Second pass: render lights to screen using GBuffer
+    glEnable(GL_BLEND); // Enable blending to add each light source
+    glDisable(GL_DEPTH_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    EntityFilter<PositionComp, LightComp> lightFilter;
+    for(const auto& [position, light] : lightFilter) {
+        renderLight(viewMatrix, position, light);
     }
 
     // Check for gl error
@@ -85,9 +111,6 @@ void RenderingSys::initGL(SDL_Window* window) {
     glGenVertexArrays(1, &vertexArrayID);
     glBindVertexArray(vertexArrayID);
 
-    glClearColor(Constants::BG_COLOR.r, Constants::BG_COLOR.g, Constants::BG_COLOR.b,
-                 1.0f);
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); // Accept the fragment closer to the camera
 
@@ -96,12 +119,136 @@ void RenderingSys::initGL(SDL_Window* window) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glEnable(GL_MULTISAMPLE); // Enable anti-aliasing (SDL attributes)
+
+    glBlendFunc(GL_ONE, GL_ONE);
+    glBlendEquation(GL_FUNC_ADD);
+
+    initDeferredRendering(width, height);
 }
 
-void RenderingSys::renderEntity(const glm::mat4& viewMatrix,
-                                const glm::mat4& projectionMatrix,
-                                const PositionComp& position,
-                                const RenderableComp& renderable) {
+void RenderingSys::initDeferredRendering(int width, int height) {
+    // Check system compatibility
+    if(GBufferTexture::COUNT > GL_MAX_COLOR_ATTACHMENTS) {
+        Log::error() << "GBufferTexture::COUNT exceeds GL_MAX_COLOR_ATTACHMENTS!";
+    }
+
+    // Create framebuffer
+    glGenFramebuffers(1, &mDeferredFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
+
+    // Add depth buffer
+    glGenRenderbuffers(1, &mDeferredDepthbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, mDeferredDepthbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
+                              mDeferredDepthbuffer);
+
+    // Generate textures
+    glGenTextures(GBufferTexture::COUNT, mDeferredTextures);
+
+    // Position
+    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Position]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,             // Level
+                 GL_RGB32F,     // Internal format
+                 width, height, // Size
+                 0,             // Border
+                 GL_RGB,        // Format
+                 GL_FLOAT,      // Data format
+                 nullptr        // Data (0s)
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mDeferredTextures[0], 0);
+
+    // Normal
+    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Normal]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,             // Level
+                 GL_RGB32F,     // Internal format
+                 width, height, // Size
+                 0,             // Border
+                 GL_RGB,        // Format
+                 GL_FLOAT,      // Data format
+                 nullptr        // Data (0s)
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, mDeferredTextures[1], 0);
+
+    // Albedo
+    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Albedo]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,             // Level
+                 GL_RGB32F,     // Internal format
+                 width, height, // Size
+                 0,             // Border
+                 GL_RGB,        // Format
+                 GL_FLOAT,      // Data format
+                 nullptr        // Data (0s)
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,
+                         mDeferredTextures[GBufferTexture::Albedo], 0);
+
+    // Metallic
+    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Metallic]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,             // Level
+                 GL_RED,        // Internal format
+                 width, height, // Size
+                 0,             // Border
+                 GL_RED,        // Format
+                 GL_FLOAT,      // Data format
+                 nullptr        // Data (0s)
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
+                         mDeferredTextures[GBufferTexture::Metallic], 0);
+
+    // Roughness
+    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Roughness]);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,             // Level
+                 GL_RED,        // Internal format
+                 width, height, // Size
+                 0,             // Border
+                 GL_RED,        // Format
+                 GL_FLOAT,      // Data format
+                 nullptr        // Data (0s)
+    );
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4,
+                         mDeferredTextures[GBufferTexture::Roughness], 0);
+
+    // Set draw buffers
+    GLenum drawBuffers[GBufferTexture::COUNT];
+    for(std::size_t i = 0; i < GBufferTexture::COUNT; i++) {
+        drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
+    }
+    glDrawBuffers(GBufferTexture::COUNT, drawBuffers);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        Log::error() << "Could not initialize deferred rendering framebuffer!";
+    }
+}
+
+void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
+                                    const glm::mat4& projectionMatrix,
+                                    const PositionComp& position,
+                                    const RenderableComp& renderable) {
+    if(!renderable.objectResource || !renderable.shader) {
+        return;
+    }
+
     using namespace Constants;
     const ShaderResource& shader = *renderable.shader;
     const GLsizei stride = sizeof(ObjResource::Vertex);
@@ -139,9 +286,9 @@ void RenderingSys::renderEntity(const glm::mat4& viewMatrix,
     }
 
     // Enable vertex attributes
-    glEnableVertexAttribArray(0); // Position
-    glEnableVertexAttribArray(1); // Normal
-    glEnableVertexAttribArray(2); // Material ID
+    glEnableVertexAttribArray(0); // Positions
+    glEnableVertexAttribArray(1); // Normals
+    glEnableVertexAttribArray(2); // Material IDs
 
     // Position (vec3)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
@@ -185,6 +332,7 @@ void RenderingSys::renderEntity(const glm::mat4& viewMatrix,
             }
         }
 
+        // Draw
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(GL_TRIANGLES, // Mode
                        mesh->indexBuffer.getCount(),
@@ -198,6 +346,66 @@ void RenderingSys::renderEntity(const glm::mat4& viewMatrix,
     glDisableVertexAttribArray(2);
     glDisableVertexAttribArray(3);
     glDisableVertexAttribArray(4);
+}
+
+void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
+                               const LightComp& light) {
+    if(!light.shader) {
+        return;
+    }
+
+    using namespace Constants;
+    const ShaderResource& shader = *light.shader;
+    const GLsizei stride = sizeof(LightComp::Vertex);
+
+    glUseProgram(shader.getId());
+
+    // Set uniforms
+    glUniformMatrix4fv(shader.getUniform(UniformName::get<"viewMatrix">()), 1, GL_FALSE,
+                       &viewMatrix[0][0]);
+    glUniform3f(shader.getUniform(UniformName::get<"lightPos_worldspace">()),
+                position.coords.x, position.coords.y, position.coords.z);
+    glUniform3f(shader.getUniform(UniformName::get<"lightDiffuseColor">()),
+                light.diffuse.r, light.diffuse.g, light.diffuse.b);
+    glUniform3f(shader.getUniform(UniformName::get<"lightSpecularColor">()),
+                light.specular.r, light.specular.g, light.specular.b);
+    glUniform1f(shader.getUniform(UniformName::get<"lightIntensity">()), light.intensity);
+
+    int textureUnit = 0;
+    glUniform1i(shader.getUniform(UniformName::get<"positionTex">()), textureUnit++);
+    glUniform1i(shader.getUniform(UniformName::get<"normalTex">()), textureUnit++);
+    glUniform1i(shader.getUniform(UniformName::get<"albedoTex">()), textureUnit++);
+    glUniform1i(shader.getUniform(UniformName::get<"metallicTex">()), textureUnit++);
+    glUniform1i(shader.getUniform(UniformName::get<"roughnessTex">()), textureUnit++);
+
+    // Set textures for samplers
+    for(std::size_t i = 0; i < GBufferTexture::COUNT; i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
+    }
+
+    // Attributes
+    glBindBuffer(GL_ARRAY_BUFFER, light.vertexBuffer.getId());
+    glEnableVertexAttribArray(0); // Positions
+    glEnableVertexAttribArray(1); // Texcoords
+
+    // Note at this point, we are probably drawing a simple, full screen quad
+    // Positions (vec3)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(LightComp::Vertex, position));
+
+    // UVs (vec2)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(LightComp::Vertex, texcoord));
+
+    // Draw
+    glDrawArrays(GL_TRIANGLES,     // Mode
+                 0,                // Start
+                 light.vertexCount // Count
+    );
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {

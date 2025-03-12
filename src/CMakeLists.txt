@@ -25,6 +25,7 @@ set(SOURCES
 
 	# Entities
 	Entities/CameraEntity.cpp
+	Entities/LightEntity.cpp
 	Entities/PlayerEntity.cpp
 	Entities/PropEntity.cpp
 )
@@ -67,15 +68,18 @@ set(HEADERS
 	Entities/EntityRegistry.hpp
 	Entities/EntityFilter.hpp
 	Entities/CameraEntity.hpp
+	Entities/LightEntity.hpp
 	Entities/PlayerEntity.hpp
 	Entities/PropEntity.hpp
 
 	# Components
+	Components/AnimationComp.hpp
+	Components/CameraInfoComp.hpp
+	Components/FrictionComp.hpp
+	Components/LightComp.hpp
+	Components/MotionComp.hpp
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
-	Components/CameraInfoComp.hpp
-	Components/AnimationComp.hpp
-	Components/MotionComp.hpp
 )
 
 # Packages

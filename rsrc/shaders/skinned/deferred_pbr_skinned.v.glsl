@@ -1,4 +1,5 @@
 #version 330 core
+#define MAX_BONES_PER_SKINNED_MESH 500
 
 layout(location = 0) in vec3 vertexPosition_modelspace;
 layout(location = 1) in vec3 vertexNormal_modelspace;
@@ -17,32 +18,15 @@ uniform mat4 normalMatrix;
 // Skin
 uniform int isSkinned;
 layout(std140) uniform SkinTransformBlock {
-    mat4 boneTransforms[500];  // MAX_BONES_PER_SKINNED_MESH = 500
+    mat4 boneTransforms[MAX_BONES_PER_SKINNED_MESH];
 };
 
 flat out int materialId;
-out vec3 normal_cameraspace;
-out vec3 lightDirection_cameraspace;
 out vec3 vertexPosition_worldspace;
-out vec3 eyeDirection_cameraspace;
-
-void calculateCameraspaceStuff(vec4 position, vec4 normal, vec3 lightPosition)
-{
-    vertexPosition_worldspace = (modelMatrix * position).xyz;
-    
-    vec3 vertexPosition_cameraspace = (viewMatrix * modelMatrix * position).xyz;
-    // Vector from vertex to camera
-    eyeDirection_cameraspace = -vertexPosition_cameraspace;
-    
-    vec3 lightPosition_cameraspace = (viewMatrix * vec4(lightPosition, 1)).xyz;
-    lightDirection_cameraspace = lightPosition_cameraspace - vertexPosition_cameraspace;
-    
-    normal_cameraspace = (normalMatrix * normal).xyz;
-}
+out vec3 normal_cameraspace;
 
 void main()
 {
-    vec3 lightPosition_worldspace = vec3(60, 60, 40);
     vec4 position;
     vec4 normal;
 
@@ -63,7 +47,9 @@ void main()
         normal = vec4(vertexNormal_modelspace, 0);
     }
 
-    calculateCameraspaceStuff(position, normal, lightPosition_worldspace);
-    gl_Position = MVP * position;
     materialId = vertexMaterialId;
+    vertexPosition_worldspace = (modelMatrix * position).xyz;
+    normal_cameraspace = (normalMatrix * normal).xyz;
+
+    gl_Position = MVP * position;
 }

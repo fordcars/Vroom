@@ -18,8 +18,6 @@ constexpr unsigned TARGET_UPDATE_FREQ = 120; // Steps per second
 constexpr unsigned AA_SAMPLES = 8;
 const float HORIZ_FOV = glm::radians(90.0f); // In radians
 
-constexpr glm::vec3 BG_COLOR(0.78f, 0.78f, 1.0f);
-
 constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
 
 // Strings used as map keys, but known at compile time
@@ -27,7 +25,10 @@ constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
 // these values instead of a map of std::strings.
 using UniformName =
     Utils::StringIndexor<"MVP", "modelMatrix", "viewMatrix", "projectionMatrix",
-                         "normalMatrix", "time", "isSkinned">;
+                         "normalMatrix", "time", "isSkinned", "lightPos_worldspace",
+                         "lightDiffuseColor", "lightSpecularColor", "lightIntensity",
+                         "positionTex", "normalTex", "albedoTex", "metallicTex",
+                         "roughnessTex">;
 using UniformBlockName = Utils::StringIndexor<"ObjMaterialsBlock", "SkinTransformBlock">;
 using AnimationName = Utils::StringIndexor<"Normal Walk", "Zombie Walk", "Happy">;
 

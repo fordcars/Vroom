@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <optional>
 
+#include "Components/LightComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
 #include "Entities/CameraEntity.hpp"
@@ -19,8 +20,14 @@ public:
     void render(SDL_Window* window);
 
 private:
+    enum GBufferTexture { Position, Normal, Albedo, Metallic, Roughness, COUNT };
+
     SDL_GLContext mContext;
     unsigned mCurrentTime = 0;
+
+    GLuint mDeferredFramebuffer = 0;
+    GLuint mDeferredTextures[GBufferTexture::COUNT]{};
+    GLuint mDeferredDepthbuffer = 0;
 
     RenderingSys(const RenderingSys&) = delete;
     RenderingSys& operator=(const RenderingSys&) = delete;
@@ -28,8 +35,11 @@ private:
     RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
-    void renderEntity(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
-                      const PositionComp& position, const RenderableComp& renderable);
+    void initDeferredRendering(int width, int height);
+    void renderRenderable(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
+                          const PositionComp& position, const RenderableComp& renderable);
+    void renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
+                     const LightComp& light);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
     glm::mat4 getProjectionMatrix(const CameraEntity& camera);
