@@ -75,7 +75,6 @@ void AnimationContainer::loadSkins(const tinygltf::Model &model) {
         Skin::Ptr newSkin = Skin::create(*this, model, skin);
 
         mSkins.push_back(newSkin);
-        mGltfSkinIndexToSkin.insert({i, newSkin});
     }
 }
 

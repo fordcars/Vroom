@@ -8,6 +8,7 @@
 #include "Animation/AnimationNode.hpp"
 #include "Animation/Skin.hpp"
 #include "GPUBuffer.hpp"
+#include "ObjTexture.hpp"
 
 class ObjResource;
 class ObjMesh {
@@ -19,8 +20,16 @@ public:
     ObjResource& parent;
     GPUBuffer indexBuffer;
     glm::mat4 transform{1.0f};
+
     AnimationNode* animationNode = nullptr; // Optional
-    Skin::Ptr skin;                         // Optional
+    Skin::Ptr skin = nullptr;               // Optional
+
+    // Optional textures
+    ObjTexture::Ptr baseColorTexture;
+    ObjTexture::Ptr normalTexture;
+    ObjTexture::Ptr metallicRoughnessTexture;
+    ObjTexture::Ptr emissiveTexture;
+    float normalScale = 1.0f;
 
     static Ptr create(ObjResource& parent, const std::string& name,
                       const std::vector<unsigned int>& indices,

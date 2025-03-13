@@ -53,9 +53,10 @@ public:
         return it == mGltfNodeIndexToNode.end() ? nullptr : it->second;
     }
 
-    Skin::Ptr getSkin(int gltfSkinIndex) {
-        auto it = mGltfSkinIndexToSkin.find(gltfSkinIndex);
-        return it == mGltfSkinIndexToSkin.end() ? nullptr : it->second;
+    Skin::Ptr getSkin(int skinIndex) {
+        if(skinIndex < 0) return nullptr;
+        if(skinIndex >= mSkins.size()) return nullptr;
+        return mSkins[skinIndex];
     }
 
     std::vector<Skin::Ptr>& getSkins() { return mSkins; }
@@ -66,7 +67,6 @@ private:
     std::unordered_set<int> mVisitedInputNodes;
     std::unordered_map<int, AnimationNode*> mGltfNodeIndexToNode;
     std::vector<Skin::Ptr> mSkins; // All skins
-    std::unordered_map<int, Skin::Ptr> mGltfSkinIndexToSkin;
     std::array<Animation::Ptr, Constants::AnimationName::size()>
         mAnimations{}; // Animations mapped by name index
 

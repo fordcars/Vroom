@@ -4,8 +4,10 @@
 
 #include "Animation/AnimationContainer.hpp"
 #include "GPUBuffer.hpp"
+#include "ObjImage.hpp"
 #include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
+#include "ObjTexture.hpp"
 
 class ObjResource {
 public:
@@ -25,8 +27,10 @@ public:
 
     GPUBuffer vertexBuffer;
     GPUBuffer materialUniformBuffer;
-    AnimationContainer::Ptr animationContainer;
     std::vector<ObjMesh::Ptr> objMeshes;
+    std::vector<ObjImage::Ptr> objImages;
+    std::vector<ObjTexture::Ptr> objTextures;
+    AnimationContainer::Ptr animationContainer; // Optional
 
     static Ptr create(std::unique_ptr<ObjLoader> loader) {
         return std::make_shared<ObjResource>(std::move(loader));

@@ -16,6 +16,8 @@ set(SOURCES
 	Systems/ResourceSys/Obj/GltfLoader.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
+	Systems/ResourceSys/Obj/ObjImage.cpp
+	Systems/ResourceSys/Obj/ObjTexture.cpp
 	Systems/ResourceSys/Obj/Animation/AnimationContainer.cpp
 	Systems/ResourceSys/Obj/Animation/Animation.cpp
 	Systems/ResourceSys/Obj/Animation/Skin.cpp
@@ -54,6 +56,8 @@ set(HEADERS
 	Systems/ResourceSys/Obj/GltfLoader.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
+	Systems/ResourceSys/Obj/ObjImage.hpp
+	Systems/ResourceSys/Obj/ObjTexture.hpp
 	Systems/ResourceSys/Obj/ObjMaterial.hpp
 	Systems/ResourceSys/Obj/Animation/AnimationNode.hpp
 	Systems/ResourceSys/Obj/Animation/AnimationContainer.hpp

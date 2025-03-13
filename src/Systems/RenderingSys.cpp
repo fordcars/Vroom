@@ -245,6 +245,29 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
                                     const glm::mat4& projectionMatrix,
                                     const PositionComp& position,
                                     const RenderableComp& renderable) {
+    constexpr unsigned POSITION_ATTRIB = 0;
+    constexpr unsigned NORMAL_ATTRIB = 1;
+    constexpr unsigned TEXCOORD_ATTRIB = 2;
+    constexpr unsigned MATERIAL_ATTRIB = 3;
+    constexpr unsigned BONE_ID_ATTRIB = 4;
+    constexpr unsigned WEIGHT_ATTRIB = 5;
+
+    auto setTexture = [](std::size_t samplerUniformLocation,
+                         std::size_t hasSamplerUniformLocation, const ObjTexture* texture,
+                         GLuint textureUnit) {
+        if(texture) {
+            glActiveTexture(GL_TEXTURE0 + textureUnit);
+            glBindTexture(GL_TEXTURE_2D, texture->image->textureId);
+            glBindSampler(textureUnit, texture->samplerId);
+            glUniform1i(samplerUniformLocation, textureUnit);
+            glUniform1i(hasSamplerUniformLocation, 1);
+
+        } else {
+            glUniform1i(samplerUniformLocation, 0);
+            glUniform1i(hasSamplerUniformLocation, 0);
+        }
+    };
+
     if(!renderable.objectResource || !renderable.shader) {
         return;
     }
@@ -273,33 +296,38 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
     }
 
     if(isSkinnedShader) {
-        glEnableVertexAttribArray(3); // Bone IDs
-        glEnableVertexAttribArray(4); // Bone weights
+        glEnableVertexAttribArray(BONE_ID_ATTRIB);
+        glEnableVertexAttribArray(WEIGHT_ATTRIB);
 
         // Joint indices
-        glVertexAttribIPointer(3, 4, GL_UNSIGNED_INT, stride,
+        glVertexAttribIPointer(BONE_ID_ATTRIB, 4, GL_UNSIGNED_INT, stride,
                                (void*)offsetof(ObjResource::Vertex, joints));
 
         // Weights
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride,
+        glVertexAttribPointer(WEIGHT_ATTRIB, 4, GL_FLOAT, GL_FALSE, stride,
                               (void*)offsetof(ObjResource::Vertex, weights));
     }
 
     // Enable vertex attributes
-    glEnableVertexAttribArray(0); // Positions
-    glEnableVertexAttribArray(1); // Normals
-    glEnableVertexAttribArray(2); // Material IDs
+    glEnableVertexAttribArray(POSITION_ATTRIB);
+    glEnableVertexAttribArray(NORMAL_ATTRIB);
+    glEnableVertexAttribArray(TEXCOORD_ATTRIB);
+    glEnableVertexAttribArray(MATERIAL_ATTRIB);
 
     // Position (vec3)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+    glVertexAttribPointer(POSITION_ATTRIB, 3, GL_FLOAT, GL_FALSE, stride,
                           (void*)offsetof(ObjResource::Vertex, position));
 
     // Normal (vec3)
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+    glVertexAttribPointer(NORMAL_ATTRIB, 3, GL_FLOAT, GL_FALSE, stride,
                           (void*)offsetof(ObjResource::Vertex, normal));
 
+    // Texcoord (vec2)
+    glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, stride,
+        (void*)offsetof(ObjResource::Vertex, texcoord));
+
     // Material ID
-    glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, stride,
+    glVertexAttribIPointer(MATERIAL_ATTRIB, 1, GL_UNSIGNED_INT, stride,
                            (void*)offsetof(ObjResource::Vertex, materialId));
 
     // Render all meshes
@@ -322,6 +350,24 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
         glUniformMatrix4fv(shader.getUniform(UniformName::get<"normalMatrix">()), 1,
                            GL_FALSE, &normalMatrix[0][0]);
 
+        // Set textures if present
+        int textureUnit = 0;
+        setTexture(shader.getUniform(UniformName::get<"baseColorTex">()),
+                   shader.getUniform(UniformName::get<"hasBaseColorTex">()),
+                   mesh->baseColorTexture.get(), textureUnit++);
+        setTexture(shader.getUniform(UniformName::get<"normalTex">()),
+                   shader.getUniform(UniformName::get<"hasNormalTex">()),
+                   mesh->normalTexture.get(), textureUnit++);
+        setTexture(shader.getUniform(UniformName::get<"metallicRoughnessTex">()),
+                   shader.getUniform(UniformName::get<"hasMetallicRoughnessTex">()),
+                   mesh->metallicRoughnessTexture.get(), textureUnit++);
+        setTexture(shader.getUniform(UniformName::get<"emissiveTex">()),
+                   shader.getUniform(UniformName::get<"hasEmissiveTex">()),
+                   mesh->emissiveTexture.get(), textureUnit++);
+
+        glUniform1f(shader.getUniform(UniformName::get<"normalScale">()),
+                    mesh->normalScale);
+
         if(isSkinnedShader) {
             if(mesh->skin) {
                 glUniform1i(isSkinnedUniform, 1);
@@ -341,11 +387,12 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
         );
     }
 
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
-    glDisableVertexAttribArray(3);
-    glDisableVertexAttribArray(4);
+    glDisableVertexAttribArray(POSITION_ATTRIB);
+    glDisableVertexAttribArray(NORMAL_ATTRIB);
+    glDisableVertexAttribArray(TEXCOORD_ATTRIB);
+    glDisableVertexAttribArray(MATERIAL_ATTRIB);
+    glDisableVertexAttribArray(BONE_ID_ATTRIB);
+    glDisableVertexAttribArray(WEIGHT_ATTRIB);
 }
 
 void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
@@ -382,6 +429,7 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     for(std::size_t i = 0; i < GBufferTexture::COUNT; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
+        glBindSampler(i, 0);
     }
 
     // Attributes

@@ -17,10 +17,15 @@ public:
 private:
     const std::filesystem::path mPath;
 
+    void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
+    void loadImages(ObjResource& resource, const tinygltf::Model& model);
+    void loadTextures(ObjResource& resource, const tinygltf::Model& model);
     void loadMeshes(ObjResource& resource, const tinygltf::Model& model);
     void loadPrimitives(ObjResource& resource,
                         std::vector<ObjResource::Vertex>& outVertices,
                         const tinygltf::Model& model, int gltfNodeIndex,
                         int gltfSkinIndex);
-    void loadMaterials(ObjResource& resource, const tinygltf::Model& model);
+    void setMeshTextures(ObjResource& resource, ObjMesh::Ptr mesh,
+                         const tinygltf::Model& model,
+                         const tinygltf::Primitive& primitive);
 };

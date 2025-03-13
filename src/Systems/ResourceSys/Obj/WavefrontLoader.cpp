@@ -52,18 +52,12 @@ void WavefrontLoader::loadOnGPU(ObjResource& resource, const tinyobj::ObjReader&
         // Convert specular to roughness/metallic approximation
         mat.metallic = glm::length(glm::vec3(objMat.specular[0], objMat.specular[1],
                                              objMat.specular[2])) *
-                       0.8f;
-        mat.roughness = 1.0f - objMat.shininess / 1000.0f; // Roughness approximation
+                       0.40;
+        mat.roughness = 1.0f - objMat.shininess / 500.0f; // Roughness approximation
 
         // Emission (same in both OBJ & PBR)
         mat.emission =
             glm::vec3(objMat.emission[0], objMat.emission[1], objMat.emission[2]);
-
-        // Set default texture indices (no textures in OBJ by default)
-        mat.baseColorTextureIndex = -1;
-        mat.metallicRoughnessTextureIndex = -1;
-        mat.normalTextureIndex = -1;
-        mat.emissiveTextureIndex = -1;
 
         objMaterials.push_back(mat);
     }

@@ -65,7 +65,7 @@ void GameplaySys::start() {
         LightEntity mainLight;
         auto [position, light, motion] = mainLight.getComponents();
         position.coords.x = 10;
-        position.coords.y = 20;
+        position.coords.y = 15;
         position.coords.z = 15;
         light.shader = ResourceSys::get().getShaderResource("light_pbr");
         light.intensity = 8.0f;
@@ -82,12 +82,12 @@ void GameplaySys::update(float deltaTime) {
     PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
     PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
 
-    // Multicolor light
-    float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
-    glm::vec3 lightColor;
-    lightColor.r = (sin(time * 2.0f) + 1.0f) / 2.0f;
-    lightColor.g = (sin(time * 0.7f) + 1.0f) / 2.0f;
-    lightColor.b = (sin(time * 1.3f) + 1.0f) / 2.0f;
-    LightEntity::instances[0].get<LightComp>().diffuse = lightColor;
-    LightEntity::instances[0].get<LightComp>().specular = lightColor;
+//     // Multicolor light
+//     float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
+//     glm::vec3 lightColor;
+//     lightColor.r = (sin(time * 2.0f) + 1.0f) / 2.0f;
+//     lightColor.g = (sin(time * 0.7f) + 1.0f) / 2.0f;
+//     lightColor.b = (sin(time * 1.3f) + 1.0f) / 2.0f;
+//     LightEntity::instances[0].get<LightComp>().diffuse = lightColor;
+//     LightEntity::instances[0].get<LightComp>().specular = lightColor;
 }

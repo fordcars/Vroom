@@ -10,12 +10,7 @@ struct ObjMaterial {
     float p2;
 
     float alpha;
-    float roughness;
     float metallic;
+    float roughness;
     float sheen;
-
-    int baseColorTextureIndex;
-    int metallicRoughnessTextureIndex;
-    int normalTextureIndex;
-    int emissiveTextureIndex;
 };

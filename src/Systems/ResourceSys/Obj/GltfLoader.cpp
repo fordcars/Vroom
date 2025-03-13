@@ -123,9 +123,133 @@ bool GltfLoader::load(ObjResource& resource) {
     if(model.animations.size() > 0) {
         resource.animationContainer = std::make_unique<AnimationContainer>(model);
     }
-    loadMeshes(resource, model);
+
+    loadImages(resource, model);
+    loadTextures(resource, model);
     loadMaterials(resource, model);
+    loadMeshes(resource, model);
     return true;
+}
+
+void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {
+    std::vector<ObjMaterial> objMaterials;
+    for(const tinygltf::Material& gltfMaterial : model.materials) {
+        ObjMaterial material = {};
+
+        // Base Color (GLTF stores it as RGBA)
+        if(gltfMaterial.pbrMetallicRoughness.baseColorFactor.size() == 4) {
+            material.baseColor[0] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[0];
+            material.baseColor[1] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[1];
+            material.baseColor[2] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[2];
+            material.alpha = gltfMaterial.pbrMetallicRoughness.baseColorFactor[3];
+        } else {
+            material.baseColor[0] = 1.0f; // Default to white
+            material.baseColor[1] = 1.0f;
+            material.baseColor[2] = 1.0f;
+            material.alpha = 1.0f;
+        }
+
+        // Emission Color
+        if(gltfMaterial.emissiveFactor.size() == 3) {
+            material.emission[0] = gltfMaterial.emissiveFactor[0];
+            material.emission[1] = gltfMaterial.emissiveFactor[1];
+            material.emission[2] = gltfMaterial.emissiveFactor[2];
+        } else {
+            material.emission[0] = material.emission[1] = material.emission[2] = 0.0f;
+        }
+
+        // Roughness & Metallic Factors
+        material.roughness =
+            static_cast<float>(gltfMaterial.pbrMetallicRoughness.roughnessFactor);
+        material.metallic =
+            static_cast<float>(gltfMaterial.pbrMetallicRoughness.metallicFactor);
+        material.sheen =
+            0.0f; // Not supported in GLTF core, but could be added via extensions.
+
+        objMaterials.push_back(material);
+    }
+
+    resource.materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
+}
+
+void GltfLoader::loadImages(ObjResource& resource, const tinygltf::Model& model) {
+    for(const tinygltf::Image& gltfImage : model.images) {
+        if(gltfImage.image.empty()) {
+            Log::warn() << "Empty image data for image '" << gltfImage.name << "'.";
+            resource.objImages.emplace_back(
+                ObjImage::create(gltfImage.name, 0, 0, 0)); // Empty image
+            continue;
+        }
+
+        // Generate GL texture
+        GLuint texId;
+        glGenTextures(1, &texId);
+        glBindTexture(GL_TEXTURE_2D, texId);
+
+        // Load image data
+        Log::debug() << "Loading image '" << gltfImage.name << "' with dimensions "
+                     << gltfImage.width << "x" << gltfImage.height << " and "
+                     << gltfImage.component << " components.";
+
+        GLenum format = (gltfImage.component == 3) ? GL_RGB : GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, gltfImage.width, gltfImage.height, 0,
+                     format, GL_UNSIGNED_BYTE, gltfImage.image.data());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        GLenum error = glGetError();
+        if(error != GL_NO_ERROR) {
+            Log::error() << "OpenGL error: " << error;
+        }
+
+        // Create ObjImage
+        auto objImage =
+            ObjImage::create(gltfImage.name, texId, gltfImage.width, gltfImage.height);
+        resource.objImages.emplace_back(objImage);
+    }
+}
+
+void GltfLoader::loadTextures(ObjResource& resource, const tinygltf::Model& model) {
+    auto emptyImage = ObjImage::create("empty_image", 0, 0, 0);
+
+    for(const tinygltf::Texture& gltfTexture : model.textures) {
+        if(gltfTexture.source < 0) {
+            Log::warn() << "Texture '" << gltfTexture.name << "' has no image source.";
+            resource.objTextures.emplace_back(
+                ObjTexture::create(gltfTexture.name, emptyImage, 0)); // Empty texture
+            continue;
+        }
+
+        if(gltfTexture.source >= static_cast<int>(resource.objImages.size())) {
+            Log::warn() << "Texture '" << gltfTexture.name
+                        << "' has an invalid image source.";
+            resource.objTextures.emplace_back(
+                ObjTexture::create(gltfTexture.name, emptyImage, 0)); // Empty texture
+            continue;
+        }
+
+        const tinygltf::Sampler& sampler = model.samplers[gltfTexture.sampler];
+
+        // Create GL sampler
+        GLuint samplerId;
+        glGenSamplers(1, &samplerId);
+
+        GLenum minFilter =
+            sampler.minFilter != -1 ? sampler.minFilter : GL_LINEAR_MIPMAP_LINEAR;
+        GLenum magFilter = sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR;
+        GLenum wrapS = sampler.wrapS != -1 ? sampler.wrapS : GL_REPEAT;
+        GLenum wrapT = sampler.wrapT != -1 ? sampler.wrapT : GL_REPEAT;
+
+        glSamplerParameteri(samplerId, GL_TEXTURE_MIN_FILTER, minFilter);
+        glSamplerParameteri(samplerId, GL_TEXTURE_MAG_FILTER, magFilter);
+        glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_S, wrapS);
+        glSamplerParameteri(samplerId, GL_TEXTURE_WRAP_T, wrapT);
+
+        // Create ObjTexture
+        auto objTexture = ObjTexture::create(
+            gltfTexture.name, resource.objImages[gltfTexture.source], samplerId);
+        resource.objTextures.emplace_back(objTexture);
+    }
 }
 
 void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model) {
@@ -261,62 +385,49 @@ void GltfLoader::loadPrimitives(ObjResource& resource,
         auto objMesh = ObjMesh::create(resource, mesh.name + "_p" + std::to_string(i),
                                        primitiveIndices, animationNode, skin);
         resource.objMeshes.emplace_back(objMesh);
+        setMeshTextures(resource, objMesh, model, primitive);
     }
 }
 
-void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& model) {
-    std::vector<ObjMaterial> objMaterials;
-    for(const tinygltf::Material& gltfMaterial : model.materials) {
-        ObjMaterial material = {};
-
-        // Base Color (GLTF stores it as RGBA)
-        if(gltfMaterial.pbrMetallicRoughness.baseColorFactor.size() == 4) {
-            material.baseColor[0] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[0];
-            material.baseColor[1] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[1];
-            material.baseColor[2] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[2];
-            material.alpha = gltfMaterial.pbrMetallicRoughness.baseColorFactor[3];
-        } else {
-            material.baseColor[0] = 1.0f; // Default to white
-            material.baseColor[1] = 1.0f;
-            material.baseColor[2] = 1.0f;
-            material.alpha = 1.0f;
+void GltfLoader::setMeshTextures(ObjResource& resource, ObjMesh::Ptr mesh,
+                                 const tinygltf::Model& model,
+                                 const tinygltf::Primitive& primitive) {
+    auto getTexture = [&resource](const tinygltf::TextureInfo& texInfo,
+                                  const std::string& type) -> ObjTexture::Ptr {
+        if(texInfo.texCoord > 0) {
+            Log::warn() << "Texture coordinate sets other than 0 are not supported.";
         }
 
-        // Emission Color
-        if(gltfMaterial.emissiveFactor.size() == 3) {
-            material.emission[0] = gltfMaterial.emissiveFactor[0];
-            material.emission[1] = gltfMaterial.emissiveFactor[1];
-            material.emission[2] = gltfMaterial.emissiveFactor[2];
-        } else {
-            material.emission[0] = material.emission[1] = material.emission[2] = 0.0f;
+        if(texInfo.index < 0) return nullptr;
+        Log::debug() << "Using image " << resource.objTextures[texInfo.index]->image->name
+                     << " for mesh " << type << " texture.";
+        return resource.objTextures[texInfo.index];
+    };
+
+    auto getNormalTexture =
+        [&resource](const tinygltf::NormalTextureInfo& texInfo) -> ObjTexture::Ptr {
+        if(texInfo.texCoord > 0) {
+            Log::warn()
+                << "Normal texture coordinate sets other than 0 are not supported.";
         }
 
-        // Roughness & Metallic Factors
-        material.roughness =
-            static_cast<float>(gltfMaterial.pbrMetallicRoughness.roughnessFactor);
-        material.metallic =
-            static_cast<float>(gltfMaterial.pbrMetallicRoughness.metallicFactor);
-        material.sheen =
-            0.0f; // Not supported in GLTF core, but could be added via extensions.
+        if(texInfo.index < 0) return nullptr;
+        Log::debug() << "Using image " << resource.objTextures[texInfo.index]->image->name
+                     << " for mesh normal map texture.";
+        return resource.objTextures[texInfo.index];
+    };
 
-        // Texture Indices
-        material.baseColorTextureIndex =
-            gltfMaterial.pbrMetallicRoughness.baseColorTexture.index;
-        if(material.baseColorTextureIndex < 0) material.baseColorTextureIndex = -1;
-
-        material.metallicRoughnessTextureIndex =
-            gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture.index;
-        if(material.metallicRoughnessTextureIndex < 0)
-            material.metallicRoughnessTextureIndex = -1;
-
-        material.normalTextureIndex = gltfMaterial.normalTexture.index;
-        if(material.normalTextureIndex < 0) material.normalTextureIndex = -1;
-
-        material.emissiveTextureIndex = gltfMaterial.emissiveTexture.index;
-        if(material.emissiveTextureIndex < 0) material.emissiveTextureIndex = -1;
-
-        objMaterials.push_back(material);
+    if(primitive.material < 0) {
+        Log::debug() << "Primitive has no material.";
+        return;
     }
 
-    resource.materialUniformBuffer.setData(GL_UNIFORM_BUFFER, objMaterials);
+    const tinygltf::Material& gltfMaterial = model.materials[primitive.material];
+    mesh->baseColorTexture =
+        getTexture(gltfMaterial.pbrMetallicRoughness.baseColorTexture, "base color");
+    mesh->normalTexture = getNormalTexture(gltfMaterial.normalTexture);
+    mesh->metallicRoughnessTexture = getTexture(
+        gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture, "metallic roughness");
+    mesh->emissiveTexture = getTexture(gltfMaterial.emissiveTexture, "emissive");
+    mesh->normalScale = static_cast<float>(gltfMaterial.normalTexture.scale);
 }
