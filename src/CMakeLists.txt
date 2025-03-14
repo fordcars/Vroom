@@ -30,6 +30,7 @@ set(SOURCES
 	Entities/LightEntity.cpp
 	Entities/PlayerEntity.cpp
 	Entities/PropEntity.cpp
+	Entities/SkyboxEntity.cpp
 )
 
 set(HEADERS
@@ -75,6 +76,7 @@ set(HEADERS
 	Entities/LightEntity.hpp
 	Entities/PlayerEntity.hpp
 	Entities/PropEntity.hpp
+	Entities/SkyboxEntity.hpp
 
 	# Components
 	Components/AnimationComp.hpp

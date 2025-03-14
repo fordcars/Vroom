@@ -5,6 +5,7 @@
 #include "Entities/LightEntity.hpp"
 #include "Entities/PlayerEntity.hpp"
 #include "Entities/PropEntity.hpp"
+#include "Entities/SkyboxEntity.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
@@ -26,7 +27,7 @@ void GameplaySys::start() {
     info.direction = {10, 0, 10, 1};
     cameraPos.coords = {12, 10, 25};
 
-    CameraEntity::instances.emplace_back(camera);
+    CameraEntity::instances.emplace_back(std::move(camera));
 
     // Create player
     {
@@ -43,7 +44,7 @@ void GameplaySys::start() {
         animationComp.startTime =
             0.09; // The walk animation isn't a perfect loop, this helps
 
-        PlayerEntity::instances.emplace_back(player);
+        PlayerEntity::instances.emplace_back(std::move(player));
     }
 
     // Create car
@@ -57,7 +58,7 @@ void GameplaySys::start() {
             ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
-        PropEntity::instances.emplace_back(prop);
+        PropEntity::instances.emplace_back(std::move(prop));
     }
 
     // Create light
@@ -69,14 +70,31 @@ void GameplaySys::start() {
         position.coords.z = 15;
         light.shader = ResourceSys::get().getShaderResource("light_pbr");
         light.intensity = 8.0f;
-        LightEntity::instances.emplace_back(mainLight);
+        LightEntity::instances.emplace_back(std::move(mainLight));
+    }
+
+    // Create skybox
+    {
+        SkyboxEntity sky;
+        auto [position, renderable] = sky.getComponents();
+        position.scale = {1000, 1000, 1000};
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("skybox");
+        renderable.setMeshes(renderable.objectResource->objMeshes);
+        renderable.shader = ResourceSys::get().getShaderResource("flat");
+        renderable.shadingType = RenderableComp::ShadingType::ForwardShaded;
+        SkyboxEntity::instances.emplace_back(std::move(sky));
     }
 }
 
 void GameplaySys::update(float deltaTime) {
     auto& playerPosition = PlayerEntity::instances[0].get<PositionComp>().coords;
+    auto& cameraPosition = CameraEntity::instances[0].get<PositionComp>().coords;
     CameraEntity::instances[0].get<CameraInfoComp>().direction =
         glm::vec4(playerPosition, 1);
+
+    // Update skybox
+    SkyboxEntity::instances[0].get<PositionComp>().coords = cameraPosition;
 
     // PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
     // PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
