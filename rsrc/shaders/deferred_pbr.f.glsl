@@ -5,6 +5,7 @@ flat in int materialId;
 in vec3 vertexPosition_worldspace;
 in vec3 normal_cameraspace;
 in vec2 texcoord;
+in mat3 tbn;
 
 uniform sampler2D baseColorTex;
 uniform int hasBaseColorTex;
@@ -58,21 +59,8 @@ void main()
         normalMap = normalize((normalMap * 2.0 - 1.0)
             * vec3(normalScale, normalScale, 1.0));
 
-        // Construct the TBN matrix
-        vec3 tangent = vec3(1.0, 0.0, 0.0); // Assume tangent aligned with x-axis
-        vec3 bitangent = normalize(cross(normal_cameraspace, tangent)); // Compute bitangent
-        
-        // Normalize to ensure orthonormality
-        if (length(bitangent) == 0.0) {
-            bitangent = vec3(0.0, 1.0, 0.0); // Use an arbitrary direction if zero
-        }
-        tangent = normalize(cross(bitangent, normal_cameraspace)); // Recompute tangent based on bitangent
-
-        // Construct the TBN matrix
-        mat3 TBN = mat3(tangent, bitangent, normal_cameraspace);
-
         // Transform the normal from tangent space to world space
-        fragNormal_cameraspace = normalize(TBN * normalMap);
+        fragNormal_cameraspace = normalize(tbn * normalMap);
     } else {
         fragNormal_cameraspace = normalize(normal_cameraspace);
     }

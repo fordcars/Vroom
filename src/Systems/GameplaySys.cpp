@@ -78,9 +78,9 @@ void GameplaySys::update(float deltaTime) {
     CameraEntity::instances[0].get<CameraInfoComp>().direction =
         glm::vec4(playerPosition, 1);
 
-    PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
-    PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
-    PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
+    // PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
+    // PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
+    // PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
 
 //     // Multicolor light
 //     float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
