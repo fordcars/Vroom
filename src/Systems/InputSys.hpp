@@ -9,7 +9,7 @@ class InputSys {
 public:
     static InputSys& get();
     InputSys() = default;
-    void init();
+    bool init();
     void update(float deltaTime);
     void handleEvent(const SDL_Event& event);
 

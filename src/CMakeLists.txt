@@ -24,6 +24,7 @@ set(SOURCES
 	Systems/ResourceSys/ShaderResource.cpp
 	Systems/PhysicsSys.cpp
 	Systems/AnimationSys.cpp
+	Systems/UISys.cpp
 
 	# Entities
 	Entities/CameraEntity.cpp
@@ -67,6 +68,7 @@ set(HEADERS
 	Systems/ResourceSys/ShaderResource.hpp
 	Systems/PhysicsSys.hpp
 	Systems/AnimationSys.hpp
+	Systems/UISys.hpp
 
 	# Entities
 	Entities/Entity.hpp
@@ -88,21 +90,34 @@ set(HEADERS
 	Components/RenderableComp.hpp
 )
 
+set(EXTRA_SOURCES
+	# imgui
+	${CMAKE_CURRENT_BINARY_DIR}/res/bindings/imgui_impl_sdl2.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/res/bindings/imgui_impl_opengl3.cpp
+)
+
+set(EXTRA_INCLUDES
+	${CMAKE_CURRENT_BINARY_DIR}/res/bindings
+)
+
 # Packages
 find_package(SDL2 REQUIRED CONFIG)
 find_package(glad REQUIRED)
 find_package(glm REQUIRED)
 find_package(tinyobjloader REQUIRED)
 find_package(TinyGLTF REQUIRED)
+find_package(imgui REQUIRED)
 
 add_executable(
 	Vroom
 	${SOURCES}
 	${HEADERS}
+	${EXTRA_SOURCES}
 )
 
 target_include_directories(
 	Vroom
+	PRIVATE ${EXTRA_INCLUDES}
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 	PRIVATE ${SDL2_INCLUDE_DIRS}
 	PRIVATE ${glad_INCLUDE_DIRS}
@@ -115,6 +130,7 @@ target_link_libraries(
 	PRIVATE glm::glm
 	PRIVATE tinyobjloader::tinyobjloader
 	PRIVATE TinyGLTF::TinyGLTF
+	PRIVATE imgui::imgui
 )
 
 target_compile_definitions(Vroom

@@ -18,7 +18,7 @@ InputSys& InputSys::get() {
     return *instance;
 }
 
-void InputSys::init() {
+bool InputSys::init() {
     mInputMapping[SDLK_SPACE] = InputNeed::Jump;
     mInputMapping[SDLK_LEFT] = InputNeed::WalkLeft;
     mInputMapping[SDLK_RIGHT] = InputNeed::WalkRight;
@@ -27,6 +27,7 @@ void InputSys::init() {
     mInputMapping[SDLK_LSHIFT] = InputNeed::Run;
     mInputMapping[SDLK_LCTRL] = InputNeed::Crouch;
     mInputMapping[SDLK_F1] = InputNeed::ChangeDebugRenderMode;
+    return true;
 }
 
 void InputSys::update(float deltaTime) {

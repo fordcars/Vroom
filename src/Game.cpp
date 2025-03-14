@@ -12,6 +12,7 @@
 #include "Systems/PhysicsSys.hpp"
 #include "Systems/RenderingSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
+#include "Systems/UISys.hpp"
 
 Game::Game() {}
 
@@ -52,8 +53,8 @@ bool Game::init() {
         return false;
     }
 
-    InputSys::get().init();
-    return RenderingSys::get().init(mMainWindow) && ResourceSys::get().loadResources();
+    return InputSys::get().init() && RenderingSys::get().init(mMainWindow) &&
+           ResourceSys::get().loadResources() && UISys::get().init();
 }
 
 void Game::quit() {
