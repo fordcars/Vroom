@@ -10,6 +10,7 @@
 #include "Entities/PlayerEntity.hpp"
 #include "Systems/PhysicsSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
+#include "Systems/UISys.hpp"
 #include "Utils/MathUtils.hpp"
 
 // Static
@@ -26,7 +27,8 @@ bool InputSys::init() {
     mInputMapping[SDLK_DOWN] = InputNeed::WalkBackward;
     mInputMapping[SDLK_LSHIFT] = InputNeed::Run;
     mInputMapping[SDLK_LCTRL] = InputNeed::Crouch;
-    mInputMapping[SDLK_F1] = InputNeed::ChangeDebugRenderMode;
+    mInputMapping[SDLK_F1] = InputNeed::ShowFPS;
+    mInputMapping[SDLK_F2] = InputNeed::ChangeDebugRenderMode;
     return true;
 }
 
@@ -77,40 +79,11 @@ void InputSys::handleDownNeed(InputNeed need) {
 // Handle key up event
 void InputSys::handleUpNeed(InputNeed need) {
     switch(need) {
+        case InputNeed::ShowFPS:
+            UISys::get().toggleFPSOverlay();
+            break;
         case InputNeed::ChangeDebugRenderMode:
-            switch(mDebugRenderMode) {
-                case 0:
-                    ++mDebugRenderMode;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("test_lightPosition");
-                    break;
-                case 1:
-                    ++mDebugRenderMode;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("test_lightNormal");
-                    break;
-                case 2:
-                    ++mDebugRenderMode;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("test_lightAlbedo");
-                    break;
-                case 3:
-                    ++mDebugRenderMode;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("test_lightMetallic");
-                    break;
-                case 4:
-                    ++mDebugRenderMode;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("test_lightRoughness");
-                    break;
-                default:
-                    mDebugRenderMode = 0;
-                    LightEntity::instances[0].get<LightComp>().shader =
-                        ResourceSys::get().getShaderResource("light_pbr");
-                    break;
-            }
-            Log::info() << "Debug render mode: " << mDebugRenderMode;
+            cycleDebugRenderMode();
             break;
         default:
             break;
@@ -192,5 +165,46 @@ void InputSys::handleWalking(float deltaTime) {
     } else {
         animationComp.setAnimation(Constants::AnimationName::get<"Normal Walk">());
         animationComp.speed = currentSpeedSq / (TARGET_WALK_SPEED * TARGET_WALK_SPEED);
+    }
+}
+
+void InputSys::cycleDebugRenderMode() {
+    switch(mDebugRenderMode) {
+        case 0:
+            ++mDebugRenderMode;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("test_lightPosition");
+            Log::debug() << "Debug render mode: worldspace position";
+            break;
+        case 1:
+            ++mDebugRenderMode;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("test_lightNormal");
+            Log::debug() << "Debug render mode: cameraspace normal";
+            break;
+        case 2:
+            ++mDebugRenderMode;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("test_lightAlbedo");
+            Log::debug() << "Debug render mode: albedo";
+            break;
+        case 3:
+            ++mDebugRenderMode;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("test_lightMetallic");
+            Log::debug() << "Debug render mode: metallic";
+            break;
+        case 4:
+            ++mDebugRenderMode;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("test_lightRoughness");
+            Log::debug() << "Debug render mode: roughness";
+            break;
+        default:
+            mDebugRenderMode = 0;
+            LightEntity::instances[0].get<LightComp>().shader =
+                ResourceSys::get().getShaderResource("light_pbr");
+            Log::debug() << "Debug render mode disabled.";
+            break;
     }
 }

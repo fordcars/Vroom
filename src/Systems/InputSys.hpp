@@ -21,6 +21,7 @@ public:
         WalkBackward,
         Run,
         Crouch,
+        ShowFPS,
         ChangeDebugRenderMode
     };
 
@@ -40,6 +41,7 @@ private:
 
     void handleMouseInput(const SDL_Event& event);
     void handleWalking(float deltaTime);
+    void cycleDebugRenderMode();
 
     InputSys(const InputSys&) = delete;
     InputSys& operator=(const InputSys&) = delete;

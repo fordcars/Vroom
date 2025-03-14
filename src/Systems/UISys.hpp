@@ -13,9 +13,16 @@ public:
     void render();
     void shutdown();
 
+    // UI elements
+    void toggleFPSOverlay() { mShowFPSOverlay = !mShowFPSOverlay; }
+
 private:
+    bool mShowFPSOverlay = false;
+
     UISys(const UISys&) = delete;
     UISys& operator=(const UISys&) = delete;
     UISys(UISys&&) = delete;
     UISys& operator=(UISys&&) = delete;
+
+    void showFPSOverlay();
 };

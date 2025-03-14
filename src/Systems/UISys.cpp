@@ -34,6 +34,8 @@ void UISys::update(float deltaTime) {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     ImGui::ShowDemoWindow(); // Show demo window! :)
+
+    if(mShowFPSOverlay) showFPSOverlay();
 }
 
 void UISys::render() {
@@ -45,4 +47,14 @@ void UISys::shutdown() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+}
+
+void UISys::showFPSOverlay()
+{
+    ImGui::SetNextWindowSize(ImVec2(100, 50)); // Set a fixed size
+    ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always); // Fixed position
+
+    ImGui::Begin("FPS", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    ImGui::End();
 }
