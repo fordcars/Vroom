@@ -7,6 +7,7 @@
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
+#include "UISys.hpp"
 #include "ResourceSys/Obj/Animation/Skin.hpp"
 #include "ResourceSys/Obj/ObjResource.hpp"
 #include "ResourceSys/ResourceSys.hpp"
@@ -55,6 +56,8 @@ bool RenderingSys::init(SDL_Window* window) {
     SDL_GL_SetSwapInterval(1);
 
     initGL(window);
+    UISys::get().init(window, mContext);
+
     return true;
 }
 
@@ -116,6 +119,9 @@ void RenderingSys::render(SDL_Window* window) {
     if(error != GL_NO_ERROR) {
         Log::glError(error) << "Encountered an OpenGL error while rendering!";
     }
+
+    // Render UI and swap window
+    UISys::get().render();
     SDL_GL_SwapWindow(window);
 }
 

@@ -54,10 +54,10 @@ bool Game::init() {
     }
 
     return InputSys::get().init() && RenderingSys::get().init(mMainWindow) &&
-           ResourceSys::get().loadResources() && UISys::get().init();
+           ResourceSys::get().loadResources();
 }
 
-void Game::quit() {
+void Game::requestQuit() {
     Log::info() << "Quitting!";
     mQuitting = true;
 }
@@ -67,11 +67,16 @@ void Game::doMainLoop() {
     float deltaTime = (startFrameTime - mLastFrameTime) / 1000.0f;
     mLastFrameTime = startFrameTime;
 
-    if(!EventSys::get().handleEvents()) quit();
+    if(!EventSys::get().handleEvents()) requestQuit();
+
+    // Logic and stuff
     InputSys::get().update(deltaTime);
+    UISys::get().update(deltaTime);
     PhysicsSys::get().update(deltaTime);
     GameplaySys::get().update(deltaTime);
     AnimationSys::get().update(deltaTime);
+
+    // Rendering
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
 
@@ -105,4 +110,9 @@ void Game::checkForErrors() {
         Log::warn() << "SDL message: " << message;
         SDL_ClearError();
     }
+}
+
+void Game::shutdown() {
+    Log::info() << "Shutting down game...";
+    UISys::get().shutdown();
 }

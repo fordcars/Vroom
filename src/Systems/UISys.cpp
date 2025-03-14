@@ -1,9 +1,10 @@
 #include "UISys.hpp"
 
+#include <memory>
+
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-
-#include <memory>
+#include "imgui_impl_sdl2.h"
 
 // Static
 UISys& UISys::get() {
@@ -11,8 +12,37 @@ UISys& UISys::get() {
     return *instance;
 }
 
-bool UISys::init() {
+bool UISys::init(SDL_Window* window, SDL_GLContext gl_context) {
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init();
+
     return true;
 }
 
-void UISys::update(float deltaTime) {}
+void UISys::handleEvent(const SDL_Event& event) { ImGui_ImplSDL2_ProcessEvent(&event); }
+
+void UISys::update(float deltaTime) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(); // Show demo window! :)
+}
+
+void UISys::render() {
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UISys::shutdown() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+}

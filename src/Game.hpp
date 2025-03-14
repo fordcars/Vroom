@@ -18,7 +18,8 @@ private:
     Uint32 mLastFrameTime;
 
     bool init();
-    void quit();
+    void requestQuit();
     void doMainLoop();
     void checkForErrors();
+    void shutdown();
 };

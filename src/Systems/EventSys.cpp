@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "InputSys.hpp"
+#include "UISys.hpp"
 
 // Static
 EventSys& EventSys::get() {
@@ -20,6 +21,8 @@ bool EventSys::handleEvents() {
         if(event.type == SDL_QUIT) {
             return false;
         }
+
+        UISys::get().handleEvent(event);
 
         // Handle input events
         if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
