@@ -69,29 +69,46 @@ void RenderingSys::clear() {
 }
 
 void RenderingSys::render(SDL_Window* window) {
+    std::vector<std::tuple<PositionComp*, RenderableComp*>> forwardShadedEntities;
+
     const CameraEntity& camera = CameraEntity::instances[0];
     glm::mat4 viewMatrix = getViewMatrix(camera);
     glm::mat4 projectionMatrix = getProjectionMatrix(camera);
     mCurrentTime = SDL_GetTicks();
 
     // First pass: render entities to GBuffer
-    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
     glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
 
     EntityFilter<PositionComp, RenderableComp> renderableFilter;
     for(const auto& [position, renderable] : renderableFilter) {
-        renderRenderable(viewMatrix, projectionMatrix, position, renderable);
+        if(renderable.shadingType == RenderableComp::ShadingType::ForwardShaded) {
+            forwardShadedEntities.emplace_back(&position, &renderable);
+        } else {
+            renderRenderable(viewMatrix, projectionMatrix, position, renderable);
+        }
     }
 
     // Second pass: render lights to screen using GBuffer
-    glEnable(GL_BLEND); // Enable blending to add each light source
+    cloneDepthBuffer(mDeferredFramebuffer, 0); // Clone depth buffer to front, used later
+    glDepthMask(GL_FALSE); // Disable writing to depth buffer
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND); // Enable blending to add each light source
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     EntityFilter<PositionComp, LightComp> lightFilter;
     for(const auto& [position, light] : lightFilter) {
         renderLight(viewMatrix, position, light);
+    }
+
+    // Third pass: render forward shaded entities
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    for(const auto& [position, renderable] : forwardShadedEntities) {
+        renderRenderable(viewMatrix, projectionMatrix, *position, *renderable);
     }
 
     // Check for gl error
@@ -105,6 +122,8 @@ void RenderingSys::render(SDL_Window* window) {
 void RenderingSys::initGL(SDL_Window* window) {
     int width, height;
     SDL_GetWindowSize(window, &width, &height);
+    mScreenSize.x = width;
+    mScreenSize.y = height;
     glViewport(0, 0, width, height);
 
     GLuint vertexArrayID;
@@ -123,10 +142,10 @@ void RenderingSys::initGL(SDL_Window* window) {
     glBlendFunc(GL_ONE, GL_ONE);
     glBlendEquation(GL_FUNC_ADD);
 
-    initDeferredRendering(width, height);
+    initDeferredRendering();
 }
 
-void RenderingSys::initDeferredRendering(int width, int height) {
+void RenderingSys::initDeferredRendering() {
     // Check system compatibility
     if(GBufferTexture::COUNT > GL_MAX_COLOR_ATTACHMENTS) {
         Log::error() << "GBufferTexture::COUNT exceeds GL_MAX_COLOR_ATTACHMENTS!";
@@ -139,7 +158,8 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Add depth buffer
     glGenRenderbuffers(1, &mDeferredDepthbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, mDeferredDepthbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, mScreenSize.x,
+                          mScreenSize.y);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
                               mDeferredDepthbuffer);
 
@@ -149,13 +169,13 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Position
     glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Position]);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,             // Level
-                 GL_RGB32F,     // Internal format
-                 width, height, // Size
-                 0,             // Border
-                 GL_RGB,        // Format
-                 GL_FLOAT,      // Data format
-                 nullptr        // Data (0s)
+                 0,                            // Level
+                 GL_RGB32F,                    // Internal format
+                 mScreenSize.x, mScreenSize.y, // Size
+                 0,                            // Border
+                 GL_RGB,                       // Format
+                 GL_FLOAT,                     // Data format
+                 nullptr                       // Data (0s)
     );
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -165,13 +185,13 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Normal
     glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Normal]);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,             // Level
-                 GL_RGB32F,     // Internal format
-                 width, height, // Size
-                 0,             // Border
-                 GL_RGB,        // Format
-                 GL_FLOAT,      // Data format
-                 nullptr        // Data (0s)
+                 0,                            // Level
+                 GL_RGB32F,                    // Internal format
+                 mScreenSize.x, mScreenSize.y, // Size
+                 0,                            // Border
+                 GL_RGB,                       // Format
+                 GL_FLOAT,                     // Data format
+                 nullptr                       // Data (0s)
     );
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -181,13 +201,13 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Albedo
     glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Albedo]);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,             // Level
-                 GL_RGB32F,     // Internal format
-                 width, height, // Size
-                 0,             // Border
-                 GL_RGB,        // Format
-                 GL_FLOAT,      // Data format
-                 nullptr        // Data (0s)
+                 0,                            // Level
+                 GL_RGB32F,                    // Internal format
+                 mScreenSize.x, mScreenSize.y, // Size
+                 0,                            // Border
+                 GL_RGB,                       // Format
+                 GL_FLOAT,                     // Data format
+                 nullptr                       // Data (0s)
     );
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -198,13 +218,13 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Metallic
     glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Metallic]);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,             // Level
-                 GL_RED,        // Internal format
-                 width, height, // Size
-                 0,             // Border
-                 GL_RED,        // Format
-                 GL_FLOAT,      // Data format
-                 nullptr        // Data (0s)
+                 0,                            // Level
+                 GL_RED,                       // Internal format
+                 mScreenSize.x, mScreenSize.y, // Size
+                 0,                            // Border
+                 GL_RED,                       // Format
+                 GL_FLOAT,                     // Data format
+                 nullptr                       // Data (0s)
     );
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -215,13 +235,13 @@ void RenderingSys::initDeferredRendering(int width, int height) {
     // Roughness
     glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Roughness]);
     glTexImage2D(GL_TEXTURE_2D,
-                 0,             // Level
-                 GL_RED,        // Internal format
-                 width, height, // Size
-                 0,             // Border
-                 GL_RED,        // Format
-                 GL_FLOAT,      // Data format
-                 nullptr        // Data (0s)
+                 0,                            // Level
+                 GL_RED,                       // Internal format
+                 mScreenSize.x, mScreenSize.y, // Size
+                 0,                            // Border
+                 GL_RED,                       // Format
+                 GL_FLOAT,                     // Data format
+                 nullptr                       // Data (0s)
     );
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -324,7 +344,7 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
 
     // Texcoord (vec2)
     glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, stride,
-        (void*)offsetof(ObjResource::Vertex, texcoord));
+                          (void*)offsetof(ObjResource::Vertex, texcoord));
 
     // Material ID
     glVertexAttribIPointer(MATERIAL_ATTRIB, 1, GL_UNSIGNED_INT, stride,
@@ -454,6 +474,13 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+}
+
+void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest);
+    glBlitFramebuffer(0, 0, mScreenSize.x, mScreenSize.y, 0, 0, mScreenSize.x,
+                      mScreenSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 }
 
 glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {

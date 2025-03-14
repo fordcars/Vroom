@@ -24,8 +24,6 @@ layout(location = 3) out float metallic;
 layout(location = 4) out float roughness;
 
 // std140-compatible struct
-// Why padding is necessary here? Not too sure,
-// but it's definitely needed for the struct to work.
 struct ObjMaterial {
     vec3 baseColor;
     float p1;

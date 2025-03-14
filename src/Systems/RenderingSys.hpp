@@ -24,6 +24,7 @@ private:
 
     SDL_GLContext mContext;
     unsigned mCurrentTime = 0;
+    glm::ivec2 mScreenSize = {0, 0};
 
     GLuint mDeferredFramebuffer = 0;
     GLuint mDeferredTextures[GBufferTexture::COUNT]{};
@@ -35,11 +36,12 @@ private:
     RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
-    void initDeferredRendering(int width, int height);
+    void initDeferredRendering();
     void renderRenderable(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                           const PositionComp& position, const RenderableComp& renderable);
     void renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
                      const LightComp& light);
+    void cloneDepthBuffer(GLuint source, GLuint dest);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
     glm::mat4 getProjectionMatrix(const CameraEntity& camera);
