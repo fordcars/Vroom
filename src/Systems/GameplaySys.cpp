@@ -20,7 +20,7 @@ void GameplaySys::start() {
     CameraInfoComp& info = camera.get<CameraInfoComp>();
     PositionComp& cameraPos = camera.get<PositionComp>();
     info.horizFOV = Constants::HORIZ_FOV;
-    info.aspectRatio = static_cast<float>(Constants::SIZE_X) / Constants::SIZE_Y;
+    info.aspectRatio = static_cast<float>(Constants::DEFAULT_WINDOW_SIZE_X) / Constants::DEFAULT_WINDOW_SIZE_Y;
     info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};

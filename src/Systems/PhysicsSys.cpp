@@ -16,12 +16,14 @@ PhysicsSys& PhysicsSys::get() {
 void PhysicsSys::update(float deltaTime) {
     EntityFilter<PositionComp, MotionComp, std::optional<FrictionComp>> filter;
     for(const auto& [position, motion, frictionComp] : filter) {
-        motion.velocity += motion.acceleration * deltaTime;
+        // Compute velocity in 2 steps to better handle large delta times
+        motion.velocity += 0.5f * motion.acceleration * deltaTime;
         position.coords += motion.velocity * deltaTime;
+        motion.velocity += 0.5f * motion.acceleration * deltaTime;
 
         if(frictionComp) {
             FrictionComp& friction = frictionComp->get();
-            motion.velocity *= (1.0f - friction.coefficient * deltaTime);
+            motion.velocity *= std::exp(-friction.coefficient * deltaTime);
         }
     }
 }

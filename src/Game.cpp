@@ -24,6 +24,9 @@ Game::~Game() {
 bool Game::start() {
     if(init()) {
         GameplaySys::get().start();
+
+        mLastFrameTime = SDL_GetTicks(); // Reset this here to avoid a huge delta time on
+                                         // the first frame.
         while(!mQuitting) doMainLoop();
         return true;
     }
@@ -46,7 +49,8 @@ bool Game::init() {
     // Create window
     mMainWindow = SDL_CreateWindow(
         Constants::GAME_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        Constants::SIZE_X, Constants::SIZE_Y, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        Constants::DEFAULT_WINDOW_SIZE_X, Constants::DEFAULT_WINDOW_SIZE_Y,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
     if(!mMainWindow) {
         Log::sdlError() << "Unable to create window!";
@@ -64,27 +68,45 @@ void Game::requestQuit() {
 
 void Game::doMainLoop() {
     Uint32 startFrameTime = SDL_GetTicks();
-    float deltaTime = (startFrameTime - mLastFrameTime) / 1000.0f;
-    mLastFrameTime = startFrameTime;
+    float deltaTime = getCurrentDeltaTime(startFrameTime);
 
+    // Handle events
     if(!EventSys::get().handleEvents()) requestQuit();
 
     // Logic and stuff
+    AnimationSys::get().update(deltaTime);
     InputSys::get().update(deltaTime);
-    UISys::get().update(deltaTime);
     PhysicsSys::get().update(deltaTime);
     GameplaySys::get().update(deltaTime);
-    AnimationSys::get().update(deltaTime);
+    UISys::get().update(deltaTime);
 
     // Rendering
     RenderingSys::get().clear();
     RenderingSys::get().render(mMainWindow);
 
-    Uint32 endFrameTime = SDL_GetTicks() - startFrameTime;
-    if(endFrameTime < (1000 / Constants::TARGET_UPDATE_FREQ)) {
-        // Wait remaining time
-        SDL_Delay((1000 / Constants::TARGET_UPDATE_FREQ) - endFrameTime);
+    // Limit FPS if VSync is off
+    if(!Constants::ENABLE_VSYNC) {
+        Uint32 endFrameTime = SDL_GetTicks() - startFrameTime;
+        if(endFrameTime < (1000 / Constants::NO_VSYNC_MAX_FPS)) {
+            SDL_Delay((1000 / Constants::NO_VSYNC_MAX_FPS) - endFrameTime);
+        }
     }
+}
+
+// Returns current frame's delta time, averaged over a couple of frames
+// for smoothness.
+float Game::getCurrentDeltaTime(Uint32 startFrameTime) {
+    float rawDeltaTime = (startFrameTime - mLastFrameTime) / 1000.0f;
+    mLastFrameTime = startFrameTime;
+
+    mLastDeltaTimes[mLastDeltaTimeIndex] = rawDeltaTime;
+    mLastDeltaTimeIndex = (mLastDeltaTimeIndex + 1) % 5;
+
+    float sum = 0.0f;
+    for(int i = 0; i < mLastDeltaTimes.size(); i++) {
+        sum += mLastDeltaTimes[i];
+    }
+    return sum / 5.0f;
 }
 
 void Game::checkForErrors() {

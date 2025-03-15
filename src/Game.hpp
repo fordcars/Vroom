@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <SDL2/SDL.h>
 
 class Game {
@@ -15,11 +16,16 @@ public:
 private:
     SDL_Window* mMainWindow;
     bool mQuitting = false;
-    Uint32 mLastFrameTime;
+
+    static constexpr std::size_t DELTA_TIME_FRAMES_TO_AVERAGE = 5;
+    Uint32 mLastFrameTime = 0;
+    std::array<float, DELTA_TIME_FRAMES_TO_AVERAGE> mLastDeltaTimes = {};
+    std::size_t mLastDeltaTimeIndex = 0;
 
     bool init();
     void requestQuit();
     void doMainLoop();
+    float getCurrentDeltaTime(Uint32 startFrameTime);
     void checkForErrors();
     void shutdown();
 };

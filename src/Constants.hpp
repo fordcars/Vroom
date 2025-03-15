@@ -12,9 +12,10 @@ constexpr const char* RESOURCE_DIR = "rsrc";
 
 constexpr unsigned OPENGL_MAJOR_VERSION = 4;
 constexpr unsigned OPENGL_MINOR_VERSION = 3;
-constexpr unsigned SIZE_X = 1024;
-constexpr unsigned SIZE_Y = 800;
-constexpr unsigned TARGET_UPDATE_FREQ = 120; // Steps per second
+constexpr unsigned DEFAULT_WINDOW_SIZE_X = 1024;
+constexpr unsigned DEFAULT_WINDOW_SIZE_Y = 800;
+constexpr unsigned NO_VSYNC_MAX_FPS = 90; // Max FPS if VSync is off
+const bool ENABLE_VSYNC = true;
 constexpr unsigned AA_SAMPLES = 8;
 const float HORIZ_FOV = glm::radians(90.0f); // In radians
 

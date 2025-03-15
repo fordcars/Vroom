@@ -53,7 +53,7 @@ bool RenderingSys::init(SDL_Window* window) {
     }
 
     Log::info() << "OpenGL: " << (const char*)glGetString(GL_VERSION);
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(Constants::ENABLE_VSYNC ? 1 : 0);
 
     initGL(window);
     UISys::get().init(window, mContext);
@@ -122,7 +122,7 @@ void RenderingSys::render(SDL_Window* window) {
 
     // Render UI and swap window
     UISys::get().render();
-    SDL_GL_SwapWindow(window);
+    SDL_GL_SwapWindow(window); // Waits for VSync if enabled
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
