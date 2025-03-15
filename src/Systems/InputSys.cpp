@@ -139,23 +139,32 @@ void InputSys::handleWalking(float deltaTime) {
     if(mUpdateWalkDirection.x != 0 || mUpdateWalkDirection.z != 0) {
         if(Utils::floatsEqualish(motionComp.velocity.x, 0, 0.3) &&
            Utils::floatsEqualish(motionComp.velocity.z, 0, 0.3)) {
-            // Add a small amount of velocity in the current direction to
-            // prevent a jarring rotation transition. Also is more realistic.
-            float angle = positionComp.rotation.y * M_PI / 180;
+            // If current motion is around 0, add a small amount of velocity in the
+            // current direction to prevent a jarring rotation transition. Also is more
+            // realistic.
+            const float& angle = positionComp.rotation.y;
             motionComp.velocity +=
                 glm::vec3{std::sin(angle), 0, std::cos(angle)} * ANTI_JARRING;
         }
         mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
 
-        // Apply walk acceleration
+        // Apply walk acceleration if we are under target speed or currently turning
+        float motionAndDirectionSimilarity =
+            glm::dot(glm::normalize(motionComp.velocity), mUpdateWalkDirection);
         if(currentSpeedSq < targetSpeedSq) {
             motionComp.velocity += (mUpdateWalkDirection * acceleration) * deltaTime;
+        } else if(!Utils::floatsEqualish(motionAndDirectionSimilarity, 1, 0.01)) {
+            // Already at max speed, but still turning. Apply rotation, but keep speed
+            // constant.
+            float currentSpeed = std::sqrt(currentSpeedSq);
+            motionComp.velocity += (mUpdateWalkDirection * acceleration) * deltaTime;
+            motionComp.velocity = glm::normalize(motionComp.velocity) * currentSpeed;
         }
 
         // Set rotation based on velocity direction
         if(motionComp.velocity.x != 0 || motionComp.velocity.z != 0) {
             positionComp.rotation.y =
-                std::atan2(motionComp.velocity.x, motionComp.velocity.z) * 180 / M_PI;
+                std::atan2(motionComp.velocity.x, motionComp.velocity.z);
         }
     }
 
