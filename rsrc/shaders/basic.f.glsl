@@ -1,11 +1,9 @@
 #version 330 core
 
-uniform vec3 color;
-
-in vec3 fScreenPos;
+in vec3 color;
 out vec3 outColor;
 
 void main()
 {
-    outColor = vec3(1.0f, 0.5f, 0.0f);
+    outColor = color;
 }

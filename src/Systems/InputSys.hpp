@@ -21,17 +21,21 @@ public:
         WalkBackward,
         Run,
         Crouch,
-        ShowFPS,
-        ChangeDebugRenderMode
+
+        // Debug stuff
+        ToggleShowFPS,
+        ChangeDebugRenderMode,
+        ToggleShowWalkVectors,
     };
 
 private:
     std::unordered_map<SDL_Keycode, InputNeed> mInputMapping;
     std::unordered_set<SDL_Keycode> mHeldKeys;
 
-    glm::vec3 mUpdateWalkDirection{}; // Walk direction for current step
+    glm::vec3 mWalkDirection{}; // Walk direction for current step
     bool mRunning = false;
     int mDebugRenderMode = 0;
+    bool mShowDebugWalkVectors = false;
 
     void handleNeed(InputNeed need, bool isKeyDown);
     void handleDownNeed(InputNeed need);

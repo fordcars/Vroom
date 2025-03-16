@@ -7,10 +7,11 @@
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
-#include "UISys.hpp"
 #include "ResourceSys/Obj/Animation/Skin.hpp"
+#include "ResourceSys/Obj/GPUBuffer.hpp"
 #include "ResourceSys/Obj/ObjResource.hpp"
 #include "ResourceSys/ResourceSys.hpp"
+#include "UISys.hpp"
 
 // Static
 RenderingSys& RenderingSys::get() {
@@ -96,7 +97,7 @@ void RenderingSys::render(SDL_Window* window) {
 
     // Second pass: render lights to screen using GBuffer
     cloneDepthBuffer(mDeferredFramebuffer, 0); // Clone depth buffer to front, used later
-    glDepthMask(GL_FALSE); // Disable writing to depth buffer
+    glDepthMask(GL_FALSE);                     // Disable writing to depth buffer
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND); // Enable blending to add each light source
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -114,6 +115,15 @@ void RenderingSys::render(SDL_Window* window) {
         renderRenderable(viewMatrix, projectionMatrix, *position, *renderable);
     }
 
+    // Render debug stuff if present, same setup as forward shaded
+    const auto& shader = ResourceSys::get().getShaderResource("basic");
+    for(const auto& [drawMode, shapes] : mDebugShapes) {
+        for(const auto& shape : shapes) {
+            renderDebugShape(*shader, viewMatrix, projectionMatrix, shape, drawMode);
+        }
+    }
+    mDebugShapes.clear();
+
     // Check for gl error
     GLenum error = glGetError();
     if(error != GL_NO_ERROR) {
@@ -123,6 +133,18 @@ void RenderingSys::render(SDL_Window* window) {
     // Render UI and swap window
     UISys::get().render();
     SDL_GL_SwapWindow(window); // Waits for VSync if enabled
+}
+
+void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
+                                          const std::vector<glm::vec3>& colors,
+                                          GLenum drawMode) {
+    // Resize colors if not same size
+    std::vector<glm::vec3> resizedColors(points.size(),
+                                         glm::vec3(0.0f, 1.0f, 0.0f)); // Default to green
+    std::copy(colors.begin(), colors.begin() + std::min(points.size(), colors.size()),
+              resizedColors.begin());
+
+    mDebugShapes[drawMode].emplace_back(DebugShape{points, resizedColors});
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
@@ -476,6 +498,48 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     glDrawArrays(GL_TRIANGLES,     // Mode
                  0,                // Start
                  light.vertexCount // Count
+    );
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+}
+
+void RenderingSys::renderDebugShape(const ShaderResource& shader,
+                                       const glm::mat4& viewMatrix,
+                                       const glm::mat4& projectionMatrix,
+                                       const DebugShape& shape, GLenum drawMode) {
+    if(shape.points.empty()) {
+        return;
+    }
+
+    using namespace Constants;
+    glUseProgram(shader.getId());
+
+    // Set uniforms
+    glm::mat4 MVP = projectionMatrix * viewMatrix; // No model matrix
+
+    glUniformMatrix4fv(shader.getUniform(UniformName::get<"MVP">()), 1, GL_FALSE,
+                       &MVP[0][0]);
+
+    // Attributes, create buffers on the spot
+    GPUBuffer posBuf(GL_ARRAY_BUFFER, shape.points, GL_STATIC_DRAW);
+    GPUBuffer colorBuf(GL_ARRAY_BUFFER, shape.colors, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    // Positions (vec3)
+    glBindBuffer(GL_ARRAY_BUFFER, posBuf.getId());
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    // Colors (vec3)
+    glBindBuffer(GL_ARRAY_BUFFER, colorBuf.getId());
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    // Draw
+    glDrawArrays(drawMode,              // Mode
+                 0,                     // Start
+                 shape.points.size() // Count
     );
 
     glDisableVertexAttribArray(0);

@@ -9,6 +9,7 @@
 #include "Entities/LightEntity.hpp"
 #include "Entities/PlayerEntity.hpp"
 #include "Systems/PhysicsSys.hpp"
+#include "Systems/RenderingSys.hpp"
 #include "Systems/ResourceSys/ResourceSys.hpp"
 #include "Systems/UISys.hpp"
 #include "Utils/MathUtils.hpp"
@@ -27,13 +28,16 @@ bool InputSys::init() {
     mInputMapping[SDLK_DOWN] = InputNeed::WalkBackward;
     mInputMapping[SDLK_LSHIFT] = InputNeed::Run;
     mInputMapping[SDLK_LCTRL] = InputNeed::Crouch;
-    mInputMapping[SDLK_F1] = InputNeed::ShowFPS;
+
+    // Debug stuff
+    mInputMapping[SDLK_F1] = InputNeed::ToggleShowFPS;
     mInputMapping[SDLK_F2] = InputNeed::ChangeDebugRenderMode;
+    mInputMapping[SDLK_F3] = InputNeed::ToggleShowWalkVectors;
     return true;
 }
 
 void InputSys::update(float deltaTime) {
-    mUpdateWalkDirection = {};
+    mWalkDirection = {};
     mRunning = false;
 
     for(auto key : mHeldKeys) {
@@ -79,11 +83,19 @@ void InputSys::handleDownNeed(InputNeed need) {
 // Handle key up event
 void InputSys::handleUpNeed(InputNeed need) {
     switch(need) {
-        case InputNeed::ShowFPS:
+        case InputNeed::ToggleShowFPS:
             UISys::get().toggleFPSOverlay();
             break;
         case InputNeed::ChangeDebugRenderMode:
             cycleDebugRenderMode();
+            break;
+        case InputNeed::ToggleShowWalkVectors:
+            mShowDebugWalkVectors = !mShowDebugWalkVectors;
+            if(mShowDebugWalkVectors) {
+                Log::debug() << "Showing walk vectors.";
+            } else {
+                Log::debug() << "Hiding walk vectors.";
+            }
             break;
         default:
             break;
@@ -95,16 +107,16 @@ void InputSys::handleHoldNeed(InputNeed need) {
     const float speed = 2;
     switch(need) {
         case InputNeed::WalkLeft:
-            mUpdateWalkDirection.x = -1;
+            mWalkDirection.x = -1;
             break;
         case InputNeed::WalkRight:
-            mUpdateWalkDirection.x = 1;
+            mWalkDirection.x = 1;
             break;
         case InputNeed::WalkForward:
-            mUpdateWalkDirection.z = -1;
+            mWalkDirection.z = -1;
             break;
         case InputNeed::WalkBackward:
-            mUpdateWalkDirection.z = 1;
+            mWalkDirection.z = 1;
             break;
         case InputNeed::Run:
             mRunning = true;
@@ -136,7 +148,7 @@ void InputSys::handleWalking(float deltaTime) {
 
     float currentSpeedSq = glm::length2(motionComp.velocity);
 
-    if(mUpdateWalkDirection.x != 0 || mUpdateWalkDirection.z != 0) {
+    if(mWalkDirection.x != 0 || mWalkDirection.z != 0) {
         if(Utils::floatsEqualish(motionComp.velocity.x, 0, 0.3) &&
            Utils::floatsEqualish(motionComp.velocity.z, 0, 0.3)) {
             // If current motion is around 0, add a small amount of velocity in the
@@ -146,18 +158,18 @@ void InputSys::handleWalking(float deltaTime) {
             motionComp.velocity +=
                 glm::vec3{std::sin(angle), 0, std::cos(angle)} * ANTI_JARRING;
         }
-        mUpdateWalkDirection = glm::normalize(mUpdateWalkDirection);
+        mWalkDirection = glm::normalize(mWalkDirection);
 
         // Apply walk acceleration if we are under target speed or currently turning
         float motionAndDirectionSimilarity =
-            glm::dot(glm::normalize(motionComp.velocity), mUpdateWalkDirection);
+            glm::dot(glm::normalize(motionComp.velocity), mWalkDirection);
         if(currentSpeedSq < targetSpeedSq) {
-            motionComp.velocity += (mUpdateWalkDirection * acceleration) * deltaTime;
+            motionComp.velocity += (mWalkDirection * acceleration) * deltaTime;
         } else if(!Utils::floatsEqualish(motionAndDirectionSimilarity, 1, 0.01)) {
             // Already at max speed, but still turning. Apply rotation, but keep speed
             // constant.
             float currentSpeed = std::sqrt(currentSpeedSq);
-            motionComp.velocity += (mUpdateWalkDirection * acceleration) * deltaTime;
+            motionComp.velocity += (mWalkDirection * acceleration) * deltaTime;
             motionComp.velocity = glm::normalize(motionComp.velocity) * currentSpeed;
         }
 
@@ -166,6 +178,21 @@ void InputSys::handleWalking(float deltaTime) {
             positionComp.rotation.y =
                 std::atan2(motionComp.velocity.x, motionComp.velocity.z);
         }
+
+        if(mShowDebugWalkVectors) {
+            RenderingSys::get().addDebugShape(
+                {positionComp.coords, mWalkDirection * 3.0f + positionComp.coords},
+                std::vector<glm::vec3>(2, {1, 0, 0}));
+        }
+    }
+
+    if(mShowDebugWalkVectors) {
+        RenderingSys::get().addDebugShape(
+            {positionComp.coords, motionComp.velocity + positionComp.coords},
+            std::vector<glm::vec3>(2, {0, 1, 0}));
+        RenderingSys::get().addDebugShape(
+            Utils::generateCircle(2, positionComp.coords, {0, 1, 0}, 32),
+            std::vector<glm::vec3>(32, {0, 1, 0}), GL_LINE_LOOP);
     }
 
     if(currentSpeedSq < 0.4) {

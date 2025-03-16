@@ -8,6 +8,13 @@
 class GPUBuffer {
 public:
     GPUBuffer();
+    template <typename T>
+    GPUBuffer(GLenum target, const std::vector<T>& data,
+              GLenum usageHint = GL_STATIC_DRAW)
+        : GPUBuffer() {
+        setData(target, data, usageHint);
+    }
+
     ~GPUBuffer();
     GPUBuffer(const GPUBuffer& other);
     GPUBuffer(GPUBuffer&& other) noexcept;
