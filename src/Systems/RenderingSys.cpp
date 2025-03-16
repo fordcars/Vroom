@@ -357,7 +357,7 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
                            (void*)offsetof(ObjResource::Vertex, materialId));
 
     // Render all meshes
-    for(const auto& mesh : renderable.meshes) {
+    for(const auto& mesh : renderable.objectResource->objMeshes) {
         // Per mesh uniforms
         glm::mat4 modelMatrix = getModelMatrix(position) * mesh->transform;
 

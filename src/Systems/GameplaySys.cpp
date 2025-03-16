@@ -38,7 +38,6 @@ void GameplaySys::start() {
         position.coords.y = 0;
         position.coords.z = 10;
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
-        renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr_skinned");
         animationComp.setAnimation(Constants::AnimationName::get<"Happy">());
         animationComp.startTime =
@@ -56,7 +55,6 @@ void GameplaySys::start() {
         position.coords.z = 10;
         renderable.objectResource =
             ResourceSys::get().getObjResource("low_poly_blendered");
-        renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(std::move(prop));
     }
@@ -80,7 +78,6 @@ void GameplaySys::start() {
         position.scale = {1000, 1000, 1000};
         renderable.objectResource =
             ResourceSys::get().getObjResource("skybox");
-        renderable.setMeshes(renderable.objectResource->objMeshes);
         renderable.shader = ResourceSys::get().getShaderResource("flat");
         renderable.shadingType = RenderableComp::ShadingType::ForwardShaded;
         SkyboxEntity::instances.emplace_back(std::move(sky));
