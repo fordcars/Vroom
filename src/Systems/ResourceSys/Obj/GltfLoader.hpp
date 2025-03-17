@@ -24,7 +24,7 @@ private:
     void loadPrimitives(ObjResource& resource,
                         std::vector<ObjResource::Vertex>& outVertices,
                         const tinygltf::Model& model, int gltfNodeIndex,
-                        int gltfSkinIndex);
+                        int gltfSkinIndex, const glm::mat4& meshTransform);
     void setMeshTextures(ObjResource& resource, ObjMesh::Ptr mesh,
                          const tinygltf::Model& model,
                          const tinygltf::Primitive& primitive);

@@ -80,6 +80,10 @@ void RenderingSys::render(SDL_Window* window) {
     glm::mat4 projectionMatrix = getProjectionMatrix(camera);
     mCurrentTime = SDL_GetTicks();
 
+    if(mShowBoundingBoxes) {
+        drawBoundingBoxes();
+    }
+
     // First pass: render entities to GBuffer
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
@@ -136,8 +140,7 @@ void RenderingSys::render(SDL_Window* window) {
 }
 
 void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
-                                          const std::vector<glm::vec3>& colors,
-                                          GLenum drawMode) {
+                                 const std::vector<glm::vec3>& colors, GLenum drawMode) {
     // Resize colors if not same size
     std::vector<glm::vec3> resizedColors(points.size(),
                                          glm::vec3(0.0f, 1.0f, 0.0f)); // Default to green
@@ -145,6 +148,15 @@ void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
               resizedColors.begin());
 
     mDebugShapes[drawMode].emplace_back(DebugShape{points, resizedColors});
+}
+
+void RenderingSys::toggleBoundingBoxes() {
+    mShowBoundingBoxes = !mShowBoundingBoxes;
+    if(mShowBoundingBoxes) {
+        Log::debug() << "Showing bounding boxes.";
+    } else {
+        Log::debug() << "Hiding bounding boxes.";
+    }
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
@@ -505,9 +517,9 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
 }
 
 void RenderingSys::renderDebugShape(const ShaderResource& shader,
-                                       const glm::mat4& viewMatrix,
-                                       const glm::mat4& projectionMatrix,
-                                       const DebugShape& shape, GLenum drawMode) {
+                                    const glm::mat4& viewMatrix,
+                                    const glm::mat4& projectionMatrix,
+                                    const DebugShape& shape, GLenum drawMode) {
     if(shape.points.empty()) {
         return;
     }
@@ -537,13 +549,59 @@ void RenderingSys::renderDebugShape(const ShaderResource& shader,
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     // Draw
-    glDrawArrays(drawMode,              // Mode
-                 0,                     // Start
+    glDrawArrays(drawMode,           // Mode
+                 0,                  // Start
                  shape.points.size() // Count
     );
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+}
+
+void RenderingSys::drawBoundingBoxes() {
+    EntityFilter<PositionComp, RenderableComp> renderableFilter;
+    for(const auto& [position, renderable] : renderableFilter) {
+        const auto& objResource = *renderable.objectResource;
+        const glm::vec3& minCorner = objResource.boundingBox->minCorner;
+        const glm::vec3& maxCorner = objResource.boundingBox->maxCorner;
+
+        std::vector<glm::vec3> vertices = {// Bottom face
+                                           minCorner,
+                                           {maxCorner.x, minCorner.y, minCorner.z},
+                                           {maxCorner.x, minCorner.y, minCorner.z},
+                                           {maxCorner.x, maxCorner.y, minCorner.z},
+                                           {maxCorner.x, maxCorner.y, minCorner.z},
+                                           {minCorner.x, maxCorner.y, minCorner.z},
+                                           {minCorner.x, maxCorner.y, minCorner.z},
+                                           minCorner,
+
+                                           // Top face
+                                           {minCorner.x, minCorner.y, maxCorner.z},
+                                           {maxCorner.x, minCorner.y, maxCorner.z},
+                                           {maxCorner.x, minCorner.y, maxCorner.z},
+                                           {maxCorner.x, maxCorner.y, maxCorner.z},
+                                           {maxCorner.x, maxCorner.y, maxCorner.z},
+                                           {minCorner.x, maxCorner.y, maxCorner.z},
+                                           {minCorner.x, maxCorner.y, maxCorner.z},
+                                           {minCorner.x, minCorner.y, maxCorner.z},
+
+                                           // Vertical edges
+                                           minCorner,
+                                           {minCorner.x, minCorner.y, maxCorner.z},
+                                           {maxCorner.x, minCorner.y, minCorner.z},
+                                           {maxCorner.x, minCorner.y, maxCorner.z},
+                                           {minCorner.x, maxCorner.y, minCorner.z},
+                                           {minCorner.x, maxCorner.y, maxCorner.z},
+                                           {maxCorner.x, maxCorner.y, minCorner.z},
+                                           {maxCorner.x, maxCorner.y, maxCorner.z}};
+
+        for(auto& vertex : vertices) {
+            vertex = glm::vec3(getModelMatrix(position) * glm::vec4(vertex, 1.0f));
+        }
+        addDebugShape(vertices,
+                      std::vector<glm::vec3>(vertices.size(), {1.0f, 0.53f, 0.0f}),
+                      GL_LINES);
+    }
 }
 
 void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) {

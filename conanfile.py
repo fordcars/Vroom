@@ -14,6 +14,7 @@ class Vroom(ConanFile):
         self.requires("tinyobjloader/2.0.0-rc10")
         self.requires("tinygltf/[~2.9.0]")
         self.requires("imgui/[~1.91]")
+        self.requires("eigen/[~3.4]")
     
     def layout(self):
         cmake_layout(self)

@@ -174,10 +174,10 @@ void AnimationSys::updateMeshTransforms(const ObjResource& objResource) {
             joint = stack.top();
             stack.pop();
 
-            glm::mat4 localTransform = glm::mat4(1.0f);
-            localTransform = glm::translate(glm::mat4(1.0f), joint->translation) *
-                             glm::mat4_cast(joint->rotation) *
-                             glm::scale(glm::mat4(1.0f), joint->scale);
+            glm::mat4 localTransform =
+                glm::translate(glm::mat4(1.0f), joint->translation) *
+                glm::mat4_cast(joint->rotation) *
+                glm::scale(glm::mat4(1.0f), joint->scale);
 
             accumulatedTransform = accumulatedTransform * localTransform;
             cachedTransforms.insert({joint, accumulatedTransform});

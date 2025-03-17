@@ -19,6 +19,7 @@ public:
     std::string name;
     ObjResource& parent;
     GPUBuffer indexBuffer;
+    std::vector<unsigned int> indices;
     glm::mat4 transform{1.0f};
 
     AnimationNode* animationNode = nullptr; // Optional
@@ -32,12 +33,10 @@ public:
     float normalScale = 1.0f;
 
     static Ptr create(ObjResource& parent, const std::string& name,
-                      const std::vector<unsigned int>& indices,
-                      AnimationNode* animationNode = nullptr, Skin::Ptr skin = nullptr) {
-        return std::make_shared<ObjMesh>(parent, name, indices, animationNode, skin);
+                      std::vector<unsigned int> indices) {
+        return std::make_shared<ObjMesh>(parent, name, std::move(indices));
     }
 
     ObjMesh(ObjResource& parent, const std::string& name,
-            const std::vector<unsigned int>& indices,
-            AnimationNode* animationNode = nullptr, Skin::Ptr skin = nullptr);
+            std::vector<unsigned int> indices);
 };

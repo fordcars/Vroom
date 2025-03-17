@@ -149,4 +149,5 @@ void WavefrontLoader::loadMeshes(ObjResource& resource,
 
     // Load interleaved attributes
     resource.vertexBuffer.setData(GL_ARRAY_BUFFER, outVertices);
+    resource.vertices = std::move(outVertices);
 }

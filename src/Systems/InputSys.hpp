@@ -26,6 +26,7 @@ public:
         ToggleShowFPS,
         ChangeDebugRenderMode,
         ToggleShowWalkVectors,
+        ToggleShowBoundingBoxes,
     };
 
 private:

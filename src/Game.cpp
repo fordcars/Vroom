@@ -74,7 +74,7 @@ void Game::doMainLoop() {
     if(!EventSys::get().handleEvents()) requestQuit();
 
     // Logic and stuff
-    AnimationSys::get().update(deltaTime);
+    //AnimationSys::get().update(deltaTime);
     InputSys::get().update(deltaTime);
     PhysicsSys::get().update(deltaTime);
     GameplaySys::get().update(deltaTime);

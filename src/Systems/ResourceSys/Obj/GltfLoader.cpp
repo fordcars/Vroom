@@ -253,11 +253,16 @@ void GltfLoader::loadTextures(ObjResource& resource, const tinygltf::Model& mode
 }
 
 void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model) {
+    struct StackEntry {
+        int nodeIndex = 0;
+        int skin = -1;
+        glm::mat4 transform = glm::mat4(1.0f);
+    };
+
     std::vector<ObjResource::Vertex> outVertices;
 
     // Traverse scene graph to apply transforms in the correct order
-    std::stack<std::tuple<int, int>>
-        nodeStack; // Stack to store {node index, parent skin}
+    std::stack<StackEntry> nodeStack;
 
     if(model.scenes.size() > 1) {
         Log::warn() << "GLTF file has multiple scenes. Only the first will be loaded.";
@@ -269,8 +274,9 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
     }
 
     while(!nodeStack.empty()) {
-        auto [nodeIndex, parentSkin] = nodeStack.top();
-        int currentSkin = parentSkin;
+        int nodeIndex = nodeStack.top().nodeIndex;
+        int currentSkin = nodeStack.top().skin;
+        glm::mat4 transform = nodeStack.top().transform;
         nodeStack.pop();
 
         const tinygltf::Node& node = model.nodes[nodeIndex];
@@ -278,25 +284,45 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
             currentSkin = node.skin;
         }
 
+        // Apply node transform
+        glm::vec3 translation = node.translation.empty()
+                                    ? glm::vec3(0.0f)
+                                    : glm::vec3(node.translation[0], node.translation[1],
+                                                node.translation[2]);
+        glm::quat rotation = node.rotation.empty()
+                                 ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f)
+                                 : glm::quat(node.rotation[3], node.rotation[0],
+                                             node.rotation[1], node.rotation[2]);
+        glm::vec3 scale = node.scale.empty()
+                              ? glm::vec3(1.0f)
+                              : glm::vec3(node.scale[0], node.scale[1], node.scale[2]);
+
+        glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), translation) *
+                                   glm::mat4_cast(rotation) *
+                                   glm::scale(glm::mat4(1.0f), scale);
+
+        transform = transform * localTransform;
+
         if(node.mesh >= 0) {
-            loadPrimitives(resource, outVertices, model, nodeIndex, currentSkin);
+            loadPrimitives(resource, outVertices, model, nodeIndex, currentSkin, transform);
         }
 
         for(int childIndex : node.children) {
-            nodeStack.push(
-                {childIndex, currentSkin}); // Push child node with inherited skin
+            nodeStack.push({childIndex, currentSkin,
+                            transform}); // Push child node with inherited skin
         }
     }
 
     // Upload interleaved vertex data to GPU
     resource.vertexBuffer.setData(GL_ARRAY_BUFFER, outVertices);
+    resource.vertices = std::move(outVertices);
 }
 
 // Each glTF primitive will generate an ObjMesh
 void GltfLoader::loadPrimitives(ObjResource& resource,
                                 std::vector<ObjResource::Vertex>& outVertices,
                                 const tinygltf::Model& model, int gltfNodeIndex,
-                                int gltfSkinIndex) {
+                                int gltfSkinIndex, const glm::mat4& meshTransform) {
     const tinygltf::Node& node = model.nodes[gltfNodeIndex];
     if(node.mesh < 0) {
         Log::warn() << "Node " << gltfNodeIndex << " has no mesh.";
@@ -383,7 +409,11 @@ void GltfLoader::loadPrimitives(ObjResource& resource,
 
         // Store index buffer in ObjMesh
         auto objMesh = ObjMesh::create(resource, mesh.name + "_p" + std::to_string(i),
-                                       primitiveIndices, animationNode, skin);
+                                       std::move(primitiveIndices));
+        objMesh->transform = meshTransform;
+        objMesh->skin = skin;
+        objMesh->animationNode = animationNode;
+
         resource.objMeshes.emplace_back(objMesh);
         setMeshTextures(resource, objMesh, model, primitive);
     }

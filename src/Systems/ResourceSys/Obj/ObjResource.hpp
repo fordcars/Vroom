@@ -8,6 +8,7 @@
 #include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
 #include "ObjTexture.hpp"
+#include "ObjOrientedBoundingBox.hpp"
 
 class ObjResource {
 public:
@@ -27,9 +28,11 @@ public:
 
     GPUBuffer vertexBuffer;
     GPUBuffer materialUniformBuffer;
+    std::vector<Vertex> vertices; // Same vertex data as in vertexBuffer
     std::vector<ObjMesh::Ptr> objMeshes;
     std::vector<ObjImage::Ptr> objImages;
     std::vector<ObjTexture::Ptr> objTextures;
+    ObjOrientedBoundingBox::Ptr boundingBox;
     AnimationContainer::Ptr animationContainer; // Optional
 
     static Ptr create(std::unique_ptr<ObjLoader> loader) {

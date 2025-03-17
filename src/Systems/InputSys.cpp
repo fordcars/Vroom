@@ -33,6 +33,7 @@ bool InputSys::init() {
     mInputMapping[SDLK_F1] = InputNeed::ToggleShowFPS;
     mInputMapping[SDLK_F2] = InputNeed::ChangeDebugRenderMode;
     mInputMapping[SDLK_F3] = InputNeed::ToggleShowWalkVectors;
+    mInputMapping[SDLK_F4] = InputNeed::ToggleShowBoundingBoxes;
     return true;
 }
 
@@ -96,6 +97,9 @@ void InputSys::handleUpNeed(InputNeed need) {
             } else {
                 Log::debug() << "Hiding walk vectors.";
             }
+            break;
+        case InputNeed::ToggleShowBoundingBoxes:
+            RenderingSys::get().toggleBoundingBoxes();
             break;
         default:
             break;

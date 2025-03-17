@@ -24,6 +24,7 @@ public:
     void addDebugShape(const std::vector<glm::vec3>& points,
                                 const std::vector<glm::vec3>& colors,
                                 GLenum drawMode = GL_LINE_STRIP);
+    void toggleBoundingBoxes();
 
 private:
     struct DebugShape {
@@ -38,6 +39,7 @@ private:
     glm::ivec2 mScreenSize = {0, 0};
 
     std::unordered_map<GLenum, std::vector<DebugShape>> mDebugShapes; // Mapped by draw mode
+    bool mShowBoundingBoxes = false;
 
     GLuint mDeferredFramebuffer = 0;
     GLuint mDeferredTextures[GBufferTexture::COUNT]{};
@@ -57,6 +59,7 @@ private:
     void renderDebugShape(const ShaderResource& shader, const glm::mat4& viewMatrix,
                              const glm::mat4& projectionMatrix,
                              const DebugShape& shape, GLenum drawMode);
+    void drawBoundingBoxes();
     void cloneDepthBuffer(GLuint source, GLuint dest);
     glm::mat4 getModelMatrix(const PositionComp& position);
     glm::mat4 getViewMatrix(const CameraEntity& camera);
