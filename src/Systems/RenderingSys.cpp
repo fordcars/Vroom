@@ -559,12 +559,8 @@ void RenderingSys::renderDebugShape(const ShaderResource& shader,
 }
 
 void RenderingSys::drawBoundingBoxes() {
-    EntityFilter<PositionComp, RenderableComp> renderableFilter;
-    for(const auto& [position, renderable] : renderableFilter) {
-        const auto& objResource = *renderable.objectResource;
-        const glm::vec3& minCorner = objResource.boundingBox->minCorner;
-        const glm::vec3& maxCorner = objResource.boundingBox->maxCorner;
-
+    auto drawBox = [this](const glm::vec3& minCorner, const glm::vec3& maxCorner,
+                          const glm::mat4& transform, const glm::vec3& color) {
         std::vector<glm::vec3> vertices = {// Bottom face
                                            minCorner,
                                            {maxCorner.x, minCorner.y, minCorner.z},
@@ -596,11 +592,19 @@ void RenderingSys::drawBoundingBoxes() {
                                            {maxCorner.x, maxCorner.y, maxCorner.z}};
 
         for(auto& vertex : vertices) {
-            vertex = glm::vec3(getModelMatrix(position) * glm::vec4(vertex, 1.0f));
+            vertex = glm::vec3(transform * glm::vec4(vertex, 1.0f));
         }
-        addDebugShape(vertices,
-                      std::vector<glm::vec3>(vertices.size(), {1.0f, 0.53f, 0.0f}),
-                      GL_LINES);
+        addDebugShape(vertices, std::vector<glm::vec3>(vertices.size(), color), GL_LINES);
+    };
+
+    EntityFilter<PositionComp, RenderableComp> renderableFilter;
+    for(const auto& [position, renderable] : renderableFilter) {
+        const auto& obb = renderable.objectResource->boundingBox;
+        const auto& aabb = obb->getWorldspaceAABB(getModelMatrix(position));
+
+        drawBox(obb->minCorner, obb->maxCorner, getModelMatrix(position),
+                {0.53f, 0.53f, 1.0f});
+        drawBox(aabb.first, aabb.second, glm::mat4(1.0f), {1.0f, 0.53f, 0.0f});
     }
 }
 

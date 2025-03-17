@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 
 class ObjResource;
 class ObjOrientedBoundingBox {
@@ -19,6 +20,7 @@ public:
     }
 
     ObjOrientedBoundingBox(const ObjResource& resource);
+    std::pair<glm::vec3, glm::vec3> getWorldspaceAABB(const glm::mat4& modelMatrix) const;
 
 private:
     void calculateCorners(const ObjResource& resource);
