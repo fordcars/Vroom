@@ -3,7 +3,8 @@
 #include <memory>
 
 #include "Components/FrictionComp.hpp"
-#include "Components/MotionComp.hpp"
+#include "Components/RenderableComp.hpp"
+#include "Components/PhysicsComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Entities/EntityFilter.hpp"
 
@@ -14,16 +15,16 @@ PhysicsSys& PhysicsSys::get() {
 }
 
 void PhysicsSys::update(float deltaTime) {
-    EntityFilter<PositionComp, MotionComp, std::optional<FrictionComp>> filter;
-    for(const auto& [position, motion, frictionComp] : filter) {
+    EntityFilter<PositionComp, PhysicsComp, std::optional<FrictionComp>> filter;
+    for(const auto& [position, physics, frictionComp] : filter) {
         // Compute velocity in 2 steps to better handle large delta times
-        motion.velocity += 0.5f * motion.acceleration * deltaTime;
-        position.coords += motion.velocity * deltaTime;
-        motion.velocity += 0.5f * motion.acceleration * deltaTime;
+        physics.velocity += 0.5f * physics.acceleration * deltaTime;
+        position.coords += physics.velocity * deltaTime;
+        physics.velocity += 0.5f * physics.acceleration * deltaTime;
 
         if(frictionComp) {
             FrictionComp& friction = frictionComp->get();
-            motion.velocity *= std::exp(-friction.coefficient * deltaTime);
+            physics.velocity *= std::exp(-friction.coefficient * deltaTime);
         }
     }
 }

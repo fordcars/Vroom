@@ -32,7 +32,7 @@ void GameplaySys::start() {
     // Create player
     {
         PlayerEntity player;
-        auto [position, renderable, animationComp, motion, frictionComp] =
+        auto [position, renderable, animationComp, physics, frictionComp] =
             player.getComponents();
         position.coords.x = 10;
         position.coords.y = 0;
@@ -49,7 +49,7 @@ void GameplaySys::start() {
     // Create car
     {
         PropEntity prop;
-        auto [position, renderable, motion, frictionComp] = prop.getComponents();
+        auto [position, renderable, physics, frictionComp] = prop.getComponents();
         position.coords.x = 10;
         position.coords.y = 0;
         position.coords.z = 10;
@@ -62,7 +62,7 @@ void GameplaySys::start() {
     // Create light
     {
         LightEntity mainLight;
-        auto [position, light, motion] = mainLight.getComponents();
+        auto [position, light, physics] = mainLight.getComponents();
         position.coords.x = 10;
         position.coords.y = 15;
         position.coords.z = 15;

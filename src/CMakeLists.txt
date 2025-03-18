@@ -87,9 +87,9 @@ set(HEADERS
 	Components/CameraInfoComp.hpp
 	Components/FrictionComp.hpp
 	Components/LightComp.hpp
-	Components/MotionComp.hpp
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
+	Components/PhysicsComp.hpp
 )
 
 set(EXTRA_SOURCES

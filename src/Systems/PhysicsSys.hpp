@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "Components/MotionComp.hpp"
+#include "Components/PhysicsComp.hpp"
 
 class PhysicsSys {
 public:
@@ -12,8 +12,8 @@ public:
 
     template <typename EntityT>
     void applyImpulse(EntityT& entity, const glm::vec3& impulse) {
-        auto& motion = entity.template get<MotionComp>();
-        motion.velocity += impulse;
+        // auto& motion = entity.template get<MotionComp>();
+        // motion.velocity += impulse;
     }
 
 private:

@@ -56,7 +56,7 @@ struct IsValidEntity_Type;
 // Recursive case: check if the first type matches, or check the rest of the tuple
 template <typename EntityT, typename FirstComponentT, typename... RestComponentTs>
 struct IsValidEntity_Type<EntityT, FirstComponentT, RestComponentTs...>
-    : std::conditional<Utils::TupleContainsOptionalType<
+    : std::conditional<Utils::TupleContainsType<
                            FirstComponentT, decltype(EntityT::mComponents)>::value,
                        IsValidEntity_Type<EntityT, RestComponentTs...>,
                        std::false_type>::type {};

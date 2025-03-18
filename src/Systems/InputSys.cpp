@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "Components/AnimationComp.hpp"
-#include "Components/MotionComp.hpp"
+#include "Components/PhysicsComp.hpp"
 #include "Entities/LightEntity.hpp"
 #include "Entities/PlayerEntity.hpp"
 #include "Systems/PhysicsSys.hpp"
@@ -146,41 +146,41 @@ void InputSys::handleWalking(float deltaTime) {
     float targetSpeedSq = targetSpeed * targetSpeed;
     float acceleration = mRunning ? RUN_ACCELERATION : WALK_ACCELERATION;
 
-    auto& motionComp = PlayerEntity::instances[0].get<MotionComp>();
+    auto& physicsComp = PlayerEntity::instances[0].get<PhysicsComp>();
     auto& animationComp = PlayerEntity::instances[0].get<AnimationComp>();
     auto& positionComp = PlayerEntity::instances[0].get<PositionComp>();
 
-    float currentSpeedSq = glm::length2(motionComp.velocity);
+    float currentSpeedSq = glm::length2(physicsComp.velocity);
 
     if(mWalkDirection.x != 0 || mWalkDirection.z != 0) {
-        if(Utils::floatsEqualish(motionComp.velocity.x, 0, 0.3) &&
-           Utils::floatsEqualish(motionComp.velocity.z, 0, 0.3)) {
+        if(Utils::floatsEqualish(physicsComp.velocity.x, 0, 0.3) &&
+           Utils::floatsEqualish(physicsComp.velocity.z, 0, 0.3)) {
             // If current motion is around 0, add a small amount of velocity in the
             // current direction to prevent a jarring rotation transition. Also is more
             // realistic.
             const float& angle = positionComp.rotation.y;
-            motionComp.velocity +=
+            physicsComp.velocity +=
                 glm::vec3{std::sin(angle), 0, std::cos(angle)} * ANTI_JARRING;
         }
         mWalkDirection = glm::normalize(mWalkDirection);
 
         // Apply walk acceleration if we are under target speed or currently turning
         float motionAndDirectionSimilarity =
-            glm::dot(glm::normalize(motionComp.velocity), mWalkDirection);
+            glm::dot(glm::normalize(physicsComp.velocity), mWalkDirection);
         if(currentSpeedSq < targetSpeedSq) {
-            motionComp.velocity += (mWalkDirection * acceleration) * deltaTime;
+            physicsComp.velocity += (mWalkDirection * acceleration) * deltaTime;
         } else if(!Utils::floatsEqualish(motionAndDirectionSimilarity, 1, 0.01)) {
             // Already at max speed, but still turning. Apply rotation, but keep speed
             // constant.
             float currentSpeed = std::sqrt(currentSpeedSq);
-            motionComp.velocity += (mWalkDirection * acceleration) * deltaTime;
-            motionComp.velocity = glm::normalize(motionComp.velocity) * currentSpeed;
+            physicsComp.velocity += (mWalkDirection * acceleration) * deltaTime;
+            physicsComp.velocity = glm::normalize(physicsComp.velocity) * currentSpeed;
         }
 
         // Set rotation based on velocity direction
-        if(motionComp.velocity.x != 0 || motionComp.velocity.z != 0) {
+        if(physicsComp.velocity.x != 0 || physicsComp.velocity.z != 0) {
             positionComp.rotation.y =
-                std::atan2(motionComp.velocity.x, motionComp.velocity.z);
+                std::atan2(physicsComp.velocity.x, physicsComp.velocity.z);
         }
 
         if(mShowDebugWalkVectors) {
@@ -192,7 +192,7 @@ void InputSys::handleWalking(float deltaTime) {
 
     if(mShowDebugWalkVectors) {
         RenderingSys::get().addDebugShape(
-            {positionComp.coords, motionComp.velocity + positionComp.coords},
+            {positionComp.coords, physicsComp.velocity + positionComp.coords},
             std::vector<glm::vec3>(2, {0, 1, 0}));
         RenderingSys::get().addDebugShape(
             Utils::generateCircle(2, positionComp.coords, {0, 1, 0}, 32),
