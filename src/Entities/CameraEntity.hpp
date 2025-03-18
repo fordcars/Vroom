@@ -7,7 +7,7 @@
 #include "Components/PositionComp.hpp"
 #include "Entity.hpp"
 
-class CameraEntity : public Entity<PositionComp, PhysicsComp, CameraInfoComp> {
+class CameraEntity : public Entity<PositionComp, NullPhysicsComp, CameraInfoComp> {
 public:
     static std::vector<CameraEntity> instances;
 };

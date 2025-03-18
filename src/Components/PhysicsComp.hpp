@@ -7,6 +7,7 @@ struct PhysicsComp {
     glm::vec3 acceleration = {};
 };
 
+struct NullPhysicsComp : public PhysicsComp {};
 struct PointPhysicsComp : public PhysicsComp {};
 struct BoxPhysicsComp : public PhysicsComp {};
 struct SpherePhysicsComp : public PhysicsComp {
