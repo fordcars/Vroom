@@ -4,6 +4,8 @@
 
 #include <glm/gtc/matrix_transform.hpp> // For lookAt()
 
+#include "Components/PhysicsComp.hpp"
+#include "Components/PositionComp.hpp"
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
@@ -80,10 +82,6 @@ void RenderingSys::render(SDL_Window* window) {
     glm::mat4 projectionMatrix = getProjectionMatrix(camera);
     mCurrentTime = SDL_GetTicks();
 
-    if(mShowBoundingBoxes) {
-        drawBoundingBoxes();
-    }
-
     // First pass: render entities to GBuffer
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
@@ -148,15 +146,6 @@ void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
               resizedColors.begin());
 
     mDebugShapes[drawMode].emplace_back(DebugShape{points, resizedColors});
-}
-
-void RenderingSys::toggleBoundingBoxes() {
-    mShowBoundingBoxes = !mShowBoundingBoxes;
-    if(mShowBoundingBoxes) {
-        Log::debug() << "Showing bounding boxes.";
-    } else {
-        Log::debug() << "Hiding bounding boxes.";
-    }
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
@@ -393,7 +382,7 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
     // Render all meshes
     for(const auto& mesh : renderable.objectResource->objMeshes) {
         // Per mesh uniforms
-        glm::mat4 modelMatrix = getModelMatrix(position) * mesh->transform;
+        glm::mat4 modelMatrix = position.getTransform() * mesh->transform;
 
         glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
         glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelViewMatrix));
@@ -558,65 +547,11 @@ void RenderingSys::renderDebugShape(const ShaderResource& shader,
     glDisableVertexAttribArray(1);
 }
 
-void RenderingSys::drawBoundingBoxes() {
-    auto drawBox = [this](const glm::vec3& minCorner, const glm::vec3& maxCorner,
-                          const glm::mat4& transform, const glm::vec3& color) {
-        std::vector<glm::vec3> vertices = {// Bottom face
-                                           minCorner,
-                                           {maxCorner.x, minCorner.y, minCorner.z},
-                                           {maxCorner.x, minCorner.y, minCorner.z},
-                                           {maxCorner.x, maxCorner.y, minCorner.z},
-                                           {maxCorner.x, maxCorner.y, minCorner.z},
-                                           {minCorner.x, maxCorner.y, minCorner.z},
-                                           {minCorner.x, maxCorner.y, minCorner.z},
-                                           minCorner,
-
-                                           // Top face
-                                           {minCorner.x, minCorner.y, maxCorner.z},
-                                           {maxCorner.x, minCorner.y, maxCorner.z},
-                                           {maxCorner.x, minCorner.y, maxCorner.z},
-                                           {maxCorner.x, maxCorner.y, maxCorner.z},
-                                           {maxCorner.x, maxCorner.y, maxCorner.z},
-                                           {minCorner.x, maxCorner.y, maxCorner.z},
-                                           {minCorner.x, maxCorner.y, maxCorner.z},
-                                           {minCorner.x, minCorner.y, maxCorner.z},
-
-                                           // Vertical edges
-                                           minCorner,
-                                           {minCorner.x, minCorner.y, maxCorner.z},
-                                           {maxCorner.x, minCorner.y, minCorner.z},
-                                           {maxCorner.x, minCorner.y, maxCorner.z},
-                                           {minCorner.x, maxCorner.y, minCorner.z},
-                                           {minCorner.x, maxCorner.y, maxCorner.z},
-                                           {maxCorner.x, maxCorner.y, minCorner.z},
-                                           {maxCorner.x, maxCorner.y, maxCorner.z}};
-
-        for(auto& vertex : vertices) {
-            vertex = glm::vec3(transform * glm::vec4(vertex, 1.0f));
-        }
-        addDebugShape(vertices, std::vector<glm::vec3>(vertices.size(), color), GL_LINES);
-    };
-
-    EntityFilter<PositionComp, RenderableComp> renderableFilter;
-    for(const auto& [position, renderable] : renderableFilter) {
-        const auto& obb = renderable.objectResource->boundingBox;
-        const auto& aabb = obb->getWorldspaceAABB(getModelMatrix(position));
-
-        drawBox(obb->minCorner, obb->maxCorner, getModelMatrix(position),
-                {0.53f, 0.53f, 1.0f});
-        drawBox(aabb.first, aabb.second, glm::mat4(1.0f), {1.0f, 0.53f, 0.0f});
-    }
-}
-
 void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest);
     glBlitFramebuffer(0, 0, mScreenSize.x, mScreenSize.y, 0, 0, mScreenSize.x,
                       mScreenSize.y, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-}
-
-glm::mat4 RenderingSys::getModelMatrix(const PositionComp& position) {
-    return position.getTransform();
 }
 
 glm::mat4 RenderingSys::getViewMatrix(const CameraEntity& camera) {

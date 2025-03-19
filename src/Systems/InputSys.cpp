@@ -33,12 +33,12 @@ bool InputSys::init() {
     mInputMapping[SDLK_F1] = InputNeed::ToggleShowFPS;
     mInputMapping[SDLK_F2] = InputNeed::ChangeDebugRenderMode;
     mInputMapping[SDLK_F3] = InputNeed::ToggleShowWalkVectors;
-    mInputMapping[SDLK_F4] = InputNeed::ToggleShowBoundingBoxes;
+    mInputMapping[SDLK_F4] = InputNeed::ToggleShowCollisionShapes;
     return true;
 }
 
 void InputSys::update(float deltaTime) {
-    mWalkDirection = {};
+    mWalkInputDirection = {};
     mRunning = false;
 
     for(auto key : mHeldKeys) {
@@ -76,7 +76,7 @@ void InputSys::handleEvent(const SDL_Event& event) {
 void InputSys::handleDownNeed(InputNeed need) {
     switch(need) {
         case InputNeed::Jump:
-            PhysicsSys::get().applyImpulse(PlayerEntity::instances[0], {0, 2, 0});
+            PhysicsSys::get().applyImpulse(PlayerEntity::instances[0], {0, 5, 0});
             break;
     }
 }
@@ -98,8 +98,8 @@ void InputSys::handleUpNeed(InputNeed need) {
                 Log::debug() << "Hiding walk vectors.";
             }
             break;
-        case InputNeed::ToggleShowBoundingBoxes:
-            RenderingSys::get().toggleBoundingBoxes();
+        case InputNeed::ToggleShowCollisionShapes:
+            PhysicsSys::get().toggleCollisionShapes();
             break;
         default:
             break;
@@ -111,16 +111,16 @@ void InputSys::handleHoldNeed(InputNeed need) {
     const float speed = 2;
     switch(need) {
         case InputNeed::WalkLeft:
-            mWalkDirection.x = -1;
+            mWalkInputDirection.x = -1;
             break;
         case InputNeed::WalkRight:
-            mWalkDirection.x = 1;
+            mWalkInputDirection.x = 1;
             break;
         case InputNeed::WalkForward:
-            mWalkDirection.z = -1;
+            mWalkInputDirection.z = -1;
             break;
         case InputNeed::WalkBackward:
-            mWalkDirection.z = 1;
+            mWalkInputDirection.z = 1;
             break;
         case InputNeed::Run:
             mRunning = true;
@@ -140,7 +140,6 @@ void InputSys::handleWalking(float deltaTime) {
     const float TARGET_RUN_SPEED = 15.0f;
     const float WALK_ACCELERATION = 50.0f;
     const float RUN_ACCELERATION = 130.0f;
-    const float ANTI_JARRING = 3.0f;
 
     float targetSpeed = mRunning ? TARGET_RUN_SPEED : TARGET_WALK_SPEED;
     float targetSpeedSq = targetSpeed * targetSpeed;
@@ -150,42 +149,47 @@ void InputSys::handleWalking(float deltaTime) {
     auto& animationComp = PlayerEntity::instances[0].get<AnimationComp>();
     auto& positionComp = PlayerEntity::instances[0].get<PositionComp>();
 
-    float currentSpeedSq = glm::length2(physicsComp.velocity);
+    float currentSpeedSq =
+        glm::length2(glm::vec2(physicsComp.velocity.x, physicsComp.velocity.z));
 
-    if(mWalkDirection.x != 0 || mWalkDirection.z != 0) {
-        if(Utils::floatsEqualish(physicsComp.velocity.x, 0, 0.3) &&
-           Utils::floatsEqualish(physicsComp.velocity.z, 0, 0.3)) {
-            // If current motion is around 0, add a small amount of velocity in the
-            // current direction to prevent a jarring rotation transition. Also is more
-            // realistic.
-            const float& angle = positionComp.rotation.y;
-            physicsComp.velocity +=
-                glm::vec3{std::sin(angle), 0, std::cos(angle)} * ANTI_JARRING;
-        }
-        mWalkDirection = glm::normalize(mWalkDirection);
+    if(mWalkInputDirection.x != 0 || mWalkInputDirection.z != 0) {
+        mWalkInputDirection = glm::normalize(mWalkInputDirection);
 
         // Apply walk acceleration if we are under target speed or currently turning
         float motionAndDirectionSimilarity =
-            glm::dot(glm::normalize(physicsComp.velocity), mWalkDirection);
+            glm::dot(glm::normalize(physicsComp.velocity), mWalkInputDirection);
         if(currentSpeedSq < targetSpeedSq) {
-            physicsComp.velocity += (mWalkDirection * acceleration) * deltaTime;
+            physicsComp.velocity += (mWalkInputDirection * acceleration) * deltaTime;
         } else if(!Utils::floatsEqualish(motionAndDirectionSimilarity, 1, 0.01)) {
             // Already at max speed, but still turning. Apply rotation, but keep speed
             // constant.
             float currentSpeed = std::sqrt(currentSpeedSq);
-            physicsComp.velocity += (mWalkDirection * acceleration) * deltaTime;
-            physicsComp.velocity = glm::normalize(physicsComp.velocity) * currentSpeed;
+            glm::vec3 walkVelocity =
+                glm::vec3(physicsComp.velocity.x, 0.0f, physicsComp.velocity.z) +
+                (mWalkInputDirection * acceleration) * deltaTime;
+            walkVelocity = glm::normalize(walkVelocity) * currentSpeed;
+            physicsComp.velocity.x = walkVelocity.x;
+            physicsComp.velocity.z = walkVelocity.z;
         }
 
         // Set rotation based on velocity direction
         if(physicsComp.velocity.x != 0 || physicsComp.velocity.z != 0) {
-            positionComp.rotation.y =
-                std::atan2(physicsComp.velocity.x, physicsComp.velocity.z);
+            float targetRotation =
+                std::atan2(mWalkInputDirection.x, mWalkInputDirection.z);
+
+            // Ensure interpolation takes the shortest path
+            float deltaRotation =
+                glm::mod(targetRotation - positionComp.rotation.y + glm::pi<float>(),
+                         glm::two_pi<float>()) -
+                glm::pi<float>();
+
+            // Interpolate smoothly towards the target rotation
+            positionComp.rotation.y += deltaRotation * (deltaTime * 10.0f);
         }
 
         if(mShowDebugWalkVectors) {
             RenderingSys::get().addDebugShape(
-                {positionComp.coords, mWalkDirection * 3.0f + positionComp.coords},
+                {positionComp.coords, mWalkInputDirection * 3.0f + positionComp.coords},
                 std::vector<glm::vec3>(2, {1, 0, 0}));
         }
     }

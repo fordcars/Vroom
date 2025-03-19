@@ -86,6 +86,7 @@ set(HEADERS
 	Components/AnimationComp.hpp
 	Components/CameraInfoComp.hpp
 	Components/FrictionComp.hpp
+	Components/GravityComp.hpp
 	Components/LightComp.hpp
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp

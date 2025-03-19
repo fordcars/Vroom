@@ -32,11 +32,12 @@ void GameplaySys::start() {
     // Create player
     {
         PlayerEntity player;
-        auto [position, renderable, animationComp, physics, frictionComp] =
+        auto [position, renderable, animationComp, physics, frictionComp, gravityComp] =
             player.getComponents();
-        position.coords.x = 10;
-        position.coords.y = 0;
+        position.coords.x = -5;
+        position.coords.y = 3;
         position.coords.z = 10;
+        physics.positionOffset = {0, 0.7, 0};
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr_skinned");
         animationComp.setAnimation(Constants::AnimationName::get<"Happy">());
@@ -49,10 +50,53 @@ void GameplaySys::start() {
     // Create car
     {
         PropEntity prop;
-        auto [position, renderable, physics, frictionComp] = prop.getComponents();
+        auto [position, renderable, frictionComp, physics] = prop.getComponents();
         position.coords.x = 10;
         position.coords.y = 0;
         position.coords.z = 10;
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
+        PropEntity::instances.emplace_back(std::move(prop));
+    }
+
+    // Create car2
+    {
+        PropEntity prop;
+        auto [position, renderable, frictionComp, physics] = prop.getComponents();
+        position.coords.x = 17;
+        position.coords.y = 0;
+        position.coords.z = 10;
+        position.rotation.y = 1.6f;
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
+        PropEntity::instances.emplace_back(std::move(prop));
+    }
+
+    // Create car3
+    {
+        PropEntity prop;
+        auto [position, renderable, frictionComp, physics] = prop.getComponents();
+        position.coords.x = 30;
+        position.coords.y = 2;
+        position.coords.z = -20;
+        position.scale = glm::vec3(2.0f);
+        position.rotation.y = 1.0f;
+        renderable.objectResource =
+            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
+        PropEntity::instances.emplace_back(std::move(prop));
+    }
+
+    // Create floor
+    {
+        PropEntity prop;
+        auto [position, renderable, frictionComp, physics] = prop.getComponents();
+        position.coords.x = 0;
+        position.coords.y = -1;
+        position.coords.z = 0;
+        position.scale = {100, 1, 100};
         renderable.objectResource =
             ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");

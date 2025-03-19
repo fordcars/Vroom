@@ -24,7 +24,6 @@ public:
     void addDebugShape(const std::vector<glm::vec3>& points,
                                 const std::vector<glm::vec3>& colors,
                                 GLenum drawMode = GL_LINE_STRIP);
-    void toggleBoundingBoxes();
 
 private:
     struct DebugShape {
@@ -39,7 +38,6 @@ private:
     glm::ivec2 mScreenSize = {0, 0};
 
     std::unordered_map<GLenum, std::vector<DebugShape>> mDebugShapes; // Mapped by draw mode
-    bool mShowBoundingBoxes = false;
 
     GLuint mDeferredFramebuffer = 0;
     GLuint mDeferredTextures[GBufferTexture::COUNT]{};
