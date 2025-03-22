@@ -18,6 +18,11 @@ void PhysicsSys::update(float deltaTime) {
         drawCollisionShapes();
     }
 
+    // Reset entities
+    for(auto& [physics] : EntityFilter<PhysicsComp>()) {
+        physics.currentCollision = {};
+    }
+
     // Entities with no collisions
     for(const auto& [position, physics, frictionComp, gravityComp] :
         EntityFilter<PositionComp, NullPhysicsComp, std::optional<FrictionComp>,
@@ -67,7 +72,7 @@ void PhysicsSys::updatePhysics(
 
     if(gravityComp) {
         GravityComp& gravity = gravityComp->get();
-        physics.velocity += glm::vec3(0, -gravity.coefficient, 0) * deltaTime;
+        physics.velocity.y += -gravity.coefficient * deltaTime;
     }
 }
 
@@ -98,7 +103,10 @@ void PhysicsSys::handleSphereEntityCollision(
             newPosition.x >= expandedMin.x && newPosition.x <= expandedMax.x &&
             newPosition.y >= expandedMin.y && newPosition.y <= expandedMax.y &&
             newPosition.z >= expandedMin.z && newPosition.z <= expandedMax.z;
-        if(!colliding) {
+        if(colliding) {
+            physics.currentCollision.colliding = true;
+            otherPhysics.currentCollision.colliding = true;
+        } else {
             continue;
         }
 
@@ -114,25 +122,50 @@ void PhysicsSys::handleSphereEntityCollision(
         // Resolve the collision along the smallest penetration axis
         if(penetrationDepth.x < penetrationDepth.y &&
            penetrationDepth.x < penetrationDepth.z) {
-            physics.velocity.x = otherPhysics.velocity.x;
-            newPosition.x = (newPosition.x < (expandedMin.x + expandedMax.x) / 2)
-                                ? expandedMin.x
-                                : expandedMax.x;
+            // Collision along the X-axis
+            if(newPosition.x < (expandedMin.x + expandedMax.x) / 2) {
+                physics.currentCollision.xPos = true;
+                otherPhysics.currentCollision.xNeg = true;
+                newPosition.x = expandedMin.x;
+            } else {
+                physics.currentCollision.xNeg = true;
+                otherPhysics.currentCollision.xPos = true;
+                newPosition.x = expandedMax.x;
+            }
         } else if(penetrationDepth.y < penetrationDepth.z) {
-            physics.velocity.y = otherPhysics.velocity.y;
-            newPosition.y = (newPosition.y < (expandedMin.y + expandedMax.y) / 2)
-                                ? expandedMin.y
-                                : expandedMax.y;
+            // Collision along the Y-axis
+            if(newPosition.y < (expandedMin.y + expandedMax.y) / 2) {
+                physics.currentCollision.yPos = true;
+                otherPhysics.currentCollision.yNeg = true;
+                newPosition.y = expandedMin.y;
+            } else {
+                physics.currentCollision.yNeg = true;
+                otherPhysics.currentCollision.yPos = true;
+                newPosition.y = expandedMax.y;
+            }
         } else {
-            physics.velocity.z = otherPhysics.velocity.z;
-            newPosition.z = (newPosition.z < (expandedMin.z + expandedMax.z) / 2)
-                                ? expandedMin.z
-                                : expandedMax.z;
+            // Collision along the Z-axis
+            if(newPosition.z < (expandedMin.z + expandedMax.z) / 2) {
+                physics.currentCollision.zPos = true;
+                otherPhysics.currentCollision.zNeg = true;
+                newPosition.z = expandedMin.z;
+            } else {
+                physics.currentCollision.zNeg = true;
+                otherPhysics.currentCollision.zPos = true;
+                newPosition.z = expandedMax.z;
+            }
         }
     }
 
     // Apply updated position
     position.coords = newPosition - physics.positionOffset;
+    if(gravityComp) {
+        GravityComp& gravity = gravityComp->get();
+        if(physics.currentCollision.yNeg) {
+            // Reset vertical velocity when colliding with the ground
+            physics.velocity.y = glm::max(physics.velocity.y, 0.0f);
+        }
+    }
 }
 
 // Draw all collision shapes
@@ -185,7 +218,8 @@ void PhysicsSys::drawCollisionShapes() {
 
         drawBox(obb->minCorner, obb->maxCorner, position.getTransform(),
                 {0.53f, 0.53f, 1.0f});
-        drawBox(aabb.first, aabb.second, glm::mat4(1.0f), {1.0f, 0.53f, 0.0f});
+        drawBox(aabb.first, aabb.second, glm::mat4(1.0f),
+                {1.0f, physics.currentCollision.colliding ? 1.0f : 0.0f, 0.0f});
     }
 
     // Spheres
@@ -196,7 +230,10 @@ void PhysicsSys::drawCollisionShapes() {
 
         for(const auto& circle : debugPoint) {
             RenderingSys::get().addDebugShape(
-                circle, std::vector<glm::vec3>(circle.size(), {1.0f, 0.2f, 0.0f}),
+                circle,
+                std::vector<glm::vec3>(
+                    circle.size(),
+                    {1.0f, physics.currentCollision.colliding ? 1.0f : 0.0f, 0.0f}),
                 GL_LINE_LOOP);
         }
     }

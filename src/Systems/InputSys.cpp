@@ -76,7 +76,10 @@ void InputSys::handleEvent(const SDL_Event& event) {
 void InputSys::handleDownNeed(InputNeed need) {
     switch(need) {
         case InputNeed::Jump:
-            PhysicsSys::get().applyImpulse(PlayerEntity::instances[0], {0, 5, 0});
+            // Jump if we are on the ground
+            if(PlayerEntity::instances[0].get<PhysicsComp>().currentCollision.yNeg) {
+                PhysicsSys::get().applyImpulse(PlayerEntity::instances[0], {0, 7, 0});
+            }
             break;
     }
 }
