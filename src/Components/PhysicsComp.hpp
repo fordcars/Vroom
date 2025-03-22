@@ -9,7 +9,6 @@ struct PhysicsComp {
 };
 
 struct NullPhysicsComp : public PhysicsComp {};
-struct PointPhysicsComp : public PhysicsComp {};
 struct BoxPhysicsComp : public PhysicsComp {};
 struct SpherePhysicsComp : public PhysicsComp {
     float radius = 1.0f;

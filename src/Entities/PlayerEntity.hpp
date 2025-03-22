@@ -11,7 +11,7 @@
 #include "Entity.hpp"
 
 class PlayerEntity : public Entity<PositionComp, RenderableComp, AnimationComp,
-                                   PointPhysicsComp, FrictionComp, GravityComp> {
+                                   SpherePhysicsComp, FrictionComp, GravityComp> {
 public:
     static std::vector<PlayerEntity> instances;
 };

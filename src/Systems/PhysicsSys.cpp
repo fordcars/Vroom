@@ -2,10 +2,6 @@
 
 #include <memory>
 
-#include "Components/FrictionComp.hpp"
-#include "Components/GravityComp.hpp"
-#include "Components/PhysicsComp.hpp"
-#include "Components/PositionComp.hpp"
 #include "Components/RenderableComp.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "RenderingSys.hpp"
@@ -22,115 +18,29 @@ void PhysicsSys::update(float deltaTime) {
         drawCollisionShapes();
     }
 
-    {
-        // Entities with no collisions
+    // Entities with no collisions
+    for(const auto& [position, physics, frictionComp, gravityComp] :
         EntityFilter<PositionComp, NullPhysicsComp, std::optional<FrictionComp>,
-                     std::optional<GravityComp>>
-            filter;
-        for(const auto& [position, physics, frictionComp, gravityComp] : filter) {
-            // Compute velocity in 2 steps to better handle large delta times
-            physics.velocity += 0.5f * physics.acceleration * deltaTime;
-            position.coords += physics.velocity * deltaTime;
-            physics.velocity += 0.5f * physics.acceleration * deltaTime;
-
-            if(frictionComp) {
-                FrictionComp& friction = frictionComp->get();
-                physics.velocity.x *= std::exp(-friction.coefficient * deltaTime);
-                physics.velocity.z *= std::exp(-friction.coefficient * deltaTime);
-            }
-
-            if(gravityComp) {
-                GravityComp& gravity = gravityComp->get();
-                physics.velocity += glm::vec3(0, -gravity.coefficient, 0) * deltaTime;
-            }
-        }
-    }
-    {
-        // Point entities
-        EntityFilter<PositionComp, PointPhysicsComp, std::optional<FrictionComp>,
-                     std::optional<GravityComp>>
-            filter;
-        for(auto& [position, physics, frictionComp, gravityComp] : filter) {
-            physics.velocity += physics.acceleration * deltaTime;
-
-            if(frictionComp) {
-                FrictionComp& friction = frictionComp->get();
-                physics.velocity.x *= std::exp(-friction.coefficient * deltaTime);
-                physics.velocity.z *= std::exp(-friction.coefficient * deltaTime);
-            }
-
-            if(gravityComp) {
-                GravityComp& gravity = gravityComp->get();
-                physics.velocity += glm::vec3(0, -gravity.coefficient, 0) * deltaTime;
-            }
-
-            // Predicted new position
-            glm::vec3 newPosition =
-                position.coords + physics.positionOffset + physics.velocity * deltaTime;
-
-            EntityFilter<PositionComp, RenderableComp, BoxPhysicsComp> otherEntities;
-            for(const auto& [otherPos, renderable, otherPhysics] : otherEntities) {
-                // Get world-space AABB of the other object
-                auto [otherMin, otherMax] =
-                    renderable.objectResource->boundingBox->getWorldspaceAABB(
-                        glm::translate(otherPos.getTransform(),
-                                       otherPhysics.positionOffset));
-
-                // Check if the new position is inside the AABB
-                bool colliding =
-                    newPosition.x >= otherMin.x && newPosition.x <= otherMax.x &&
-                    newPosition.y >= otherMin.y && newPosition.y <= otherMax.y &&
-                    newPosition.z >= otherMin.z && newPosition.z <= otherMax.z;
-                if(!colliding) {
-                    continue;
-                }
-
-                // Compute penetration depth along each axis
-                glm::vec3 penetrationDepth =
-                    glm::vec3(std::min(std::abs(newPosition.x - otherMin.x),
-                                       std::abs(newPosition.x - otherMax.x)),
-                              std::min(std::abs(newPosition.y - otherMin.y),
-                                       std::abs(newPosition.y - otherMax.y)),
-                              std::min(std::abs(newPosition.z - otherMin.z),
-                                       std::abs(newPosition.z - otherMax.z)));
-
-                // Resolve the collision along the smallest penetration axis
-                if(penetrationDepth.x < penetrationDepth.y &&
-                   penetrationDepth.x < penetrationDepth.z) {
-                    physics.velocity.x = otherPhysics.velocity.x;
-                    newPosition.x = (newPosition.x < (otherMin.x + otherMax.x) / 2)
-                                        ? otherMin.x
-                                        : otherMax.x;
-                } else if(penetrationDepth.y < penetrationDepth.z) {
-                    physics.velocity.y = otherPhysics.velocity.y;
-                    newPosition.y = (newPosition.y < (otherMin.y + otherMax.y) / 2)
-                                        ? otherMin.y
-                                        : otherMax.y;
-                } else {
-                    physics.velocity.z = otherPhysics.velocity.z;
-                    newPosition.z = (newPosition.z < (otherMin.z + otherMax.z) / 2)
-                                        ? otherMin.z
-                                        : otherMax.z;
-                }
-            }
-
-            // Apply updated position
-            position.coords = newPosition - physics.positionOffset;
-        }
+                     std::optional<GravityComp>>()) {
+        updatePhysics(physics, frictionComp, gravityComp, deltaTime);
+        position.coords += physics.velocity * deltaTime;
     }
 
-    // {
-    //     // Sphere entities
-    //     EntityFilter<PositionComp, SpherePhysicsComp, std::optional<FrictionComp>>
-    //     filter; for(const auto& [position, physics, frictionComp] : filter) {
-    //     }
-    // }
-    // {
-    //     // Box entities
-    //     EntityFilter<PositionComp, BoxPhysicsComp, std::optional<FrictionComp>> filter;
-    //     for(const auto& [position, physics, frictionComp] : filter) {
-    //     }
-    // }
+    // Box entities (for now, behaves the same as entities with no collisions)
+    for(const auto& [position, physics, frictionComp, gravityComp] :
+        EntityFilter<PositionComp, BoxPhysicsComp, std::optional<FrictionComp>,
+                     std::optional<GravityComp>>()) {
+        updatePhysics(physics, frictionComp, gravityComp, deltaTime);
+        position.coords += physics.velocity * deltaTime;
+    }
+
+    // Sphere entities
+    for(auto& [position, physics, frictionComp, gravityComp] :
+        EntityFilter<PositionComp, SpherePhysicsComp, std::optional<FrictionComp>,
+                     std::optional<GravityComp>>()) {
+        handleSphereEntityCollision(position, physics, frictionComp, gravityComp,
+                                    deltaTime);
+    }
 }
 
 void PhysicsSys::toggleCollisionShapes() {
@@ -140,6 +50,89 @@ void PhysicsSys::toggleCollisionShapes() {
     } else {
         Log::debug() << "Hiding collision shapes.";
     }
+}
+
+void PhysicsSys::updatePhysics(
+    PhysicsComp& physics,
+    const std::optional<std::reference_wrapper<FrictionComp>>& frictionComp,
+    const std::optional<std::reference_wrapper<GravityComp>>& gravityComp,
+    float deltaTime) {
+    physics.velocity += physics.acceleration * deltaTime;
+
+    if(frictionComp) {
+        FrictionComp& friction = frictionComp->get();
+        physics.velocity.x *= std::exp(-friction.coefficient * deltaTime);
+        physics.velocity.z *= std::exp(-friction.coefficient * deltaTime);
+    }
+
+    if(gravityComp) {
+        GravityComp& gravity = gravityComp->get();
+        physics.velocity += glm::vec3(0, -gravity.coefficient, 0) * deltaTime;
+    }
+}
+
+void PhysicsSys::handleSphereEntityCollision(
+    PositionComp& position, SpherePhysicsComp& physics,
+    const std::optional<std::reference_wrapper<FrictionComp>>& frictionComp,
+    const std::optional<std::reference_wrapper<GravityComp>>& gravityComp,
+    float deltaTime) {
+    updatePhysics(physics, frictionComp, gravityComp, deltaTime);
+
+    // Predicted new position
+    glm::vec3 newPosition =
+        position.coords + physics.positionOffset + physics.velocity * deltaTime;
+
+    EntityFilter<PositionComp, RenderableComp, BoxPhysicsComp> otherEntities;
+    for(const auto& [otherPos, renderable, otherPhysics] : otherEntities) {
+        // Get world-space AABB of the other object
+        auto [otherMin, otherMax] =
+            renderable.objectResource->boundingBox->getWorldspaceAABB(
+                glm::translate(otherPos.getTransform(), otherPhysics.positionOffset));
+
+        // Expand AABB by the sphere's radius
+        glm::vec3 expandedMin = otherMin - glm::vec3(physics.radius);
+        glm::vec3 expandedMax = otherMax + glm::vec3(physics.radius);
+
+        // Check if the new position is inside the AABB
+        bool colliding =
+            newPosition.x >= expandedMin.x && newPosition.x <= expandedMax.x &&
+            newPosition.y >= expandedMin.y && newPosition.y <= expandedMax.y &&
+            newPosition.z >= expandedMin.z && newPosition.z <= expandedMax.z;
+        if(!colliding) {
+            continue;
+        }
+
+        // Compute penetration depth along each axis
+        glm::vec3 penetrationDepth =
+            glm::vec3(std::min(std::abs(newPosition.x - expandedMin.x),
+                               std::abs(newPosition.x - expandedMax.x)),
+                      std::min(std::abs(newPosition.y - expandedMin.y),
+                               std::abs(newPosition.y - expandedMax.y)),
+                      std::min(std::abs(newPosition.z - expandedMin.z),
+                               std::abs(newPosition.z - expandedMax.z)));
+
+        // Resolve the collision along the smallest penetration axis
+        if(penetrationDepth.x < penetrationDepth.y &&
+           penetrationDepth.x < penetrationDepth.z) {
+            physics.velocity.x = otherPhysics.velocity.x;
+            newPosition.x = (newPosition.x < (expandedMin.x + expandedMax.x) / 2)
+                                ? expandedMin.x
+                                : expandedMax.x;
+        } else if(penetrationDepth.y < penetrationDepth.z) {
+            physics.velocity.y = otherPhysics.velocity.y;
+            newPosition.y = (newPosition.y < (expandedMin.y + expandedMax.y) / 2)
+                                ? expandedMin.y
+                                : expandedMax.y;
+        } else {
+            physics.velocity.z = otherPhysics.velocity.z;
+            newPosition.z = (newPosition.z < (expandedMin.z + expandedMax.z) / 2)
+                                ? expandedMin.z
+                                : expandedMax.z;
+        }
+    }
+
+    // Apply updated position
+    position.coords = newPosition - physics.positionOffset;
 }
 
 // Draw all collision shapes
@@ -193,19 +186,6 @@ void PhysicsSys::drawCollisionShapes() {
         drawBox(obb->minCorner, obb->maxCorner, position.getTransform(),
                 {0.53f, 0.53f, 1.0f});
         drawBox(aabb.first, aabb.second, glm::mat4(1.0f), {1.0f, 0.53f, 0.0f});
-    }
-
-    // Points
-    EntityFilter<PositionComp, RenderableComp, PointPhysicsComp> pointEntities;
-    for(const auto& [position, renderable, physics] : pointEntities) {
-        const auto& debugPoint =
-            Utils::generateSphere(0.1f, position.coords + physics.positionOffset);
-
-        for(const auto& circle : debugPoint) {
-            RenderingSys::get().addDebugShape(
-                circle, std::vector<glm::vec3>(circle.size(), {1.0f, 0.2f, 0.0f}),
-                GL_LINE_LOOP);
-        }
     }
 
     // Spheres
