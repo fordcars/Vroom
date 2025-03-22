@@ -97,17 +97,17 @@ void PhysicsSys::update(float deltaTime) {
                 // Resolve the collision along the smallest penetration axis
                 if(penetrationDepth.x < penetrationDepth.y &&
                    penetrationDepth.x < penetrationDepth.z) {
-                    physics.velocity.x = 0;
+                    physics.velocity.x = otherPhysics.velocity.x;
                     newPosition.x = (newPosition.x < (otherMin.x + otherMax.x) / 2)
                                         ? otherMin.x
                                         : otherMax.x;
                 } else if(penetrationDepth.y < penetrationDepth.z) {
-                    physics.velocity.y = 0;
+                    physics.velocity.y = otherPhysics.velocity.y;
                     newPosition.y = (newPosition.y < (otherMin.y + otherMax.y) / 2)
                                         ? otherMin.y
                                         : otherMax.y;
                 } else {
-                    physics.velocity.z = 0;
+                    physics.velocity.z = otherPhysics.velocity.z;
                     newPosition.z = (newPosition.z < (otherMin.z + otherMax.z) / 2)
                                         ? otherMin.z
                                         : otherMax.z;

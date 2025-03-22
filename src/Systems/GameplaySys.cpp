@@ -137,6 +137,10 @@ void GameplaySys::update(float deltaTime) {
     // Update skybox
     SkyboxEntity::instances[0].get<PositionComp>().coords = cameraPosition;
 
+    // Random debug stuff
+    PropEntity::instances[1].get<PositionComp>().coords.x = 10 + 2*sin(SDL_GetTicks() / 1000.0f);
+    PropEntity::instances[2].get<PositionComp>().rotation.x = SDL_GetTicks() / 1000.0f;
+
     // PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
     // PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
     // PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
