@@ -15,7 +15,7 @@ set(SOURCES
 	Systems/ResourceSys/Obj/WavefrontLoader.cpp
 	Systems/ResourceSys/Obj/GltfLoader.cpp
 	Systems/ResourceSys/Obj/GPUBuffer.cpp
-	Systems/ResourceSys/Obj/ObjOrientedBoundingBox.cpp
+	Systems/ResourceSys/Obj/ObjBoundingBox.cpp
 	Systems/ResourceSys/Obj/ObjMesh.cpp
 	Systems/ResourceSys/Obj/ObjImage.cpp
 	Systems/ResourceSys/Obj/ObjTexture.cpp
@@ -60,7 +60,7 @@ set(HEADERS
 	Systems/ResourceSys/Obj/WavefrontLoader.hpp
 	Systems/ResourceSys/Obj/GltfLoader.hpp
 	Systems/ResourceSys/Obj/GPUBuffer.hpp
-	Systems/ResourceSys/Obj/ObjOrientedBoundingBox.hpp
+	Systems/ResourceSys/Obj/ObjBoundingBox.hpp
 	Systems/ResourceSys/Obj/ObjMesh.hpp
 	Systems/ResourceSys/Obj/ObjImage.hpp
 	Systems/ResourceSys/Obj/ObjTexture.hpp

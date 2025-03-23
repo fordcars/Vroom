@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Systems/ResourceSys/Obj/ObjOrientedBoundingBox.hpp"
+#include "Systems/ResourceSys/Obj/ObjBoundingBox.hpp"
 
 struct PhysicsComp {
     struct CurrentCollision {

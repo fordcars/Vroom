@@ -8,7 +8,7 @@
 #include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
 #include "ObjTexture.hpp"
-#include "ObjOrientedBoundingBox.hpp"
+#include "ObjBoundingBox.hpp"
 
 class ObjResource {
 public:
@@ -32,7 +32,7 @@ public:
     std::vector<ObjMesh::Ptr> objMeshes;
     std::vector<ObjImage::Ptr> objImages;
     std::vector<ObjTexture::Ptr> objTextures;
-    ObjOrientedBoundingBox::Ptr boundingBox;
+    ObjBoundingBox::Ptr boundingBox;
     AnimationContainer::Ptr animationContainer; // Optional
 
     static Ptr create(std::unique_ptr<ObjLoader> loader) {

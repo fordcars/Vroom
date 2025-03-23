@@ -7,21 +7,22 @@
 #include <tuple>
 
 class ObjResource;
-class ObjOrientedBoundingBox {
+class ObjBoundingBox {
 public:
-    using Ptr = std::shared_ptr<ObjOrientedBoundingBox>;
-    using CPtr = std::shared_ptr<const ObjOrientedBoundingBox>;
+    using Ptr = std::shared_ptr<ObjBoundingBox>;
+    using CPtr = std::shared_ptr<const ObjBoundingBox>;
 
+    // Modelspace AABB corners
     glm::vec3 minCorner {};
     glm::vec3 maxCorner {};
 
     static Ptr create(const ObjResource& resource) {
-        return std::make_shared<ObjOrientedBoundingBox>(resource);
+        return std::make_shared<ObjBoundingBox>(resource);
     }
 
-    ObjOrientedBoundingBox(const ObjResource& resource);
+    ObjBoundingBox(const ObjResource& resource);
     std::pair<glm::vec3, glm::vec3> getWorldspaceAABB(const glm::mat4& modelMatrix) const;
 
 private:
-    void calculateCorners(const ObjResource& resource);
+    void calculateModelspaceAABB(const ObjResource& resource);
 };
