@@ -25,7 +25,7 @@ bool ResourceSys::loadResources() {
     return res;
 }
 
-ObjResource::CPtr ResourceSys::getObjResource(const std::string& name) const {
+ObjResource::Ptr ResourceSys::getObjResource(const std::string& name) {
     if(mObjResources.find(name) == mObjResources.end()) {
         Log::error() << "Cannot find obj resource '" << name << "'!";
         throw std::invalid_argument("No obj resource with name '" + name + "'");
@@ -41,6 +41,15 @@ ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) con
     }
 
     return mShaderResources.at(name);
+}
+
+AudioResource::Ptr ResourceSys::getAudioResource(const std::string& name) {
+    if(mAudioResources.find(name) == mAudioResources.end()) {
+        Log::error() << "Cannot find audio resource '" << name << "'!";
+        throw std::invalid_argument("No audio resource with name '" + name + "'");
+    }
+
+    return mAudioResources.at(name);
 }
 
 bool ResourceSys::loadResourcesFromDir(const std::filesystem::path& dirPath) {
@@ -67,7 +76,7 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     size_t firstDot = name.find('.');
     if(firstDot != std::string::npos) name = name.substr(0, firstDot);
 
-    Log::debug() << "Loading resource '" << name << "' with type '" << type << "' from "
+    Log::debug() << "Found resource '" << name << "' with type '" << type << "' from "
                  << path.string();
 
     bool alreadyExists = false;
@@ -84,6 +93,13 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
                 mObjResources.insert(
                     {name, ObjResource::create(std::make_unique<GltfLoader>(path))});
             }
+        }
+    } else if(type == ".wav" || type == ".flac" || type == ".mp3") {
+        if(mAudioResources.find(name) != mAudioResources.end()) {
+            alreadyExists = true;
+            resourceType = "audio";
+        } else {
+            mAudioResources.insert({name, AudioResource::create(path)});
         }
     } else if(type == ".glsl") {
         if(mShaderResources.find(name) == mShaderResources.end()) {

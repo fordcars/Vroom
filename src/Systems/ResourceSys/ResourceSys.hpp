@@ -5,6 +5,7 @@
 
 #include "Obj/ObjResource.hpp"
 #include "ShaderResource.hpp"
+#include "AudioResource.hpp"
 
 class ResourceSys {
 public:
@@ -12,12 +13,14 @@ public:
     ResourceSys() = default;
 
     bool loadResources();
-    ObjResource::CPtr getObjResource(const std::string& name) const;
+    ObjResource::Ptr getObjResource(const std::string& name);
     ShaderResource::CPtr getShaderResource(const std::string& name) const;
+    AudioResource::Ptr getAudioResource(const std::string& name);
 
 private:
     std::unordered_map<std::string, ObjResource::Ptr> mObjResources;
     std::unordered_map<std::string, ShaderResource::Ptr> mShaderResources;
+    std::unordered_map<std::string, AudioResource::Ptr> mAudioResources;
 
     ResourceSys(const ResourceSys&) = delete;
     ResourceSys& operator=(const ResourceSys&) = delete;

@@ -23,8 +23,10 @@ set(SOURCES
 	Systems/ResourceSys/Obj/Animation/Animation.cpp
 	Systems/ResourceSys/Obj/Animation/Skin.cpp
 	Systems/ResourceSys/ShaderResource.cpp
+	Systems/ResourceSys/AudioResource.cpp
 	Systems/PhysicsSys.cpp
 	Systems/AnimationSys.cpp
+	Systems/AudioSys.cpp
 	Systems/UISys.cpp
 
 	# Entities
@@ -68,8 +70,10 @@ set(HEADERS
 	Systems/ResourceSys/Obj/Animation/Animation.hpp
 	Systems/ResourceSys/Obj/Animation/Skin.hpp
 	Systems/ResourceSys/ShaderResource.hpp
+	Systems/ResourceSys/AudioResource.hpp
 	Systems/PhysicsSys.hpp
 	Systems/AnimationSys.hpp
+	Systems/AudioSys.hpp
 	Systems/UISys.hpp
 
 	# Entities
@@ -111,6 +115,7 @@ find_package(tinyobjloader REQUIRED)
 find_package(TinyGLTF REQUIRED)
 find_package(imgui REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(miniaudio REQUIRED)
 
 add_executable(
 	Vroom
@@ -136,6 +141,7 @@ target_link_libraries(
 	PRIVATE TinyGLTF::TinyGLTF
 	PRIVATE imgui::imgui
 	PRIVATE Eigen3::Eigen
+	PRIVATE miniaudio::miniaudio
 )
 
 target_compile_definitions(Vroom

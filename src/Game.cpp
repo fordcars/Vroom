@@ -6,6 +6,7 @@
 #include "Constants.hpp"
 #include "Log.hpp"
 #include "Systems/AnimationSys.hpp"
+#include "Systems/AudioSys.hpp"
 #include "Systems/EventSys.hpp"
 #include "Systems/GameplaySys.hpp"
 #include "Systems/InputSys.hpp"
@@ -58,7 +59,7 @@ bool Game::init() {
     }
 
     return InputSys::get().init() && RenderingSys::get().init(mMainWindow) &&
-           ResourceSys::get().loadResources();
+           AudioSys::get().init() && ResourceSys::get().loadResources();
 }
 
 void Game::requestQuit() {
