@@ -95,6 +95,7 @@ set(HEADERS
 	Components/PositionComp.hpp
 	Components/RenderableComp.hpp
 	Components/PhysicsComp.hpp
+	Components/SoundComp.hpp
 )
 
 set(EXTRA_SOURCES

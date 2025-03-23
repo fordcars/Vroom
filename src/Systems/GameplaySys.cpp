@@ -20,7 +20,8 @@ void GameplaySys::start() {
     CameraInfoComp& info = camera.get<CameraInfoComp>();
     PositionComp& cameraPos = camera.get<PositionComp>();
     info.horizFOV = Constants::HORIZ_FOV;
-    info.aspectRatio = static_cast<float>(Constants::DEFAULT_WINDOW_SIZE_X) / Constants::DEFAULT_WINDOW_SIZE_Y;
+    info.aspectRatio = static_cast<float>(Constants::DEFAULT_WINDOW_SIZE_X) /
+                       Constants::DEFAULT_WINDOW_SIZE_Y;
     info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
@@ -32,7 +33,7 @@ void GameplaySys::start() {
     // Create player
     {
         PlayerEntity player;
-        auto [position, renderable, animationComp, physics, frictionComp, gravityComp] =
+        auto [position, renderable, sound, animation, physics, frictionComp, gravity] =
             player.getComponents();
         position.coords.x = -5;
         position.coords.y = 3;
@@ -40,9 +41,11 @@ void GameplaySys::start() {
         physics.positionOffset = {0, 0.7, 0};
         renderable.objectResource = ResourceSys::get().getObjResource("skelly");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr_skinned");
-        animationComp.setAnimation(Constants::AnimationName::get<"Happy">());
-        animationComp.startTime =
-            0.09; // The walk animation isn't a perfect loop, this helps
+        animation.setAnimation(Constants::AnimationName::get<"Happy">());
+        animation.startTime = 0.09; // The walk animation isn't a perfect loop, this helps
+
+        sound.audioResource = ResourceSys::get().getAudioResource("step");
+        sound.audioResource->call<ma_sound_set_looping>(true);
 
         PlayerEntity::instances.emplace_back(std::move(player));
     }
@@ -120,14 +123,17 @@ void GameplaySys::start() {
         SkyboxEntity sky;
         auto [position, renderable] = sky.getComponents();
         position.scale = {1000, 1000, 1000};
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("skybox");
+        renderable.objectResource = ResourceSys::get().getObjResource("skybox");
         renderable.shader = ResourceSys::get().getShaderResource("flat");
         renderable.shadingType = RenderableComp::ShadingType::ForwardShaded;
         SkyboxEntity::instances.emplace_back(std::move(sky));
     }
 
-    ResourceSys::get().getAudioResource("texasradiofish")->run<ma_sound_start>();
+    auto&& music = ResourceSys::get().getAudioResource("texasradiofish");
+    music->call<ma_sound_set_looping>(true);
+    music->call<ma_sound_set_spatialization_enabled>(false);
+    music->call<ma_sound_start>();
+    music->call<ma_sound_set_volume>(0.15f);
 }
 
 void GameplaySys::update(float deltaTime) {
@@ -140,19 +146,20 @@ void GameplaySys::update(float deltaTime) {
     SkyboxEntity::instances[0].get<PositionComp>().coords = cameraPosition;
 
     // Random debug stuff
-    PropEntity::instances[1].get<PositionComp>().coords.x = 10 + 2*sin(SDL_GetTicks() / 1000.0f);
+    PropEntity::instances[1].get<PositionComp>().coords.x =
+        10 + 2 * sin(SDL_GetTicks() / 1000.0f);
     PropEntity::instances[2].get<PositionComp>().rotation.x = SDL_GetTicks() / 1000.0f;
 
     // PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;
     // PropEntity::instances[0].get<PositionComp>().coords.y = playerPosition.y;
     // PropEntity::instances[0].get<PositionComp>().coords.z = playerPosition.z;
 
-//     // Multicolor light
-//     float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
-//     glm::vec3 lightColor;
-//     lightColor.r = (sin(time * 2.0f) + 1.0f) / 2.0f;
-//     lightColor.g = (sin(time * 0.7f) + 1.0f) / 2.0f;
-//     lightColor.b = (sin(time * 1.3f) + 1.0f) / 2.0f;
-//     LightEntity::instances[0].get<LightComp>().diffuse = lightColor;
-//     LightEntity::instances[0].get<LightComp>().specular = lightColor;
+    // // Multicolor light
+    // float time = static_cast<float>(SDL_GetTicks()) / 1000.0f;
+    // glm::vec3 lightColor;
+    // lightColor.r = (sin(time * 2.0f) + 1.0f) / 2.0f;
+    // lightColor.g = (sin(time * 0.7f) + 1.0f) / 2.0f;
+    // lightColor.b = (sin(time * 1.3f) + 1.0f) / 2.0f;
+    // LightEntity::instances[0].get<LightComp>().diffuse = lightColor;
+    // LightEntity::instances[0].get<LightComp>().specular = lightColor;
 }

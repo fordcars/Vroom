@@ -80,6 +80,7 @@ void Game::doMainLoop() {
     PhysicsSys::get().update(deltaTime);
     GameplaySys::get().update(deltaTime);
     UISys::get().update(deltaTime);
+    AudioSys::get().update(deltaTime);
 
     // Rendering
     RenderingSys::get().clear();

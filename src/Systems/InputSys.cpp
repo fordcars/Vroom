@@ -151,6 +151,7 @@ void InputSys::handleWalking(float deltaTime) {
     auto& physicsComp = PlayerEntity::instances[0].get<PhysicsComp>();
     auto& animationComp = PlayerEntity::instances[0].get<AnimationComp>();
     auto& positionComp = PlayerEntity::instances[0].get<PositionComp>();
+    auto& soundComp = PlayerEntity::instances[0].get<SoundComp>();
 
     float currentSpeedSq =
         glm::length2(glm::vec2(physicsComp.velocity.x, physicsComp.velocity.z));
@@ -175,7 +176,7 @@ void InputSys::handleWalking(float deltaTime) {
             physicsComp.velocity.z = walkVelocity.z;
         }
 
-        // Set rotation based on velocity direction
+        // Set rotation based on direction
         if(physicsComp.velocity.x != 0 || physicsComp.velocity.z != 0) {
             float targetRotation =
                 std::atan2(mWalkInputDirection.x, mWalkInputDirection.z);
@@ -206,12 +207,19 @@ void InputSys::handleWalking(float deltaTime) {
             std::vector<glm::vec3>(32, {0, 1, 0}), GL_LINE_LOOP);
     }
 
-    if(currentSpeedSq < 0.4) {
+    if(currentSpeedSq < 0.4 || !physicsComp.currentCollision.yNeg) {
         animationComp.setAnimation(Constants::AnimationName::get<"Happy">());
         animationComp.speed = 1.0f;
+
+        if(soundComp.audioResource->call<ma_sound_is_playing>()) {
+            soundComp.audioResource->call<ma_sound_stop>();
+            soundComp.audioResource->call<ma_sound_seek_to_pcm_frame>(0);
+        }
     } else {
         animationComp.setAnimation(Constants::AnimationName::get<"Normal Walk">());
         animationComp.speed = currentSpeedSq / (TARGET_WALK_SPEED * TARGET_WALK_SPEED);
+        soundComp.audioResource->call<ma_sound_start>();
+        soundComp.audioResource->call<ma_sound_set_pitch>(glm::max(animationComp.speed, 0.8f));
     }
 }
 
