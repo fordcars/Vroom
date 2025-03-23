@@ -20,6 +20,7 @@ public:
     bool init(SDL_Window* window);
     void clear();
     void render(SDL_Window* window);
+    void setPostProcessShader(ShaderResource::CPtr shader);
 
     void addDebugShape(const std::vector<glm::vec3>& points,
                        const std::vector<glm::vec3>& colors,
@@ -42,7 +43,11 @@ private:
 
     GLuint mDeferredFramebuffer = 0;
     GLuint mDeferredTextures[GBufferTexture::COUNT]{};
-    GLuint mDeferredDepthbuffer = 0;
+    GLuint mDeferredDepthBuffer = 0;
+    GLuint mPostProcessFramebuffer = 0;
+    GLuint mPostProcessTexture = 0;
+    GLuint mPostProcessDepthBuffer = 0;
+    ShaderResource::CPtr mPostProcessShader;
 
     RenderingSys(const RenderingSys&) = delete;
     RenderingSys& operator=(const RenderingSys&) = delete;
@@ -51,10 +56,12 @@ private:
 
     void initGL(SDL_Window* window);
     void initDeferredRendering();
+    void initPostProcessRendering();
     void renderRenderable(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                           const PositionComp& position, const RenderableComp& renderable);
     void renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
                      const LightComp& light);
+    void renderPostProcessing();
     void renderDebugShape(const ShaderResource& shader, const glm::mat4& viewMatrix,
                           const glm::mat4& projectionMatrix, const DebugShape& shape,
                           GLenum drawMode);

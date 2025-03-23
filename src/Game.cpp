@@ -43,10 +43,6 @@ bool Game::init() {
         return false;
     }
 
-    // Set AA before window creation
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, Constants::AA_ENABLED ? 1 : 0);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, Constants::AA_SAMPLES);
-
     // Create window
     mMainWindow = SDL_CreateWindow(
         Constants::GAME_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

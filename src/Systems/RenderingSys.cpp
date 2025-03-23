@@ -65,12 +65,18 @@ bool RenderingSys::init(SDL_Window* window) {
 }
 
 void RenderingSys::clear() {
-    // Must clear framebuffers to black, since we are using additive blending
+    // Must clear deferred framebuffers to black, since we are using additive blending
     glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glDepthMask(GL_TRUE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessFramebuffer);
+    glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -97,12 +103,14 @@ void RenderingSys::render(SDL_Window* window) {
         }
     }
 
-    // Second pass: render lights to screen using GBuffer
-    cloneDepthBuffer(mDeferredFramebuffer, 0); // Clone depth buffer to front, used later
-    glDepthMask(GL_FALSE);                     // Disable writing to depth buffer
+    // Second pass: render lights using GBuffer
+    GLuint lightTargetFramebuffer = mPostProcessShader ? mPostProcessFramebuffer : 0;
+    cloneDepthBuffer(mDeferredFramebuffer,
+                     lightTargetFramebuffer); // Clone depth buffer to front, used later
+    glDepthMask(GL_FALSE);                    // Disable writing to depth buffer
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND); // Enable blending to add each light source
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, lightTargetFramebuffer);
 
     EntityFilter<PositionComp, LightComp> lightFilter;
     for(const auto& [position, light] : lightFilter) {
@@ -115,6 +123,14 @@ void RenderingSys::render(SDL_Window* window) {
     glDisable(GL_BLEND);
     for(const auto& [position, renderable] : forwardShadedEntities) {
         renderRenderable(viewMatrix, projectionMatrix, *position, *renderable);
+    }
+
+    // Fourth pass: post-process rendering if shader is present
+    if(mPostProcessShader) {
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        renderPostProcessing();
     }
 
     // Render debug stuff if present, same setup as forward shaded
@@ -135,6 +151,10 @@ void RenderingSys::render(SDL_Window* window) {
     // Render UI and swap window
     UISys::get().render();
     SDL_GL_SwapWindow(window); // Waits for VSync if enabled
+}
+
+void RenderingSys::setPostProcessShader(ShaderResource::CPtr shader) {
+    mPostProcessShader = std::move(shader);
 }
 
 void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
@@ -172,12 +192,13 @@ void RenderingSys::initGL(SDL_Window* window) {
     glBlendEquation(GL_FUNC_ADD);
 
     initDeferredRendering();
+    initPostProcessRendering();
 }
 
 void RenderingSys::initDeferredRendering() {
     static constexpr std::pair<GBufferTexture, GLenum> TEXTURE_FORMATS[] = {
         {GBufferTexture::Position, GL_RGB32F}, {GBufferTexture::Normal, GL_RGB32F},
-        {GBufferTexture::Albedo, GL_RGB32F},   {GBufferTexture::Metallic, GL_RED},
+        {GBufferTexture::Albedo, GL_RGB8},     {GBufferTexture::Metallic, GL_RED},
         {GBufferTexture::Roughness, GL_RED},
     };
     static_assert(std::size(TEXTURE_FORMATS) == GBufferTexture::COUNT);
@@ -192,41 +213,24 @@ void RenderingSys::initDeferredRendering() {
     glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
 
     // Add depth buffer
-    glGenRenderbuffers(1, &mDeferredDepthbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, mDeferredDepthbuffer);
+    glGenRenderbuffers(1, &mDeferredDepthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, mDeferredDepthBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, mScreenSize.x,
                           mScreenSize.y);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
-                              mDeferredDepthbuffer);
+                              mDeferredDepthBuffer);
 
     // Generate textures
     glGenTextures(GBufferTexture::COUNT, mDeferredTextures);
-
-    // Set up multisampling if enabled
-    if(Constants::AA_ENABLED) {
-        for(size_t i = 0; i < GBufferTexture::COUNT; ++i) {
-            auto&& [texture, format] = TEXTURE_FORMATS[i];
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mDeferredTextures[texture]);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, Constants::AA_SAMPLES,
-                                    format, mScreenSize.x, mScreenSize.y,
-                                    GL_TRUE); // Multisampled texture
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + texture,
-                                 mDeferredTextures[texture], 0);
-            glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        }
-    } else {
-        // If AA is not enabled, create regular textures
-        for(size_t i = 0; i < GBufferTexture::COUNT; ++i) {
-            auto&& [texture, format] = TEXTURE_FORMATS[i];
-            glBindTexture(GL_TEXTURE_2D, mDeferredTextures[texture]);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, mScreenSize.x, mScreenSize.y, 0,
-                         GL_RED, GL_FLOAT, nullptr);
-            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + texture,
-                                 mDeferredTextures[texture], 0);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        }
+    for(size_t i = 0; i < GBufferTexture::COUNT; ++i) {
+        auto&& [texture, format] = TEXTURE_FORMATS[i];
+        glBindTexture(GL_TEXTURE_2D, mDeferredTextures[texture]);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, mScreenSize.x, mScreenSize.y, 0, GL_RED,
+                     GL_FLOAT, nullptr);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + texture,
+                             mDeferredTextures[texture], 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
 
     // Set draw buffers
@@ -245,6 +249,44 @@ void RenderingSys::initDeferredRendering() {
     if(error != GL_NO_ERROR) {
         Log::glError(error)
             << "Encountered an OpenGL error while initializing deferred rendering!";
+    }
+}
+
+void RenderingSys::initPostProcessRendering() {
+    // Create framebuffer
+    glGenFramebuffers(1, &mPostProcessFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, mPostProcessFramebuffer);
+
+    // Add depth buffer
+    glGenRenderbuffers(1, &mPostProcessDepthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, mPostProcessDepthBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, mScreenSize.x,
+                          mScreenSize.y);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,
+                              mPostProcessDepthBuffer);
+
+    // Generate texture
+    glGenTextures(1, &mPostProcessTexture);
+    glBindTexture(GL_TEXTURE_2D, mPostProcessTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, mScreenSize.x, mScreenSize.y, 0, GL_RED,
+                 GL_FLOAT, nullptr);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mPostProcessTexture, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Set draw buffer
+    GLenum drawBuffer = GL_COLOR_ATTACHMENT0;
+    glDrawBuffers(1, &drawBuffer);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        Log::error() << "Could not initialize post-process rendering framebuffer!";
+    }
+
+    // Check for gl error
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+        Log::glError(error)
+            << "Encountered an OpenGL error while initializing post-process rendering!";
     }
 }
 
@@ -435,11 +477,7 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     // Set textures for samplers
     for(std::size_t i = 0; i < GBufferTexture::COUNT; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
-        if(Constants::AA_ENABLED) {
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mDeferredTextures[i]);
-        } else {
-            glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
-        }
+        glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
         glBindSampler(i, 0);
     }
 
@@ -461,6 +499,58 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     glDrawArrays(GL_TRIANGLES,     // Mode
                  0,                // Start
                  light.vertexCount // Count
+    );
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+}
+
+void RenderingSys::renderPostProcessing() {
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+    };
+    static GPUBuffer quadBuffer(GL_ARRAY_BUFFER, std::vector<Vertex>{
+                                                     {{-1, -1, 0}, {0, 0}},
+                                                     {{1, -1, 0}, {1, 0}},
+                                                     {{1, 1, 0}, {1, 1}},
+
+                                                     {{-1, -1, 0}, {0, 0}},
+                                                     {{1, 1, 0}, {1, 1}},
+                                                     {{-1, 1, 0}, {0, 1}},
+                                                 });
+    static std::size_t quadVertexCount = quadBuffer.getCount();
+
+    using namespace Constants;
+    const ShaderResource& shader = *mPostProcessShader;
+    const GLsizei stride = sizeof(Vertex);
+
+    glUseProgram(shader.getId());
+    glUniform1i(shader.getUniform(UniformName::get<"colorTex">()), 0);
+
+    // Set textures for samplers
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mPostProcessTexture);
+    glBindSampler(0, 0);
+
+    // Attributes
+    glBindBuffer(GL_ARRAY_BUFFER, quadBuffer.getId());
+    glEnableVertexAttribArray(0); // Positions
+    glEnableVertexAttribArray(1); // Texcoords
+
+    // Note at this point, we are probably drawing a simple, full screen quad
+    // Positions (vec3)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(Vertex, position));
+
+    // UVs (vec2)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(Vertex, texcoord));
+
+    // Draw
+    glDrawArrays(GL_TRIANGLES,   // Mode
+                 0,              // Start
+                 quadVertexCount // Count
     );
 
     glDisableVertexAttribArray(0);

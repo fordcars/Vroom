@@ -6,6 +6,7 @@
 #include "Entities/PlayerEntity.hpp"
 #include "Entities/PropEntity.hpp"
 #include "Entities/SkyboxEntity.hpp"
+#include "RenderingSys.hpp"
 #include "ResourceSys/ResourceSys.hpp"
 
 // Static
@@ -15,6 +16,13 @@ GameplaySys& GameplaySys::get() {
 }
 
 void GameplaySys::start() {
+    // Init stuff
+    if(Constants::ENABLE_FXAA)
+    {
+        RenderingSys::get().setPostProcessShader(
+            ResourceSys::get().getShaderResource("fxaa"));
+    }
+
     // Create camera
     CameraEntity camera;
     CameraInfoComp& info = camera.get<CameraInfoComp>();
