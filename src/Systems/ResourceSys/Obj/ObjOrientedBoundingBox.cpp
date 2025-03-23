@@ -20,37 +20,29 @@ std::vector<glm::vec3> getModelspacePoints(const ObjResource& resource) {
     return points;
 }
 
-glm::mat3 computeCovarianceMatrix(const std::vector<glm::vec3>& points,
-                                  glm::vec3& centroid) {
-    centroid = glm::vec3(0.0f);
+Eigen::Matrix3f computeCovarianceMatrix(const std::vector<glm::vec3>& points,
+                                  Eigen::Vector3f& centroid) {
+    centroid = Eigen::Vector3f::Zero();
     for(const auto& p : points) {
-        centroid += p;
+        centroid += Eigen::Vector3f(p.x, p.y, p.z);
     }
     centroid /= static_cast<float>(points.size());
 
-    glm::mat3 cov(0.0f);
-    for(const auto& p : points) {
-        glm::vec3 diff = p - centroid;
-        cov += glm::outerProduct(diff, diff);
+    Eigen::Matrix3f covariance = Eigen::Matrix3f::Zero();
+    for (const auto& p : points) {
+        auto&& point = Eigen::Vector3f(p.x, p.y, p.z);
+        Eigen::Vector3f diff = point - centroid;
+        covariance += diff * diff.transpose();
     }
-    return cov / static_cast<float>(points.size());
+    return covariance /= static_cast<float>(points.size());
 }
 
 // Compute eigenvalues and eigenvectors using Eigen library
-void computeEigenDecomposition(const glm::mat3& matrix, glm::vec3& eigenvalues,
-                               glm::mat3& eigenvectors) {
-    Eigen::Matrix3f mat;
-    for(int i = 0; i < 3; i++)
-        for(int j = 0; j < 3; j++) mat(i, j) = matrix[i][j];
-
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(mat);
-    Eigen::Vector3f eigVals = solver.eigenvalues();
-    Eigen::Matrix3f eigVecs = solver.eigenvectors();
-
-    eigenvalues = glm::vec3(eigVals[0], eigVals[1], eigVals[2]);
-    eigenvectors = glm::mat3(eigVecs(0, 0), eigVecs(1, 0), eigVecs(2, 0), eigVecs(0, 1),
-                             eigVecs(1, 1), eigVecs(2, 1), eigVecs(0, 2), eigVecs(1, 2),
-                             eigVecs(2, 2));
+void computeEigenDecomposition(const Eigen::Matrix3f& matrix,
+                               Eigen::Vector3f& eigenvalues, Eigen::Matrix3f& eigenvectors) {
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(matrix);
+    eigenvalues = solver.eigenvalues();
+    eigenvectors = solver.eigenvectors();
 }
 } // namespace
 
@@ -86,27 +78,35 @@ std::pair<glm::vec3, glm::vec3> ObjOrientedBoundingBox::getWorldspaceAABB(
 void ObjOrientedBoundingBox::calculateCorners(const ObjResource& resource) {
     std::vector<glm::vec3> points = getModelspacePoints(resource);
 
-    glm::vec3 centroid;
-    glm::mat3 covariance = computeCovarianceMatrix(points, centroid);
+    Eigen::Vector3f centroid;
+    Eigen::Matrix3f covariance = computeCovarianceMatrix(points, centroid);
 
-    glm::vec3 eigenvalues;
-    glm::mat3 eigenvectors;
+    Eigen::Vector3f eigenvalues;
+    Eigen::Matrix3f eigenvectors;
     computeEigenDecomposition(covariance, eigenvalues, eigenvectors);
 
-    // Find min/max extents along the new basis
-    glm::vec3 minExtents(std::numeric_limits<float>::max());
-    glm::vec3 maxExtents(std::numeric_limits<float>::lowest());
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(covariance);
+    Eigen::Matrix3f eigenVectors = solver.eigenvectors();
+    Eigen::Vector3f eigenValues = solver.eigenvalues();
 
-    for(const auto& p : points) {
-        glm::vec3 localPos = glm::transpose(eigenvectors) * (p - centroid);
-        minExtents = glm::min(minExtents, localPos);
-        maxExtents = glm::max(maxExtents, localPos);
+    // Step 4: Project the points onto the principal axes
+    Eigen::Matrix3f rotation = eigenVectors;
+    Eigen::Vector3f minExtents =
+        Eigen::Vector3f::Ones() * std::numeric_limits<float>::max();
+    Eigen::Vector3f maxExtents =
+        Eigen::Vector3f::Ones() * std::numeric_limits<float>::lowest();
+
+    for(const auto& point : points) {
+        Eigen::Vector3f projected =
+            rotation.transpose() *
+            (Eigen::Vector3f(point.x, point.y, point.z) - centroid);
+        minExtents = minExtents.cwiseMin(projected);
+        maxExtents = maxExtents.cwiseMax(projected);
     }
 
-    // Compute OBB center and extents
-    glm::vec3 obbCenter = centroid + eigenvectors * ((minExtents + maxExtents) * 0.5f);
-
-    // Compute the 2 key corners (min and max)
-    minCorner = obbCenter + eigenvectors * minExtents;
-    maxCorner = obbCenter + eigenvectors * maxExtents;
+    // Step 5: Calculate the min and max corners of the OBB
+    auto eigenMinCorner = rotation * minExtents + centroid;
+    auto eigenMaxCorner = rotation * maxExtents + centroid;
+    minCorner = glm::vec3(eigenMinCorner.x(), eigenMinCorner.y(), eigenMinCorner.z());
+    maxCorner = glm::vec3(eigenMaxCorner.x(), eigenMaxCorner.y(), eigenMaxCorner.z());
 }
