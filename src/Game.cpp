@@ -44,7 +44,7 @@ bool Game::init() {
     }
 
     // Set AA before window creation
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, Constants::AA_ENABLED ? 1 : 0);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, Constants::AA_SAMPLES);
 
     // Create window

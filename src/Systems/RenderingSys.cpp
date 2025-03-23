@@ -175,6 +175,13 @@ void RenderingSys::initGL(SDL_Window* window) {
 }
 
 void RenderingSys::initDeferredRendering() {
+    static constexpr std::pair<GBufferTexture, GLenum> TEXTURE_FORMATS[] = {
+        {GBufferTexture::Position, GL_RGB32F}, {GBufferTexture::Normal, GL_RGB32F},
+        {GBufferTexture::Albedo, GL_RGB32F},   {GBufferTexture::Metallic, GL_RED},
+        {GBufferTexture::Roughness, GL_RED},
+    };
+    static_assert(std::size(TEXTURE_FORMATS) == GBufferTexture::COUNT);
+
     // Check system compatibility
     if(GBufferTexture::COUNT > GL_MAX_COLOR_ATTACHMENTS) {
         Log::error() << "GBufferTexture::COUNT exceeds GL_MAX_COLOR_ATTACHMENTS!";
@@ -195,88 +202,32 @@ void RenderingSys::initDeferredRendering() {
     // Generate textures
     glGenTextures(GBufferTexture::COUNT, mDeferredTextures);
 
-    // Position
-    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Position]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,                            // Level
-                 GL_RGB32F,                    // Internal format
-                 mScreenSize.x, mScreenSize.y, // Size
-                 0,                            // Border
-                 GL_RGB,                       // Format
-                 GL_FLOAT,                     // Data format
-                 nullptr                       // Data (0s)
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mDeferredTextures[0], 0);
-
-    // Normal
-    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Normal]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,                            // Level
-                 GL_RGB32F,                    // Internal format
-                 mScreenSize.x, mScreenSize.y, // Size
-                 0,                            // Border
-                 GL_RGB,                       // Format
-                 GL_FLOAT,                     // Data format
-                 nullptr                       // Data (0s)
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, mDeferredTextures[1], 0);
-
-    // Albedo
-    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Albedo]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,                            // Level
-                 GL_RGB32F,                    // Internal format
-                 mScreenSize.x, mScreenSize.y, // Size
-                 0,                            // Border
-                 GL_RGB,                       // Format
-                 GL_FLOAT,                     // Data format
-                 nullptr                       // Data (0s)
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,
-                         mDeferredTextures[GBufferTexture::Albedo], 0);
-
-    // Metallic
-    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Metallic]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,                            // Level
-                 GL_RED,                       // Internal format
-                 mScreenSize.x, mScreenSize.y, // Size
-                 0,                            // Border
-                 GL_RED,                       // Format
-                 GL_FLOAT,                     // Data format
-                 nullptr                       // Data (0s)
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3,
-                         mDeferredTextures[GBufferTexture::Metallic], 0);
-
-    // Roughness
-    glBindTexture(GL_TEXTURE_2D, mDeferredTextures[GBufferTexture::Roughness]);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,                            // Level
-                 GL_RED,                       // Internal format
-                 mScreenSize.x, mScreenSize.y, // Size
-                 0,                            // Border
-                 GL_RED,                       // Format
-                 GL_FLOAT,                     // Data format
-                 nullptr                       // Data (0s)
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4,
-                         mDeferredTextures[GBufferTexture::Roughness], 0);
+    // Set up multisampling if enabled
+    if(Constants::AA_ENABLED) {
+        for(size_t i = 0; i < GBufferTexture::COUNT; ++i) {
+            auto&& [texture, format] = TEXTURE_FORMATS[i];
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mDeferredTextures[texture]);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, Constants::AA_SAMPLES,
+                                    format, mScreenSize.x, mScreenSize.y,
+                                    GL_TRUE); // Multisampled texture
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + texture,
+                                 mDeferredTextures[texture], 0);
+            glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        }
+    } else {
+        // If AA is not enabled, create regular textures
+        for(size_t i = 0; i < GBufferTexture::COUNT; ++i) {
+            auto&& [texture, format] = TEXTURE_FORMATS[i];
+            glBindTexture(GL_TEXTURE_2D, mDeferredTextures[texture]);
+            glTexImage2D(GL_TEXTURE_2D, 0, format, mScreenSize.x, mScreenSize.y, 0,
+                         GL_RED, GL_FLOAT, nullptr);
+            glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + texture,
+                                 mDeferredTextures[texture], 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        }
+    }
 
     // Set draw buffers
     GLenum drawBuffers[GBufferTexture::COUNT];
@@ -287,6 +238,13 @@ void RenderingSys::initDeferredRendering() {
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         Log::error() << "Could not initialize deferred rendering framebuffer!";
+    }
+
+    // Check for gl error
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+        Log::glError(error)
+            << "Encountered an OpenGL error while initializing deferred rendering!";
     }
 }
 
@@ -477,7 +435,11 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     // Set textures for samplers
     for(std::size_t i = 0; i < GBufferTexture::COUNT; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
+        if(Constants::AA_ENABLED) {
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, mDeferredTextures[i]);
+        } else {
+            glBindTexture(GL_TEXTURE_2D, mDeferredTextures[i]);
+        }
         glBindSampler(i, 0);
     }
 

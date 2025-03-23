@@ -22,8 +22,8 @@ public:
     void render(SDL_Window* window);
 
     void addDebugShape(const std::vector<glm::vec3>& points,
-                                const std::vector<glm::vec3>& colors,
-                                GLenum drawMode = GL_LINE_STRIP);
+                       const std::vector<glm::vec3>& colors,
+                       GLenum drawMode = GL_LINE_STRIP);
 
 private:
     struct DebugShape {
@@ -31,13 +31,14 @@ private:
         std::vector<glm::vec3> colors;
     };
 
-    enum GBufferTexture { Position, Normal, Albedo, Metallic, Roughness, COUNT };
+    enum GBufferTexture { Position = 0, Normal, Albedo, Metallic, Roughness, COUNT };
 
     SDL_GLContext mContext;
     unsigned mCurrentTime = 0;
     glm::ivec2 mScreenSize = {0, 0};
 
-    std::unordered_map<GLenum, std::vector<DebugShape>> mDebugShapes; // Mapped by draw mode
+    std::unordered_map<GLenum, std::vector<DebugShape>>
+        mDebugShapes; // Mapped by draw mode
 
     GLuint mDeferredFramebuffer = 0;
     GLuint mDeferredTextures[GBufferTexture::COUNT]{};
@@ -55,8 +56,8 @@ private:
     void renderLight(const glm::mat4& viewMatrix, const PositionComp& position,
                      const LightComp& light);
     void renderDebugShape(const ShaderResource& shader, const glm::mat4& viewMatrix,
-                             const glm::mat4& projectionMatrix,
-                             const DebugShape& shape, GLenum drawMode);
+                          const glm::mat4& projectionMatrix, const DebugShape& shape,
+                          GLenum drawMode);
     void drawBoundingBoxes();
     void cloneDepthBuffer(GLuint source, GLuint dest);
     glm::mat4 getModelMatrix(const PositionComp& position);

@@ -16,6 +16,7 @@ constexpr unsigned DEFAULT_WINDOW_SIZE_X = 1024;
 constexpr unsigned DEFAULT_WINDOW_SIZE_Y = 800;
 constexpr unsigned NO_VSYNC_MAX_FPS = 120; // Max FPS if VSync is off
 const bool ENABLE_VSYNC = true;
+const bool AA_ENABLED = false;
 constexpr unsigned AA_SAMPLES = 8;
 const float HORIZ_FOV = glm::radians(90.0f); // In radians
 
