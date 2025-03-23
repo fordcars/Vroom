@@ -11,12 +11,15 @@
 Skin::Skin(AnimationContainer &container, const tinygltf::Model &model,
            const tinygltf::Skin &skin) {
     load(container, model, skin);
-    updateTransformBuffer();
+    
+    std::unordered_map<AnimationNode *, glm::mat4> emptyCachedTransforms;
+    updateTransformBuffer(emptyCachedTransforms);
 }
 
-void Skin::updateTransformBuffer() {
+// cachedTransforms contains already calculated transforms for each joint, if present
+void Skin::updateTransformBuffer(
+    std::unordered_map<AnimationNode *, glm::mat4> &cachedTransforms) {
     std::vector<glm::mat4> outTransforms;
-    std::unordered_map<AnimationNode *, glm::mat4> cachedTransforms;
     outTransforms.reserve(mJoints.size());
 
     // Apply all joints transformations, from root to joint[i]

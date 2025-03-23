@@ -29,7 +29,8 @@ public:
 
     Skin(AnimationContainer& container, const tinygltf::Model& model,
          const tinygltf::Skin& skin);
-    void updateTransformBuffer();
+    void updateTransformBuffer(
+        std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms);
 
     const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
     const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }

@@ -15,6 +15,6 @@ conan install . --output-folder=build --build=missing --settings=build_type=Debu
 cmake --preset conan-default
 
 # Build
-cmake --build --preset conan-debug # Or Release
+cmake --build --preset conan-debug # Or release
 # Or cd build && make, or use Microsoft Visual Studio, etc.
 ```

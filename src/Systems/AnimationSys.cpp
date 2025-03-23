@@ -139,16 +139,17 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
     }
 
     // Update mesh and skin transforms with new node transforms
-    updateMeshTransforms(*renderableComp.objectResource.get());
+    std::unordered_map<AnimationNode*, glm::mat4> cachedTransforms;
+    updateMeshTransforms(*renderableComp.objectResource.get(), cachedTransforms);
     for(auto& skin : animationContainer->getSkins()) {
-        skin->updateTransformBuffer();
+        skin->updateTransformBuffer(cachedTransforms);
     }
 }
 
 // Handles skeletal (not skinned) animation
-void AnimationSys::updateMeshTransforms(const ObjResource& objResource) {
-    std::unordered_map<AnimationNode*, glm::mat4> cachedTransforms;
-
+void AnimationSys::updateMeshTransforms(
+    const ObjResource& objResource,
+    std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms) {
     // Apply all joints transformations, from root to animationNode, for each mesh
     for(auto& mesh : objResource.objMeshes) {
         if(!mesh->animationNode) continue;

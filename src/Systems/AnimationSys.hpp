@@ -15,5 +15,5 @@ private:
                                 float blendFactor, float deltaTime);
     void updateAnimation(RenderableComp& renderableComp, AnimationComp& animationComp,
                          float deltaTime);
-    void updateMeshTransforms(const ObjResource& objResource);
+    void updateMeshTransforms(const ObjResource& objResource, std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms);
 };
