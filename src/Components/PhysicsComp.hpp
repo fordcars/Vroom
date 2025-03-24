@@ -20,7 +20,13 @@ struct PhysicsComp {
 };
 
 struct NullPhysicsComp : public PhysicsComp {};
-struct BoxPhysicsComp : public PhysicsComp {};
+struct BoxPhysicsComp : public PhysicsComp {
+    // AABB
+    glm::vec3 minCorner {};
+    glm::vec3 maxCorner {};
+    glm::vec3 minCornerVelocity {};
+    glm::vec3 maxCornerVelocity {};
+};
 struct SpherePhysicsComp : public PhysicsComp {
     float radius = 1.0f;
 };
