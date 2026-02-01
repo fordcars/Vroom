@@ -4,12 +4,10 @@
 
 #include <glm/gtc/matrix_transform.hpp> // For lookAt()
 
-#include "Components/PhysicsComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Constants.hpp"
 #include "Entities/EntityFilter.hpp"
 #include "Log.hpp"
-#include "ResourceSys/Obj/Animation/Skin.hpp"
 #include "ResourceSys/Obj/GPUBuffer.hpp"
 #include "ResourceSys/Obj/ObjResource.hpp"
 #include "ResourceSys/ResourceSys.hpp"
@@ -53,9 +51,9 @@ bool RenderingSys::init(SDL_Window* window) {
     if(gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress) == 0) {
         Log::error() << "Failed to load OpenGL!";
         return false;
-    }
+    }// NOLINT(readability-make-member-function-const)
 
-    Log::info() << "OpenGL: " << (const char*)glGetString(GL_VERSION);
+    Log::info() << "OpenGL: " << glGetString(GL_VERSION);
     SDL_GL_SetSwapInterval(Constants::ENABLE_VSYNC ? 1 : 0);
 
     initGL(window);
@@ -64,7 +62,7 @@ bool RenderingSys::init(SDL_Window* window) {
     return true;
 }
 
-void RenderingSys::clear() {
+void RenderingSys::clear() { // NOLINT(readability-make-member-function-const)
     // Must clear deferred framebuffers to black, since we are using additive blending
     glBindFramebuffer(GL_FRAMEBUFFER, mDeferredFramebuffer);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -162,14 +160,15 @@ void RenderingSys::addDebugShape(const std::vector<glm::vec3>& points,
     // Resize colors if not same size
     std::vector<glm::vec3> resizedColors(points.size(),
                                          glm::vec3(0.0f, 1.0f, 0.0f)); // Default to green
-    std::copy(colors.begin(), colors.begin() + std::min(points.size(), colors.size()),
+    std::copy(colors.begin(), colors.begin() + static_cast<long>(std::min(points.size(), colors.size())),
               resizedColors.begin());
 
     mDebugShapes[drawMode].emplace_back(DebugShape{points, resizedColors});
 }
 
 void RenderingSys::initGL(SDL_Window* window) {
-    int width, height;
+    int width;
+    int height;
     SDL_GetWindowSize(window, &width, &height);
     mScreenSize.x = width;
     mScreenSize.y = height;
@@ -196,7 +195,7 @@ void RenderingSys::initGL(SDL_Window* window) {
 }
 
 void RenderingSys::initDeferredRendering() {
-    static constexpr std::pair<GBufferTexture, GLenum> TEXTURE_FORMATS[] = {
+    static constexpr std::pair<GBufferTexture, GLint> TEXTURE_FORMATS[] = {
         {GBufferTexture::Position, GL_RGB32F}, {GBufferTexture::Normal, GL_RGB32F},
         {GBufferTexture::Albedo, GL_RGB8},     {GBufferTexture::Metallic, GL_RED},
         {GBufferTexture::Roughness, GL_RED},
@@ -290,7 +289,7 @@ void RenderingSys::initPostProcessRendering() {
     }
 }
 
-void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
+void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,  // NOLINT(readability-make-member-function-const)
                                     const glm::mat4& projectionMatrix,
                                     const PositionComp& position,
                                     const RenderableComp& renderable) {
@@ -303,17 +302,17 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
 
     auto setTexture = [](std::size_t samplerUniformLocation,
                          std::size_t hasSamplerUniformLocation, const ObjTexture* texture,
-                         GLuint textureUnit) {
+                         GLint textureUnit) {
         if(texture) {
             glActiveTexture(GL_TEXTURE0 + textureUnit);
             glBindTexture(GL_TEXTURE_2D, texture->image->textureId);
             glBindSampler(textureUnit, texture->samplerId);
-            glUniform1i(samplerUniformLocation, textureUnit);
-            glUniform1i(hasSamplerUniformLocation, 1);
+            glUniform1i(static_cast<GLint>(samplerUniformLocation), textureUnit);
+            glUniform1i(static_cast<GLint>(hasSamplerUniformLocation), 1);
 
         } else {
-            glUniform1i(samplerUniformLocation, 0);
-            glUniform1i(hasSamplerUniformLocation, 0);
+            glUniform1i(static_cast<GLint>(samplerUniformLocation), 0);
+            glUniform1i(static_cast<GLint>(hasSamplerUniformLocation), 0);
         }
     };
 
@@ -337,9 +336,8 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
 
     // Per object uniforms
     glUniform1ui(shader.getUniform(UniformName::get<"time">()), mCurrentTime);
-    GLint materialsBlock = -1;
-    if((materialsBlock = renderable.shader->getUniformBlock(
-            UniformBlockName::get<"ObjMaterialsBlock">())) != -1) {
+    GLint materialsBlock = renderable.shader->getUniformBlock(UniformBlockName::get<"ObjMaterialsBlock">());
+    if(materialsBlock != -1) {
         glBindBufferBase(GL_UNIFORM_BUFFER, materialsBlock,
                          renderable.objectResource->materialUniformBuffer.getId());
     }
@@ -350,11 +348,11 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
 
         // Joint indices
         glVertexAttribIPointer(BONE_ID_ATTRIB, 4, GL_UNSIGNED_INT, stride,
-                               (void*)offsetof(ObjResource::Vertex, joints));
+                               (void*)offsetof(ObjResource::Vertex, joints)); // NOLINT
 
         // Weights
         glVertexAttribPointer(WEIGHT_ATTRIB, 4, GL_FLOAT, GL_FALSE, stride,
-                              (void*)offsetof(ObjResource::Vertex, weights));
+                              (void*)offsetof(ObjResource::Vertex, weights)); // NOLINT
     }
 
     // Enable vertex attributes
@@ -365,19 +363,19 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
 
     // Position (vec3)
     glVertexAttribPointer(POSITION_ATTRIB, 3, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(ObjResource::Vertex, position));
+                          (void*)offsetof(ObjResource::Vertex, position)); // NOLINT
 
     // Normal (vec3)
     glVertexAttribPointer(NORMAL_ATTRIB, 3, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(ObjResource::Vertex, normal));
+                          (void*)offsetof(ObjResource::Vertex, normal)); // NOLINT
 
     // Texcoord (vec2)
     glVertexAttribPointer(TEXCOORD_ATTRIB, 2, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(ObjResource::Vertex, texcoord));
+                          (void*)offsetof(ObjResource::Vertex, texcoord)); // NOLINT
 
     // Material ID
     glVertexAttribIPointer(MATERIAL_ATTRIB, 1, GL_UNSIGNED_INT, stride,
-                           (void*)offsetof(ObjResource::Vertex, materialId));
+                           (void*)offsetof(ObjResource::Vertex, materialId)); // NOLINT
 
     // Render all meshes
     for(const auto& mesh : renderable.objectResource->objMeshes) {
@@ -430,7 +428,7 @@ void RenderingSys::renderRenderable(const glm::mat4& viewMatrix,
         // Draw
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indexBuffer.getId());
         glDrawElements(GL_TRIANGLES, // Mode
-                       mesh->indexBuffer.getCount(),
+                       static_cast<GLsizei>(mesh->indexBuffer.getCount()),
                        GL_UNSIGNED_INT, // Type
                        (void*)0         // Element array buffer offset
         );
@@ -489,16 +487,16 @@ void RenderingSys::renderLight(const glm::mat4& viewMatrix, const PositionComp& 
     // Note at this point, we are probably drawing a simple, full screen quad
     // Positions (vec3)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(LightComp::Vertex, position));
+                          (void*)offsetof(LightComp::Vertex, position)); // NOLINT
 
     // UVs (vec2)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(LightComp::Vertex, texcoord));
+                          (void*)offsetof(LightComp::Vertex, texcoord)); // NOLINT
 
     // Draw
     glDrawArrays(GL_TRIANGLES,     // Mode
                  0,                // Start
-                 light.vertexCount // Count
+                 static_cast<GLsizei>(light.vertexCount) // Count
     );
 
     glDisableVertexAttribArray(0);
@@ -541,16 +539,16 @@ void RenderingSys::renderPostProcessing() {
     // Note at this point, we are probably drawing a simple, full screen quad
     // Positions (vec3)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(Vertex, position));
+                          (void*)offsetof(Vertex, position)); // NOLINT
 
     // UVs (vec2)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride,
-                          (void*)offsetof(Vertex, texcoord));
+                          (void*)offsetof(Vertex, texcoord)); // NOLINT
 
     // Draw
     glDrawArrays(GL_TRIANGLES,   // Mode
                  0,              // Start
-                 quadVertexCount // Count
+                 static_cast<GLsizei>(quadVertexCount) // Count
     );
 
     glDisableVertexAttribArray(0);
@@ -592,14 +590,14 @@ void RenderingSys::renderDebugShape(const ShaderResource& shader,
     // Draw
     glDrawArrays(drawMode,           // Mode
                  0,                  // Start
-                 shape.points.size() // Count
+                 static_cast<GLsizei>(shape.points.size()) // Count
     );
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 }
 
-void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) {
+void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) { // NOLINT(readability-make-member-function-const)
     glBindFramebuffer(GL_READ_FRAMEBUFFER, source);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest);
     glBlitFramebuffer(0, 0, mScreenSize.x, mScreenSize.y, 0, 0, mScreenSize.x,
@@ -608,7 +606,7 @@ void RenderingSys::cloneDepthBuffer(GLuint source, GLuint dest) {
 
 glm::mat4 RenderingSys::getViewMatrix(const CameraEntity& camera) {
     glm::vec3 position = camera.get<PositionComp>().coords;
-    const CameraInfoComp& info = camera.get<CameraInfoComp>();
+    const auto& info = camera.get<CameraInfoComp>();
 
     glm::vec3 vec3Direction;
     if(info.direction.w == 0) {

@@ -3,7 +3,6 @@
 #include <glad/glad.h>
 
 #include <glm/glm.hpp>
-#include <optional>
 
 #include "Components/LightComp.hpp"
 #include "Components/PositionComp.hpp"
@@ -16,6 +15,10 @@ public:
     static RenderingSys& get();
     RenderingSys() = default;
     ~RenderingSys();
+    RenderingSys(const RenderingSys&) = delete;
+    RenderingSys& operator=(const RenderingSys&) = delete;
+    RenderingSys(RenderingSys&&) = delete;
+    RenderingSys& operator=(RenderingSys&&) = delete;
 
     bool init(SDL_Window* window);
     void clear();
@@ -34,7 +37,7 @@ private:
 
     enum GBufferTexture { Position = 0, Normal, Albedo, Metallic, Roughness, COUNT };
 
-    SDL_GLContext mContext;
+    SDL_GLContext mContext{};
     unsigned mCurrentTime = 0;
     glm::ivec2 mScreenSize = {0, 0};
 
@@ -48,11 +51,6 @@ private:
     GLuint mPostProcessTexture = 0;
     GLuint mPostProcessDepthBuffer = 0;
     ShaderResource::CPtr mPostProcessShader;
-
-    RenderingSys(const RenderingSys&) = delete;
-    RenderingSys& operator=(const RenderingSys&) = delete;
-    RenderingSys(RenderingSys&&) = delete;
-    RenderingSys& operator=(RenderingSys&&) = delete;
 
     void initGL(SDL_Window* window);
     void initDeferredRendering();

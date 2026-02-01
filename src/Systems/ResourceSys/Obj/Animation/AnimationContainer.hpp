@@ -3,11 +3,10 @@
 #include <tiny_gltf.h>
 
 #include <array>
-#include <filesystem>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
-#include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "Animation.hpp"

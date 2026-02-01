@@ -21,3 +21,44 @@ else()
 endif()
 
 add_subdirectory(src)
+
+# Find clang-format
+find_program(CLANG_FORMAT_EXECUTABLE
+    NAMES clang-format clang-format-18 clang-format-17 clang-format-16 clang-format-15
+    DOC "Path to clang-format executable"
+)
+
+if(CLANG_FORMAT_EXECUTABLE)
+    # Collect all source files
+    file(GLOB_RECURSE ALL_CXX_SOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+    )
+
+    # clang-format-check target
+    add_custom_target(clang-format-check
+        COMMAND ${CLANG_FORMAT_EXECUTABLE}
+        --dry-run
+        --Werror
+        --style=file
+        ${ALL_CXX_SOURCE_FILES}
+        COMMENT "Checking code formatting with clang-format"
+        VERBATIM
+    )
+
+    # clang-format-fix target
+    add_custom_target(clang-format-fix
+        COMMAND ${CLANG_FORMAT_EXECUTABLE}
+        -i
+        --style=file
+        ${ALL_CXX_SOURCE_FILES}
+        COMMENT "Fixing code formatting with clang-format"
+        VERBATIM
+    )
+
+    message(STATUS "clang-format found: ${CLANG_FORMAT_EXECUTABLE}")
+    message(STATUS "Added targets: clang-format-check, clang-format-fix")
+else()
+    message(WARNING "clang-format not found. Formatting targets will not be available.")
+endif()

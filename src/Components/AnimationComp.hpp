@@ -5,8 +5,8 @@
 enum class AnimationMode { OneShot, Loop };
 
 struct AnimationComp {
-    std::size_t currentAnimation;
-    std::size_t previousAnimation;
+    std::size_t currentAnimation{};
+    std::size_t previousAnimation{};
     AnimationMode mode = AnimationMode::Loop;
 
     float currentTime = 0.0;

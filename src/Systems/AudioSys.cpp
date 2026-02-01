@@ -44,7 +44,7 @@ void AudioSys::update(float) {
 
     // Update spatial parameters for all entities
     for(auto& [sound, position, physics] : EntityFilter<SoundComp, PositionComp, std::optional<PhysicsComp>>()) {
-        if(!sound.audioResource || !sound.audioResource->call<ma_sound_is_spatialization_enabled>()) {
+        if(!sound.audioResource || (sound.audioResource->call<ma_sound_is_spatialization_enabled>() == 0u)) {
             continue;
         }
         sound.audioResource->call<ma_sound_set_position>(position.coords.x, position.coords.y, position.coords.z);

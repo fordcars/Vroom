@@ -13,8 +13,7 @@ std::vector<glm::vec3> getModelspacePoints(const ObjResource& resource) {
     for(const auto& mesh : resource.objMeshes) {
         for(const auto& index : mesh->indices) {
             const auto& vertex = resource.vertices[index];
-            points.push_back(
-                glm::vec3(mesh->transform * glm::vec4(vertex.position, 1.0f)));
+            points.emplace_back(mesh->transform * glm::vec4(vertex.position, 1.0f));
         }
     }
     return points;

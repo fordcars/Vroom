@@ -27,7 +27,7 @@ public:
     friend void swap(AudioResource& first, AudioResource& second) noexcept;
 
     ma_sound* getSound() { return mMiniAudioSound.get(); }
-    const ma_sound* getSound() const { return mMiniAudioSound.get(); }
+    [[nodiscard]] const ma_sound* getSound() const { return mMiniAudioSound.get(); }
 
 private:
     // AudioSys::Engine must be referred to through a shared_ptr for proper destruction order,
@@ -38,11 +38,10 @@ private:
 
 public:
     template <
-        auto MiniAudioFunction, typename... Args,
-        typename = std::enable_if_t<std::is_same<
+        auto MiniAudioFunction, typename... Args>
+    bool call(Args&&... args) requires std::is_same_v<
             decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)),
-            ma_result>::value>>
-    bool call(Args&&... args) {
+            ma_result> {
         ma_result result =
             MiniAudioFunction(mMiniAudioSound.get(), std::forward<Args>(args)...);
         if(result != MA_SUCCESS) {
@@ -53,11 +52,10 @@ public:
         return true;
     }
 
-    template <auto MiniAudioFunction, typename... Args,
-    typename = std::enable_if_t<!std::is_same<
+    template <auto MiniAudioFunction, typename... Args>
+    decltype(auto) call(Args&&... args) requires (!std::is_same_v<
             decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)),
-            ma_result>::value>>
-    decltype(auto) call(Args&&... args) {
+            ma_result>) {
         return MiniAudioFunction(mMiniAudioSound.get(), std::forward<Args>(args)...);
     }
 };

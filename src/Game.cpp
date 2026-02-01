@@ -15,8 +15,6 @@
 #include "Systems/ResourceSys/ResourceSys.hpp"
 #include "Systems/UISys.hpp"
 
-Game::Game() {}
-
 Game::~Game() {
     SDL_DestroyWindow(mMainWindow);
     SDL_Quit();
@@ -94,15 +92,15 @@ void Game::doMainLoop() {
 // Returns current frame's delta time, averaged over a couple of frames
 // for smoothness.
 float Game::getCurrentDeltaTime(Uint32 startFrameTime) {
-    float rawDeltaTime = (startFrameTime - mLastFrameTime) / 1000.0f;
+    float rawDeltaTime = static_cast<float>(startFrameTime - mLastFrameTime) / 1000.0f;
     mLastFrameTime = startFrameTime;
 
     mLastDeltaTimes[mLastDeltaTimeIndex] = rawDeltaTime;
     mLastDeltaTimeIndex = (mLastDeltaTimeIndex + 1) % 5;
 
     float sum = 0.0f;
-    for(int i = 0; i < mLastDeltaTimes.size(); i++) {
-        sum += mLastDeltaTimes[i];
+    for(float mLastDeltaTime : mLastDeltaTimes) {
+        sum += mLastDeltaTime;
     }
     return sum / 5.0f;
 }

@@ -1,6 +1,5 @@
 #pragma once
-
-#include "Systems/ResourceSys/Obj/ObjBoundingBox.hpp"
+#include <glm/glm.hpp>
 
 struct PhysicsComp {
     struct CurrentCollision {

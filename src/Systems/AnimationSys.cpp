@@ -1,9 +1,11 @@
 #include "AnimationSys.hpp"
 
+#include <algorithm>
 #include <glm/gtc/quaternion.hpp>
 #include <stack>
 
 #include "ResourceSys/Obj/Animation/Animation.hpp"
+#include "Entities/EntityFilter.hpp"
 
 namespace {
 // Interpolation helper
@@ -41,8 +43,8 @@ void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
 
         // Find the two closest keyframes
         auto it =
-            std::lower_bound(channel.sampler.timestamps.begin(),
-                             channel.sampler.timestamps.end(), animationComp.currentTime);
+            std::ranges::lower_bound(channel.sampler.timestamps,
+                            animationComp.currentTime);
         size_t i = std::distance(channel.sampler.timestamps.begin(), it);
 
         size_t i0 = 0;
@@ -97,7 +99,7 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
     if(!renderableComp.objectResource->animationContainer) return;
 
     auto animationContainer = renderableComp.objectResource->animationContainer;
-    auto currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
+    auto *currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
     if(!currentAnim) return;
 
     float scaledDelta = deltaTime * animationComp.speed;
@@ -151,7 +153,7 @@ void AnimationSys::updateMeshTransforms(
     const ObjResource& objResource,
     std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms) {
     // Apply all joints transformations, from root to animationNode, for each mesh
-    for(auto& mesh : objResource.objMeshes) {
+    for(const auto& mesh : objResource.objMeshes) {
         if(!mesh->animationNode) continue;
         AnimationNode* joint = mesh->animationNode;
         std::stack<AnimationNode*> stack;
@@ -161,7 +163,7 @@ void AnimationSys::updateMeshTransforms(
         // If we hit a joint that has already been processed, we can use its cached
         // transform
         while(joint != nullptr) {
-            if(cachedTransforms.find(joint) != cachedTransforms.end()) {
+            if(cachedTransforms.contains(joint)) {
                 accumulatedTransform = cachedTransforms[joint];
                 break;
             }

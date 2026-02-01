@@ -6,6 +6,10 @@ class UISys {
 public:
     static UISys& get();
     UISys() = default;
+    UISys(const UISys&) = delete;
+    UISys& operator=(const UISys&) = delete;
+    UISys(UISys&&) = delete;
+    UISys& operator=(UISys&&) = delete;
 
     bool init(SDL_Window* window, SDL_GLContext gl_context);
     void handleEvent(const SDL_Event& event);
@@ -18,11 +22,6 @@ public:
 
 private:
     bool mShowFPSOverlay = false;
-
-    UISys(const UISys&) = delete;
-    UISys& operator=(const UISys&) = delete;
-    UISys(UISys&&) = delete;
-    UISys& operator=(UISys&&) = delete;
 
     void showFPSOverlay();
 };

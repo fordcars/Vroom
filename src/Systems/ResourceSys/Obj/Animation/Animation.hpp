@@ -40,13 +40,13 @@ public:
     Animation(AnimationContainer& container, const tinygltf::Model& model,
               const tinygltf::Animation& animation);
 
-    const std::string& getName() const { return mName; }
+    [[nodiscard]] const std::string& getName() const { return mName; }
 
     std::vector<AnimationChannel>& getChannels() { return mChannels; }
 
-    const std::vector<AnimationChannel>& getChannels() const { return mChannels; }
+    [[nodiscard]] const std::vector<AnimationChannel>& getChannels() const { return mChannels; }
 
-    float getDuration() const { return mDuration; }
+    [[nodiscard]] float getDuration() const { return mDuration; }
 
 private:
     std::string mName;

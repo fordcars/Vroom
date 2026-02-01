@@ -27,23 +27,23 @@ public:
     ShaderResource& operator=(ShaderResource&& other) noexcept;
     friend void swap(ShaderResource& first, ShaderResource& second) noexcept;
 
-    GLuint getId() const { return mId; }
-    const std::string& getName() const { return mName; }
-    GLint getUniform(std::size_t uniformNameIndex) const;
-    GLint getUniformBlock(std::size_t uniformBlockNameIndex) const;
+    [[nodiscard]] GLuint getId() const { return mId; }
+    [[nodiscard]] const std::string& getName() const { return mName; }
+    [[nodiscard]] GLint getUniform(std::size_t uniformNameIndex) const;
+    [[nodiscard]] GLint getUniformBlock(std::size_t uniformBlockNameIndex) const;
 
 private:
     std::string mName; // Useful for logs
     GLuint mId = 0;
-    std::array<GLint, Constants::UniformName::size()> mUniformLocations;
-    std::array<GLint, Constants::UniformBlockName::size()> mUniformBlockLocations;
+    std::array<GLint, Constants::UniformName::size()> mUniformLocations {};
+    std::array<GLint, Constants::UniformBlockName::size()> mUniformBlockLocations {};
 
     static GLuint compileShader(const std::filesystem::path& shaderPath,
                                 const std::string& shaderSource, GLenum type);
     static GLuint linkShaderProgram(const std::string& shaderProgramName,
                                     GLuint vertexShader, GLuint fragmentShader);
     static std::string getGLShaderDebugLog(GLuint object, PFNGLGETSHADERIVPROC glGet_iv,
-                                           PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
+                                           PFNGLGETSHADERINFOLOGPROC glGet_InfoLog);
 
     void registerUniforms();
     void registerUniform(const std::string& uniformName);

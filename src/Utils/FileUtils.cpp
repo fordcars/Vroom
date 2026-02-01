@@ -16,9 +16,9 @@ std::string getFileContents(const std::filesystem::path& path) {
             std::stringstream outStream;
             outStream << file.rdbuf();
             return outStream.str();
-        } else {
-            Log::error() << "Failed to open file: '" << path << "'.";
         }
+        
+        Log::error() << "Failed to open file: '" << path << "'.";
     } else {
         Log::error() << "FIle does not exist: '" << path << "'.";
     }

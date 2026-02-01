@@ -2,17 +2,12 @@
 
 #include <tiny_gltf.h>
 
-#include <filesystem>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
-#include <optional>
-#include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "AnimationNode.hpp"
-#include "Constants.hpp"
 #include "Systems/ResourceSys/Obj/GPUBuffer.hpp"
 
 class AnimationContainer;
@@ -32,8 +27,8 @@ public:
     void updateTransformBuffer(
         std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms);
 
-    const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
-    const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }
+    [[nodiscard]] const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
+    [[nodiscard]] const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }
 
 private:
     std::vector<AnimationNode*> mJoints;         // Nodes in the skeleton

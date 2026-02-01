@@ -9,6 +9,11 @@ class InputSys {
 public:
     static InputSys& get();
     InputSys() = default;
+    InputSys(const InputSys&) = delete;
+    InputSys& operator=(const InputSys&) = delete;
+    InputSys(InputSys&&) = delete;
+    InputSys& operator=(InputSys&&) = delete;
+    
     bool init();
     void update(float deltaTime);
     void handleEvent(const SDL_Event& event);
@@ -47,9 +52,4 @@ private:
     void handleMouseInput(const SDL_Event& event);
     void handleWalking(float deltaTime);
     void cycleDebugRenderMode();
-
-    InputSys(const InputSys&) = delete;
-    InputSys& operator=(const InputSys&) = delete;
-    InputSys(InputSys&&) = delete;
-    InputSys& operator=(InputSys&&) = delete;
 };

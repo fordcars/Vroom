@@ -6,7 +6,7 @@
 
 namespace Utils {
 inline bool floatsEqualish(float a, float b, float margin = 0.0001) {
-    return fabs(a - b) < margin;
+    return std::fabs(a - b) < margin;
 }
 
 inline std::vector<glm::vec3> generateCircle(float radius, const glm::vec3& center,
@@ -21,8 +21,8 @@ inline std::vector<glm::vec3> generateCircle(float radius, const glm::vec3& cent
     glm::vec3 axis2 = glm::normalize(glm::cross(normal, axis1));
 
     for(int i = 0; i < segments; ++i) {
-        float angle = 2.0f * glm::pi<float>() * i / segments;
-        glm::vec3 point = center + radius * (cos(angle) * axis1 + sin(angle) * axis2);
+        float angle = 2.0f * static_cast<float>(std::numbers::pi) * static_cast<float>(i) / static_cast<float>(segments);
+        glm::vec3 point = center + radius * (std::cos(angle) * axis1 + std::sin(angle) * axis2);
         circlePoints.push_back(point);
     }
 
@@ -35,9 +35,9 @@ inline std::vector<std::vector<glm::vec3>> generateSphere(float radius, const gl
 
     // Generate latitude circles (XZ plane, varying Y)
     for(int i = 0; i <= latSegments; ++i) {
-        float theta = glm::pi<float>() * i / latSegments; // From 0 to π
-        float y = radius * cos(theta);
-        float latRadius = radius * sin(theta);
+        float theta = static_cast<float>(std::numbers::pi) * static_cast<float>(i) / static_cast<float>(latSegments); // From 0 to π
+        float y = radius * std::cos(theta);
+        float latRadius = radius * std::sin(theta);
 
         std::vector<glm::vec3> latitudeCircle = generateCircle(latRadius, center + glm::vec3(0, y, 0), glm::vec3(0, 1, 0), longSegments);
         sphereCircles.push_back(latitudeCircle);
@@ -45,11 +45,11 @@ inline std::vector<std::vector<glm::vec3>> generateSphere(float radius, const gl
 
     // Generate longitude circles (YZ plane, varying X)
     for(int i = 0; i <= longSegments; ++i) {
-        float phi = 2.0f * glm::pi<float>() * i / longSegments; // 0 to 2π
-        float x = radius/2 * cos(phi);
-        float z = radius/2 * sin(phi);
+        float phi = 2.0f * static_cast<float>(std::numbers::pi) * static_cast<float>(i) / static_cast<float>(longSegments); // 0 to 2π
+        float x = radius/2 * std::cos(phi);
+        float z = radius/2 * std::sin(phi);
 
-        std::vector<glm::vec3> longitudeCircle = generateCircle(radius, center, glm::vec3(cos(phi), 0, sin(phi)), latSegments);
+        std::vector<glm::vec3> longitudeCircle = generateCircle(radius, center, glm::vec3(std::cos(phi), 0, std::sin(phi)), latSegments);
         sphereCircles.push_back(longitudeCircle);
     }
 

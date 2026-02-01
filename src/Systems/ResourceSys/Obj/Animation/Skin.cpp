@@ -32,7 +32,7 @@ void Skin::updateTransformBuffer(
         // If we hit a joint that has already been processed, we can use its cached
         // transform
         while(joint != nullptr) {
-            if(cachedTransforms.find(joint) != cachedTransforms.end()) {
+            if(cachedTransforms.contains(joint)) {
                 accumulatedTransform = cachedTransforms[joint];
                 break;
             }
@@ -73,12 +73,12 @@ void Skin::load(AnimationContainer &container, const tinygltf::Model &model,
     const tinygltf::Accessor &accessor = model.accessors[skin.inverseBindMatrices];
     const tinygltf::BufferView &bufferView = model.bufferViews[accessor.bufferView];
     const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-    const float *data = reinterpret_cast<const float *>(
+    const auto *data = reinterpret_cast<const float *>(
         &buffer.data[bufferView.byteOffset + accessor.byteOffset]);
 
     for(size_t i = 0; i < accessor.count; i++) {
         glm::mat4 inverseBindMatrix;
-        for(size_t j = 0; j < 16; j++) {
+        for(int j = 0; j < 16; j++) {
             inverseBindMatrix[j / 4][j % 4] = data[i * 16 + j];
         }
         mInverseBindMatrices.push_back(inverseBindMatrix);

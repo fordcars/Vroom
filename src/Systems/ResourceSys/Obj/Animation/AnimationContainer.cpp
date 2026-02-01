@@ -9,7 +9,7 @@ AnimationContainer::AnimationContainer(const tinygltf::Model &model) {
     if(model.scenes.empty()) {
         Log::warn() << "No scenes found in the model.";
     } else {
-        for(auto &node : model.scenes[0].nodes) {
+        for(const auto &node : model.scenes[0].nodes) {
             loadNodes(model, node);
         }
         loadSkins(model);
@@ -19,7 +19,7 @@ AnimationContainer::AnimationContainer(const tinygltf::Model &model) {
 
 // Loads all nodes under the given parent node
 void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeIndex) {
-    if(mVisitedInputNodes.find(parentNodeIndex) != mVisitedInputNodes.end()) {
+    if(mVisitedInputNodes.contains(parentNodeIndex)) {
         Log::debug() << "Node " << parentNodeIndex << " already visited.";
         return;
     }
@@ -36,7 +36,7 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
     while(!stack.empty()) {
         auto [nodeIndex, parentNode] = stack.top();
         stack.pop();
-        if(mVisitedInputNodes.find(nodeIndex) != mVisitedInputNodes.end()) continue;
+        if(mVisitedInputNodes.contains(nodeIndex)) continue;
 
         const tinygltf::Node &node = model.nodes[nodeIndex];
 
@@ -50,8 +50,8 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
                                                node.translation[2]);
         newNode->rotation = node.rotation.empty()
                                 ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f)
-                                : glm::quat(node.rotation[3], node.rotation[0],
-                                            node.rotation[1], node.rotation[2]);
+                                : glm::quat(static_cast<float>(node.rotation[3]), static_cast<float>(node.rotation[0]),
+                                            static_cast<float>(node.rotation[1]), static_cast<float>(node.rotation[2]));
         newNode->scale = node.scale.empty()
                              ? glm::vec3(1.0f)
                              : glm::vec3(node.scale[0], node.scale[1], node.scale[2]);
@@ -62,7 +62,7 @@ void AnimationContainer::loadNodes(const tinygltf::Model &model, int parentNodeI
         mNodes.push_back(std::move(newNode));
 
         for(int childIndex : node.children) {
-            stack.push({childIndex, newNodePtr});
+            stack.emplace(childIndex, newNodePtr);
         }
         mVisitedInputNodes.insert(nodeIndex);
     }

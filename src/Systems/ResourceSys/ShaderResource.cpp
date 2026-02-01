@@ -131,14 +131,14 @@ GLuint ShaderResource::linkShaderProgram(const std::string& shaderProgramName,
 // Static
 std::string ShaderResource::getGLShaderDebugLog(
     GLuint object, PFNGLGETSHADERIVPROC glGet_iv,
-    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog) {
+    PFNGLGETSHADERINFOLOGPROC glGet_InfoLog) {
     GLint logLength;
     std::string log;
 
     glGet_iv(object, GL_INFO_LOG_LENGTH, &logLength);
     log.resize(logLength);
 
-    if(logLength) glGet__InfoLog(object, logLength, NULL, &log[0]);
+    if(logLength) glGet_InfoLog(object, logLength, nullptr, log.data());
 
     log.pop_back(); // Remove null terminator (\0) that OpenGL added
 
@@ -202,7 +202,7 @@ void ShaderResource::registerUniform(const std::string& uniformName) {
         if(uniformLocation != -1) {
             Log::debug() << "Registering uniform '" << uniformName << "' in shader '"
                          << mName << "'.";
-            mUniformLocations[uniformNameIndex.value()] = uniformLocation;
+            mUniformLocations[uniformNameIndex.value()] = static_cast<GLint>(uniformLocation);
         }
 
         return;
@@ -224,7 +224,7 @@ void ShaderResource::registerUniformBlock(const std::string& uniformBlockName,
         Log::debug() << "Registering uniform block '" << uniformBlockName
                      << "' in shader'" << mName << "' at binding point " << bindingPoint
                      << ".";
-        mUniformBlockLocations[uniformBlockNameIndex.value()] = bindingPoint;
+        mUniformBlockLocations[uniformBlockNameIndex.value()] = static_cast<GLint>(bindingPoint);
         return;
     }
 

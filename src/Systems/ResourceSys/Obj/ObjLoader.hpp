@@ -1,7 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
 class ObjResource;
 class ObjLoader {
 public:

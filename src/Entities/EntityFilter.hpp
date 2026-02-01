@@ -15,7 +15,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include "Entities/Entity.hpp"
 #include "Entities/EntityRegistry.hpp"
 #include "Utils/TupleUtils.hpp"
 

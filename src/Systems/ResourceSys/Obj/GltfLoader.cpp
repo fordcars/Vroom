@@ -30,20 +30,20 @@ void extractAttribute(const tinygltf::Primitive& primitive, const tinygltf::Mode
     output.resize(accessor.count);
 
     if constexpr(std::is_same<T, glm::vec3>::value) {
-        const glm::vec3* data = reinterpret_cast<const glm::vec3*>(dataPtr);
+        const auto* data = reinterpret_cast<const glm::vec3*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
     } else if constexpr(std::is_same<T, glm::vec2>::value) {
-        const glm::vec2* data = reinterpret_cast<const glm::vec2*>(dataPtr);
+        const auto* data = reinterpret_cast<const glm::vec2*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
     } else if constexpr(std::is_same<T, glm::uvec4>::value) {
         if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-            const uint8_t* data = reinterpret_cast<const uint8_t*>(dataPtr);
+            const auto* data = reinterpret_cast<const uint8_t*>(dataPtr);
             for(size_t i = 0; i < accessor.count; i++) {
                 output[i] = glm::uvec4(data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2],
                                        data[i * 4 + 3]);
             }
         } else if(accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-            const uint16_t* data = reinterpret_cast<const uint16_t*>(dataPtr);
+            const auto* data = reinterpret_cast<const uint16_t*>(dataPtr);
             for(size_t i = 0; i < accessor.count; i++) {
                 output[i] = glm::uvec4(data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2],
                                        data[i * 4 + 3]);
@@ -52,7 +52,7 @@ void extractAttribute(const tinygltf::Primitive& primitive, const tinygltf::Mode
             Log::debug() << "Unsupported component type for JOINTS_0.";
         }
     } else if constexpr(std::is_same<T, glm::vec4>::value) {
-        const glm::vec4* data = reinterpret_cast<const glm::vec4*>(dataPtr);
+        const auto* data = reinterpret_cast<const glm::vec4*>(dataPtr);
         std::copy(data, data + accessor.count, output.begin());
     }
 }
@@ -70,17 +70,17 @@ void extractIndices(const tinygltf::Primitive& primitive, const tinygltf::Model&
 
     switch(accessor.componentType) {
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-            const uint8_t* indices = reinterpret_cast<const uint8_t*>(dataPtr);
+            const auto* indices = reinterpret_cast<const uint8_t*>(dataPtr);
             output.assign(indices, indices + accessor.count);
             break;
         }
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-            const uint16_t* indices = reinterpret_cast<const uint16_t*>(dataPtr);
+            const auto* indices = reinterpret_cast<const uint16_t*>(dataPtr);
             output.assign(indices, indices + accessor.count);
             break;
         }
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
-            const uint32_t* indices = reinterpret_cast<const uint32_t*>(dataPtr);
+            const auto* indices = reinterpret_cast<const uint32_t*>(dataPtr);
             output.assign(indices, indices + accessor.count);
             break;
         }
@@ -92,16 +92,17 @@ void extractIndices(const tinygltf::Primitive& primitive, const tinygltf::Model&
 
 } // namespace
 
-GltfLoader::GltfLoader(const std::filesystem::path& path) : mPath(path) {
+GltfLoader::GltfLoader(std::filesystem::path path) : mPath(std::move(path)) {
     Log::debug() << "Creating GltfLoader for '" << mPath.string() << "'.";
 }
 
 bool GltfLoader::load(ObjResource& resource) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
-    std::string err, warn;
+    std::string err;
+    std::string warn;
 
-    bool ret;
+    bool ret = false;
     if(mPath.extension() == ".obj") {
         ret = loader.LoadASCIIFromFile(&model, &err, &warn, mPath.string());
     } else {
@@ -138,10 +139,10 @@ void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& mod
 
         // Base Color (GLTF stores it as RGBA)
         if(gltfMaterial.pbrMetallicRoughness.baseColorFactor.size() == 4) {
-            material.baseColor[0] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[0];
-            material.baseColor[1] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[1];
-            material.baseColor[2] = gltfMaterial.pbrMetallicRoughness.baseColorFactor[2];
-            material.alpha = gltfMaterial.pbrMetallicRoughness.baseColorFactor[3];
+            material.baseColor[0] = static_cast<float>(gltfMaterial.pbrMetallicRoughness.baseColorFactor[0]);
+            material.baseColor[1] = static_cast<float>(gltfMaterial.pbrMetallicRoughness.baseColorFactor[1]);
+            material.baseColor[2] = static_cast<float>(gltfMaterial.pbrMetallicRoughness.baseColorFactor[2]);
+            material.alpha = static_cast<float>(gltfMaterial.pbrMetallicRoughness.baseColorFactor[3]);
         } else {
             material.baseColor[0] = 1.0f; // Default to white
             material.baseColor[1] = 1.0f;
@@ -151,9 +152,9 @@ void GltfLoader::loadMaterials(ObjResource& resource, const tinygltf::Model& mod
 
         // Emission Color
         if(gltfMaterial.emissiveFactor.size() == 3) {
-            material.emission[0] = gltfMaterial.emissiveFactor[0];
-            material.emission[1] = gltfMaterial.emissiveFactor[1];
-            material.emission[2] = gltfMaterial.emissiveFactor[2];
+            material.emission[0] = static_cast<float>(gltfMaterial.emissiveFactor[0]);
+            material.emission[1] = static_cast<float>(gltfMaterial.emissiveFactor[1]);
+            material.emission[2] = static_cast<float>(gltfMaterial.emissiveFactor[2]);
         } else {
             material.emission[0] = material.emission[1] = material.emission[2] = 0.0f;
         }
@@ -191,7 +192,7 @@ void GltfLoader::loadImages(ObjResource& resource, const tinygltf::Model& model)
                      << gltfImage.width << "x" << gltfImage.height << " and "
                      << gltfImage.component << " components.";
 
-        GLenum format = (gltfImage.component == 3) ? GL_RGB : GL_RGBA;
+        GLint format = (gltfImage.component == 3) ? GL_RGB : GL_RGBA;
         glTexImage2D(GL_TEXTURE_2D, 0, format, gltfImage.width, gltfImage.height, 0,
                      format, GL_UNSIGNED_BYTE, gltfImage.image.data());
 
@@ -234,11 +235,11 @@ void GltfLoader::loadTextures(ObjResource& resource, const tinygltf::Model& mode
         GLuint samplerId;
         glGenSamplers(1, &samplerId);
 
-        GLenum minFilter =
+        GLint minFilter =
             sampler.minFilter != -1 ? sampler.minFilter : GL_LINEAR_MIPMAP_LINEAR;
-        GLenum magFilter = sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR;
-        GLenum wrapS = sampler.wrapS != -1 ? sampler.wrapS : GL_REPEAT;
-        GLenum wrapT = sampler.wrapT != -1 ? sampler.wrapT : GL_REPEAT;
+        GLint magFilter = sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR;
+        GLint wrapS = sampler.wrapS != -1 ? sampler.wrapS : GL_REPEAT;
+        GLint wrapT = sampler.wrapT != -1 ? sampler.wrapT : GL_REPEAT;
 
         glSamplerParameteri(samplerId, GL_TEXTURE_MIN_FILTER, minFilter);
         glSamplerParameteri(samplerId, GL_TEXTURE_MAG_FILTER, magFilter);
@@ -291,8 +292,8 @@ void GltfLoader::loadMeshes(ObjResource& resource, const tinygltf::Model& model)
                                                 node.translation[2]);
         glm::quat rotation = node.rotation.empty()
                                  ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f)
-                                 : glm::quat(node.rotation[3], node.rotation[0],
-                                             node.rotation[1], node.rotation[2]);
+                                 : glm::quat(static_cast<float>(node.rotation[3]), static_cast<float>(node.rotation[0]),
+                                             static_cast<float>(node.rotation[1]), static_cast<float>(node.rotation[2]));
         glm::vec3 scale = node.scale.empty()
                               ? glm::vec3(1.0f)
                               : glm::vec3(node.scale[0], node.scale[1], node.scale[2]);
@@ -415,11 +416,11 @@ void GltfLoader::loadPrimitives(ObjResource& resource,
         objMesh->animationNode = animationNode;
 
         resource.objMeshes.emplace_back(objMesh);
-        setMeshTextures(resource, objMesh, model, primitive);
+        setMeshTextures(resource, *objMesh, model, primitive);
     }
 }
 
-void GltfLoader::setMeshTextures(ObjResource& resource, ObjMesh::Ptr mesh,
+void GltfLoader::setMeshTextures(ObjResource& resource, ObjMesh& mesh,
                                  const tinygltf::Model& model,
                                  const tinygltf::Primitive& primitive) {
     auto getTexture = [&resource](const tinygltf::TextureInfo& texInfo,
@@ -453,11 +454,11 @@ void GltfLoader::setMeshTextures(ObjResource& resource, ObjMesh::Ptr mesh,
     }
 
     const tinygltf::Material& gltfMaterial = model.materials[primitive.material];
-    mesh->baseColorTexture =
+    mesh.baseColorTexture =
         getTexture(gltfMaterial.pbrMetallicRoughness.baseColorTexture, "base color");
-    mesh->normalTexture = getNormalTexture(gltfMaterial.normalTexture);
-    mesh->metallicRoughnessTexture = getTexture(
+    mesh.normalTexture = getNormalTexture(gltfMaterial.normalTexture);
+    mesh.metallicRoughnessTexture = getTexture(
         gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture, "metallic roughness");
-    mesh->emissiveTexture = getTexture(gltfMaterial.emissiveTexture, "emissive");
-    mesh->normalScale = static_cast<float>(gltfMaterial.normalTexture.scale);
+    mesh.emissiveTexture = getTexture(gltfMaterial.emissiveTexture, "emissive");
+    mesh.normalScale = static_cast<float>(gltfMaterial.normalTexture.scale);
 }

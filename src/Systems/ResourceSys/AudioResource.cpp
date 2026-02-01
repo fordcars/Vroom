@@ -7,7 +7,7 @@ AudioResource::AudioResource(const std::filesystem::path& path)
     mMiniAudioSound(std::make_unique<ma_sound>()) {
     ma_result result =
         ma_sound_init_from_file(&mEngine->miniAudioEngine, path.string().c_str(), 0,
-                                NULL, NULL, mMiniAudioSound.get());
+                                nullptr, nullptr, mMiniAudioSound.get());
     if(result != MA_SUCCESS) {
         Log::error() << "Failed to load sound from file: "
                      << ma_result_description(result);

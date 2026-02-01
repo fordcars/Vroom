@@ -1,6 +1,7 @@
 #include "Animation.hpp"
 
-#include <stack>
+#include <algorithm>
+#include <cstddef>
 
 #include "AnimationContainer.hpp"
 #include "Log.hpp"
@@ -31,7 +32,7 @@ void Animation::loadAnimationData(AnimationContainer &container,
         const tinygltf::Accessor &input = model.accessors[sampler.input];
         const tinygltf::BufferView &inputView = model.bufferViews[input.bufferView];
         const tinygltf::Buffer &inputBuffer = model.buffers[inputView.buffer];
-        const float *timeData = reinterpret_cast<const float *>(
+        const auto *timeData = reinterpret_cast<const float *>(
             &inputBuffer.data[inputView.byteOffset + input.byteOffset]);
 
         for(size_t j = 0; j < input.count; j++) {
@@ -47,7 +48,7 @@ void Animation::loadAnimationData(AnimationContainer &container,
             outputBuffer.data.data() + outputView.byteOffset + output.byteOffset;
         size_t stride =
             (outputView.byteStride == 0)
-                ? tinygltf::GetComponentSizeInBytes(output.componentType) * output.type
+                ? static_cast<size_t>(tinygltf::GetComponentSizeInBytes(output.componentType) * output.type)
                 : outputView.byteStride;
 
         for(size_t j = 0; j < output.count; j++) {
@@ -56,11 +57,9 @@ void Animation::loadAnimationData(AnimationContainer &container,
                 reinterpret_cast<const float *>(dataPtr + j * stride);
 
             if(channel.target_path == "rotation") {
-                animChannel.sampler.values.push_back(
-                    glm::vec4(valueData[0], valueData[1], valueData[2], valueData[3]));
+                animChannel.sampler.values.emplace_back(valueData[0], valueData[1], valueData[2], valueData[3]);
             } else {
-                animChannel.sampler.values.push_back(
-                    glm::vec4(valueData[0], valueData[1], valueData[2], 0.0f));
+                animChannel.sampler.values.emplace_back(valueData[0], valueData[1], valueData[2], 0.0f);
             }
         }
 
@@ -71,6 +70,6 @@ void Animation::loadAnimationData(AnimationContainer &container,
     mDuration = 0.0f;
     for(const auto &channel : mChannels) {
         float time = channel.sampler.timestamps.back();
-        if(time > mDuration) mDuration = time;
+        mDuration = std::max(time, mDuration);
     }
 }

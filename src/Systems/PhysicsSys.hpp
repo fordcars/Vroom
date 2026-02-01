@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <optional>
-#include <vector>
 
 #include "Components/FrictionComp.hpp"
 #include "Components/GravityComp.hpp"
@@ -12,6 +11,11 @@ class PhysicsSys {
 public:
     static PhysicsSys& get();
     PhysicsSys() = default;
+    PhysicsSys(const PhysicsSys&) = delete;
+    PhysicsSys& operator=(const PhysicsSys&) = delete;
+    PhysicsSys(PhysicsSys&&) = delete;
+    PhysicsSys& operator=(PhysicsSys&&) = delete;
+
     void update(float deltaTime);
 
     template <typename EntityT>
@@ -25,16 +29,11 @@ public:
 private:
     bool mShowCollisionShapes = false;
 
-    PhysicsSys(const PhysicsSys&) = delete;
-    PhysicsSys& operator=(const PhysicsSys&) = delete;
-    PhysicsSys(PhysicsSys&&) = delete;
-    PhysicsSys& operator=(PhysicsSys&&) = delete;
-
-    void updatePhysics(
+    static void updatePhysics(
         PhysicsComp& physics,
         const std::optional<std::reference_wrapper<FrictionComp>>& frictionComp,
         const std::optional<std::reference_wrapper<GravityComp>>& gravityComp, float deltaTime);
-    void handleSphereEntityCollision(
+    static void handleSphereEntityCollision(
         PositionComp& position, SpherePhysicsComp& physics,
         const std::optional<std::reference_wrapper<FrictionComp>>& frictionComp,
         const std::optional<std::reference_wrapper<GravityComp>>& gravityComp,

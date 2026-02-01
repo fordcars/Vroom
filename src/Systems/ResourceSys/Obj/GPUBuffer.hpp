@@ -22,9 +22,9 @@ public:
     GPUBuffer& operator=(GPUBuffer&& other) noexcept;
     friend void swap(GPUBuffer& first, GPUBuffer& second) noexcept;
 
-    GLuint getId() const;
-    size_t getCount() const;
-    size_t getSize() const;
+    [[nodiscard]] GLuint getId() const;
+    [[nodiscard]] size_t getCount() const;
+    [[nodiscard]] size_t getSize() const;
 
     template <typename T>
     void setData(GLenum target, const std::vector<T>& data,

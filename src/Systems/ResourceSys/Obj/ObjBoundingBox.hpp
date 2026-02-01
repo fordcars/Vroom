@@ -2,9 +2,6 @@
 
 #include <glm/glm.hpp>
 #include <memory>
-#include <string>
-#include <vector>
-#include <tuple>
 
 class ObjResource;
 class ObjBoundingBox {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <math.h>
+#include <cmath>
 
 #include <glm/glm.hpp>
 
@@ -17,7 +17,7 @@ constexpr unsigned DEFAULT_WINDOW_SIZE_Y = 800;
 constexpr unsigned NO_VSYNC_MAX_FPS = 120; // Max FPS if VSync is off
 const bool ENABLE_VSYNC = true;
 const bool ENABLE_FXAA = false;
-const float HORIZ_FOV = glm::radians(90.0f); // In radians
+const float HORIZ_FOV = glm::radians(90.0f); // NOLINT
 
 constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
 

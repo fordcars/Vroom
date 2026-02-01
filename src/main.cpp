@@ -5,11 +5,14 @@
 #include "Log.hpp"
 #include "Utils/getopt.h"
 
+namespace
+{
 void printHelp(const std::string& progName) {
     std::cout << "Usage:\n"
               << "    " << progName << '\n'
               << "Options:\n"
               << "    -l        logging level (0: errors only, 3: all)" << std::endl;
+}
 }
 
 int main(int argc, char* argv[]) {
@@ -20,7 +23,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     int c;
-    while((c = getopt(argc, argv, "hl:")) != -1) {
+    while((c = getopt(argc, argv, "hl:")) != -1) { // NOLINT(concurrency-mt-unsafe)
         switch(c) {
             case '?':
             case 'l': {

@@ -2,13 +2,12 @@
 
 class EventSys {
 public:
-    static EventSys& get();
+    static EventSys &get();
     EventSys() = default;
-    bool handleEvents();
+    EventSys(const EventSys &) = delete;
+    EventSys &operator=(const EventSys &) = delete;
+    EventSys(EventSys &&) = delete;
+    EventSys &operator=(EventSys &&) = delete;
 
-private:
-    EventSys(const EventSys&) = delete;
-    EventSys& operator=(const EventSys&) = delete;
-    EventSys(EventSys&&) = delete;
-    EventSys& operator=(EventSys&&) = delete;
+    bool handleEvents();
 };

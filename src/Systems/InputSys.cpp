@@ -57,7 +57,7 @@ void InputSys::handleEvent(const SDL_Event& event) {
         auto it = mInputMapping.find(key);
         if(it != mInputMapping.end()) {
             if(event.type == SDL_KEYDOWN) {
-                if(mHeldKeys.find(key) == mHeldKeys.end()) {
+                if(!mHeldKeys.contains(key)) {
                     handleDownNeed(it->second);
                     mHeldKeys.insert(key);
                 }
@@ -80,6 +80,8 @@ void InputSys::handleDownNeed(InputNeed need) {
             if(PlayerEntity::instances[0].get<PhysicsComp>().currentCollision.yNeg) {
                 PhysicsSys::get().applyImpulse(PlayerEntity::instances[0], {0, 7, 0});
             }
+            break;
+        default:
             break;
     }
 }
@@ -131,7 +133,9 @@ void InputSys::handleHoldNeed(InputNeed need) {
         case InputNeed::Crouch:
             PlayerEntity::instances[0].get<PositionComp>().coords.y -= speed / 60;
             break;
-    }
+        default:
+            break;
+        }
 }
 
 void InputSys::handleMouseInput(const SDL_Event& event) {

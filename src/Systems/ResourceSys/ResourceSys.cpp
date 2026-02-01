@@ -26,7 +26,7 @@ bool ResourceSys::loadResources() {
 }
 
 ObjResource::Ptr ResourceSys::getObjResource(const std::string& name) {
-    if(mObjResources.find(name) == mObjResources.end()) {
+    if(!mObjResources.contains(name)) {
         Log::error() << "Cannot find obj resource '" << name << "'!";
         throw std::invalid_argument("No obj resource with name '" + name + "'");
     }
@@ -35,7 +35,7 @@ ObjResource::Ptr ResourceSys::getObjResource(const std::string& name) {
 }
 
 ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) const {
-    if(mShaderResources.find(name) == mShaderResources.end()) {
+    if(!mShaderResources.contains(name)) {
         Log::error() << "Cannot find shader resource '" << name << "'!";
         throw std::invalid_argument("No shader resource with name '" + name + "'");
     }
@@ -44,7 +44,7 @@ ShaderResource::CPtr ResourceSys::getShaderResource(const std::string& name) con
 }
 
 AudioResource::Ptr ResourceSys::getAudioResource(const std::string& name) {
-    if(mAudioResources.find(name) == mAudioResources.end()) {
+    if(!mAudioResources.contains(name)) {
         Log::error() << "Cannot find audio resource '" << name << "'!";
         throw std::invalid_argument("No audio resource with name '" + name + "'");
     }
@@ -82,7 +82,7 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
     bool alreadyExists = false;
     std::string resourceType;
     if(type == ".obj" || type == ".gltf" || type == ".glb") {
-        if(mObjResources.find(name) != mObjResources.end()) {
+        if(mObjResources.contains(name)) {
             alreadyExists = true;
             resourceType = "object";
         } else {
@@ -95,14 +95,14 @@ bool ResourceSys::loadResource(const std::filesystem::path& path) {
             }
         }
     } else if(type == ".wav" || type == ".flac" || type == ".mp3") {
-        if(mAudioResources.find(name) != mAudioResources.end()) {
+        if(mAudioResources.contains(name)) {
             alreadyExists = true;
             resourceType = "audio";
         } else {
             mAudioResources.insert({name, AudioResource::create(path)});
         }
     } else if(type == ".glsl") {
-        if(mShaderResources.find(name) == mShaderResources.end()) {
+        if(!mShaderResources.contains(name)) {
             // Don't throw error, since multiple shader sources must have the same name.
             // Find both vertex and fragment shader sources:
             std::filesystem::path vertexShaderPath =

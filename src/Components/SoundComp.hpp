@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "Systems/ResourceSys/ResourceSys.hpp"
+#include "Systems/ResourceSys/AudioResource.hpp"
 
 struct SoundComp {
     AudioResource::Ptr audioResource;

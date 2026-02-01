@@ -5,7 +5,7 @@
 
 class Game {
 public:
-    Game();
+    Game() = default;
     ~Game();
     Game(const Game&) = delete;
     Game& operator=(const Game&) = delete;
@@ -14,7 +14,7 @@ public:
     bool start();
 
 private:
-    SDL_Window* mMainWindow;
+    SDL_Window* mMainWindow {};
     bool mQuitting = false;
 
     static constexpr std::size_t DELTA_TIME_FRAMES_TO_AVERAGE = 5;

@@ -1,4 +1,5 @@
 #include "GPUBuffer.hpp"
+#include "Log.hpp"
 
 #include <utility>
 
@@ -14,10 +15,10 @@ GPUBuffer::GPUBuffer(const GPUBuffer& other) : mSize(other.mSize) {
     glBindBuffer(GL_COPY_READ_BUFFER, other.mId);
     // Allocate data for the new buffer
     glBindBuffer(GL_COPY_WRITE_BUFFER, mId);
-    glBufferData(GL_COPY_WRITE_BUFFER, mSize, nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_COPY_WRITE_BUFFER, static_cast<GLsizeiptr>(mSize), nullptr, GL_STATIC_DRAW);
 
     // Copy data
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, mSize);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, static_cast<GLsizeiptr>(mSize));
 
     // Unbind buffers
     glBindBuffer(GL_COPY_READ_BUFFER, 0);
