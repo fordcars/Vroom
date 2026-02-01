@@ -44,7 +44,7 @@ public:
 
     template <typename... ComponentTs>
     ReturnedComponentsTuple<ComponentTs...> getTuple() {
-        return {mEntity.get<ComponentTs>()...};
+        return {mEntity.template get<ComponentTs>()...};
     }
 };
 
@@ -114,7 +114,7 @@ private:
             // The is the current EntityT being traversed
             if(mIndex < EntityT::instances.size()) {
                 returnValue =
-                    ComponentTuple(EntityT::instances[mIndex]).getTuple<ComponentTs...>();
+                    ComponentTuple(EntityT::instances[mIndex]).template getTuple<ComponentTs...>();
                 ++mIndex;
             }
 

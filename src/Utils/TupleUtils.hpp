@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 namespace Utils {
 
@@ -10,34 +11,43 @@ namespace Utils {
 // an std::optional.
 // Inspired by: https://stackoverflow.com/a/25958302/6222104
 namespace TupleContainsTypeInternal {
-template <typename T, typename Tuple>
-struct has_type;
+// Is true if T is a specialization of TemplateT
+template <typename T, template <typename...> class TemplateT>
+struct IsSpecializationOf : std::false_type {};
+
+template <template <typename...> class TemplateT, typename... Args>
+struct IsSpecializationOf<TemplateT<Args...>, TemplateT> : std::true_type {};
+
+// Is true if:
+// - T1 == T2
+// - T1 is base class of T2
+// - T1 is std::optional
+template <typename T1, typename T2>
+struct TypeMatches
+    : std::conditional_t<
+        std::is_same_v<T1, T2>, std::true_type,
+        std::conditional_t<
+            std::is_base_of_v<T1, T2>, std::true_type,
+            IsSpecializationOf<T1, std::optional>
+        >
+    > {};
+
+template <typename T, typename TupleT>
+struct HasType;
 
 // Empty tuple (we went through entire tuple with no matches)
 template <typename T>
-struct has_type<T, std::tuple<>> : std::false_type {};
-
-// First type of tuple is T
-template <typename T, typename... Ts>
-struct has_type<T, std::tuple<T, Ts...>> : std::true_type {};
-
-// If T is std::optional, be true
-template <typename T, typename TupleT>
-struct has_type<std::optional<T>, TupleT> : std::true_type {};
+struct HasType<T, std::tuple<>> : std::false_type {};
 
 // Recursive case: check the rest of the tuple
-// Essentially, this specialization is chosen if first
-// type of tuple doesn't match; we check if the first type
-// derives from the type we're looking for, otherwise we
-// continue checking the rest of the tuple.
 template <typename T, typename U, typename... Ts>
-struct has_type<T, std::tuple<U, Ts...>>
-    : std::conditional_t<std::is_base_of_v<T, U>, std::true_type,
-                         has_type<T, std::tuple<Ts...>>> {};
+struct HasType<T, std::tuple<U, Ts...>>
+    : std::conditional_t<TypeMatches<T, U>::value, std::true_type,
+                         HasType<T, std::tuple<Ts...>>> {};
 } // namespace TupleContainsTypeInternal
 
 template <typename T, typename TupleT>
-using TupleContainsType = typename TupleContainsTypeInternal::has_type<T, TupleT>::type;
+using TupleContainsType = typename TupleContainsTypeInternal::HasType<T, TupleT>::type;
 
 // Same as std::get<T>(tuple), but supports derived types.
 // https://stackoverflow.com/a/34002368/6222104

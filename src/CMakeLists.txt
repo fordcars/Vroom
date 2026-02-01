@@ -159,4 +159,3 @@ add_custom_command(
         ${RESOURCE_DEST_DIR}
     COMMENT "Copying resources to output directory"
 )
-add_custom_target(copy_resources ALL DEPENDS ${RESOURCE_DEST_DIR})

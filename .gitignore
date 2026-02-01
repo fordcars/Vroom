@@ -35,6 +35,7 @@
 CMakeUserPresets.json
 
 # Dirs
+.cache/
 .vscode/
 bin/
 build/
