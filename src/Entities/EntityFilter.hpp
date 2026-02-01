@@ -22,8 +22,7 @@ namespace EntityFilterInternal {
 
 template <typename... ComponentTs>
 using ReturnedComponentsTuple =
-    std::tuple<decltype(std::declval<Utils::OptionalTupleGetter<ComponentTs>>().get(
-        std::declval<std::tuple<>&>()))...>;
+    std::tuple<decltype(std::declval<Utils::OptionalTupleGetter<ComponentTs>>().get(std::declval<std::tuple<>&>()))...>;
 
 // Get tuple of ComponentTs values from EntityT
 // Ex: If the entity has components A, B, C, D, and ComponentTs are A, D, C,
@@ -33,46 +32,38 @@ using ReturnedComponentsTuple =
 // and ComponentTs are A, D, std::optional<E>, we want to
 // return std::tuple<A&, D&, std::optional<std::reference_wrapper<E>>.
 // This logic is done in Entity::get<std::optional<E>>().
-template <typename EntityT>
-class ComponentTuple {
+template <typename EntityT> class ComponentTuple {
 private:
     EntityT& mEntity;
 
 public:
     ComponentTuple(EntityT& entity) : mEntity(entity) {}
 
-    template <typename... ComponentTs>
-    ReturnedComponentsTuple<ComponentTs...> getTuple() {
+    template <typename... ComponentTs> ReturnedComponentsTuple<ComponentTs...> getTuple() {
         return {mEntity.template get<ComponentTs>()...};
     }
 };
 
 namespace IsValidEntityInternal {
 // Forward decl
-template <typename EntityT, typename... ComponentTs>
-struct IsValidEntity_Type;
+template <typename EntityT, typename... ComponentTs> struct IsValidEntity_Type;
 
 // Recursive case: check if the first type matches, or check the rest of the tuple
 template <typename EntityT, typename FirstComponentT, typename... RestComponentTs>
 struct IsValidEntity_Type<EntityT, FirstComponentT, RestComponentTs...>
-    : std::conditional<Utils::TupleContainsType<
-                           FirstComponentT, decltype(EntityT::mComponents)>::value,
-                       IsValidEntity_Type<EntityT, RestComponentTs...>,
-                       std::false_type>::type {};
+    : std::conditional<Utils::TupleContainsType<FirstComponentT, decltype(EntityT::mComponents)>::value,
+                       IsValidEntity_Type<EntityT, RestComponentTs...>, std::false_type>::type {};
 
 // Base case: empty ComponentTs (valid EntityT)
-template <typename EntityT, typename... ComponentTs>
-struct IsValidEntity_Type : std::true_type {};
-}  // namespace IsValidEntityInternal
+template <typename EntityT, typename... ComponentTs> struct IsValidEntity_Type : std::true_type {};
+} // namespace IsValidEntityInternal
 
 // Is true if EntityT has at least the specified components.
 template <typename EntityT, typename... ComponentTs>
-concept IsValidEntity =
-    IsValidEntityInternal::IsValidEntity_Type<EntityT, ComponentTs...>::value;
+concept IsValidEntity = IsValidEntityInternal::IsValidEntity_Type<EntityT, ComponentTs...>::value;
 
 // Helper class for getting the next entity with the specified components.
-template <typename... ComponentTs>
-class EntityGetter {
+template <typename... ComponentTs> class EntityGetter {
 private:
     // Is an std::optional of std::tuple
     using ReturnT = std::optional<ReturnedComponentsTuple<ComponentTs...>>;
@@ -80,13 +71,13 @@ private:
 public:
     // Find next valid entity
     // Return empty value if there is no next entity
-    template <typename... EntityTs>
-    ReturnT getNextEntity(const EntityRegistry<EntityTs...>&) {
+    template <typename... EntityTs> ReturnT getNextEntity(const EntityRegistry<EntityTs...>&) {
         ReturnT returnValue;
-        if(mReachedEnd) return {};
+        if (mReachedEnd)
+            return {};
 
         (..., getNextEntityOfEntityT<EntityTs>(returnValue));
-        if(mCurrentEntityVector == nullptr) {
+        if (mCurrentEntityVector == nullptr) {
             // We reached the end!
             mReachedEnd = true;
         }
@@ -100,24 +91,21 @@ private:
     bool mReachedEnd = false;
 
     template <typename EntityT>
-    void getNextEntityOfEntityT(ReturnT& returnValue)
-        requires IsValidEntity<EntityT, ComponentTs...>
-    {
-        if(mCurrentEntityVector == nullptr) {
+    void getNextEntityOfEntityT(ReturnT& returnValue) requires IsValidEntity<EntityT, ComponentTs...> {
+        if (mCurrentEntityVector == nullptr) {
             // This is the first entity being traversed in this EntityT
             mCurrentEntityVector = &(EntityT::instances);
             mIndex = 0;
         }
 
-        if(mCurrentEntityVector == &(EntityT::instances) && !returnValue.has_value()) {
+        if (mCurrentEntityVector == &(EntityT::instances) && !returnValue.has_value()) {
             // The is the current EntityT being traversed
-            if(mIndex < EntityT::instances.size()) {
-                returnValue =
-                    ComponentTuple(EntityT::instances[mIndex]).template getTuple<ComponentTs...>();
+            if (mIndex < EntityT::instances.size()) {
+                returnValue = ComponentTuple(EntityT::instances[mIndex]).template getTuple<ComponentTs...>();
                 ++mIndex;
             }
 
-            if(mIndex >= EntityT::instances.size()) {
+            if (mIndex >= EntityT::instances.size()) {
                 // Done traversing this EntityT, go to next one!
                 mCurrentEntityVector = nullptr;
             }
@@ -126,29 +114,27 @@ private:
 
     // SFINAE
     template <typename EntityT>
-    void getNextEntityOfEntityT(ReturnT& returnValue)
-        requires(!IsValidEntity<EntityT, ComponentTs...>)
-    {}
+    void getNextEntityOfEntityT(ReturnT& returnValue) requires(!IsValidEntity<EntityT, ComponentTs...>) {}
 };
 
-}  // namespace EntityFilterInternal
+} // namespace EntityFilterInternal
 
 // Iterable class for getting the current entities which
 // have the specified components.
-template <typename... ComponentTs>
-class EntityFilter {
+template <typename... ComponentTs> class EntityFilter {
 public:
     class Iterator {
     public:
         Iterator(bool isEnd = false) : mIsEnd(isEnd) {
-            if(!mIsEnd) {
+            if (!mIsEnd) {
                 // It's extremely important to use reset() before assigning a new
                 // value to the std::optional (at least on Windows), since without it,
                 // it will move-assign the next entity in the previous one for some
                 // reason. This is because we are using std::tuples of references.
                 mCurrentEntity.reset();
                 mCurrentEntity = mEntityGetter.getNextEntity(mEntityRegistry);
-                if(!mCurrentEntity.has_value()) mIsEnd = true;
+                if (!mCurrentEntity.has_value())
+                    mIsEnd = true;
             }
         }
 
@@ -157,7 +143,8 @@ public:
         Iterator& operator++() {
             mCurrentEntity.reset();
             mCurrentEntity = mEntityGetter.getNextEntity(mEntityRegistry);
-            if(!mCurrentEntity.has_value()) mIsEnd = true;
+            if (!mCurrentEntity.has_value())
+                mIsEnd = true;
             return *this;
         }
 
@@ -165,10 +152,9 @@ public:
 
     private:
         bool mIsEnd = false;
-        EntityRegistryDefinition mEntityRegistry;  // This is in reality an empty class
+        EntityRegistryDefinition mEntityRegistry; // This is in reality an empty class
         EntityFilterInternal::EntityGetter<ComponentTs...> mEntityGetter;
-        std::optional<EntityFilterInternal::ReturnedComponentsTuple<ComponentTs...>>
-            mCurrentEntity;
+        std::optional<EntityFilterInternal::ReturnedComponentsTuple<ComponentTs...>> mCurrentEntity;
     };
 
     Iterator begin() { return {}; }

@@ -27,7 +27,7 @@ public:
     AudioSys& operator=(const AudioSys&) = delete;
     AudioSys(AudioSys&&) = delete;
     AudioSys& operator=(AudioSys&&) = delete;
-    
+
     bool init();
     void update(float deltaTime);
     Engine::Ptr getEngine() { return mEngine; }
@@ -37,21 +37,17 @@ private:
 
 public:
     template <auto MiniAudioFunction, typename... Args>
-    bool call(Args&&... args) requires std::is_same_v<decltype(MiniAudioFunction(&mEngine->miniAudioEngine,
-                                                          std::declval<Args>()...)),
-                               ma_result> {
-        ma_result result =
-            MiniAudioFunction(&mEngine->miniAudioEngine, std::forward<Args>(args)...);
-        if(result != MA_SUCCESS) {
-            Log::warn() << "Failed to call miniaudio engine function: "
-                        << ma_result_description(result);
+    bool call(Args&&... args) requires
+        std::is_same_v<decltype(MiniAudioFunction(&mEngine->miniAudioEngine, std::declval<Args>()...)), ma_result> {
+        ma_result result = MiniAudioFunction(&mEngine->miniAudioEngine, std::forward<Args>(args)...);
+        if (result != MA_SUCCESS) {
+            Log::warn() << "Failed to call miniaudio engine function: " << ma_result_description(result);
             return false;
         }
         return true;
     }
 
-    template <auto MiniAudioFunction, typename... Args>
-    decltype(auto) call(Args&&... args) {
+    template <auto MiniAudioFunction, typename... Args> decltype(auto) call(Args&&... args) {
         MiniAudioFunction(&mEngine->miniAudioEngine, std::forward<Args>(args)...);
     }
 };

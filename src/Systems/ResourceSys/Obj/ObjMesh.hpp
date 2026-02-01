@@ -32,11 +32,9 @@ public:
     ObjTexture::Ptr emissiveTexture;
     float normalScale = 1.0f;
 
-    static Ptr create(ObjResource& parent, const std::string& name,
-                      std::vector<unsigned int> indices) {
+    static Ptr create(ObjResource& parent, const std::string& name, std::vector<unsigned int> indices) {
         return std::make_shared<ObjMesh>(parent, name, std::move(indices));
     }
 
-    ObjMesh(ObjResource& parent, const std::string& name,
-            std::vector<unsigned int> indices);
+    ObjMesh(ObjResource& parent, const std::string& name, std::vector<unsigned int> indices);
 };

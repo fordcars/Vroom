@@ -37,8 +37,7 @@ public:
         return std::make_shared<Animation>(container, model, animation);
     }
 
-    Animation(AnimationContainer& container, const tinygltf::Model& model,
-              const tinygltf::Animation& animation);
+    Animation(AnimationContainer& container, const tinygltf::Model& model, const tinygltf::Animation& animation);
 
     [[nodiscard]] const std::string& getName() const { return mName; }
 

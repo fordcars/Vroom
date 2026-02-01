@@ -9,11 +9,11 @@
 #include "ObjMaterial.hpp"
 #include "ObjResource.hpp"
 
-WavefrontLoader::WavefrontLoader(const std::filesystem::path &path) : mPath(path) {
+WavefrontLoader::WavefrontLoader(const std::filesystem::path& path) : mPath(path) {
     Log::debug() << "Creating WavefrontLoader for '" << mPath.string() << "'.";
 }
 
-bool WavefrontLoader::load(ObjResource &resource) {
+bool WavefrontLoader::load(ObjResource& resource) {
     // https://github.com/tinyobjloader/tinyobjloader?tab=readme-ov-file
     tinyobj::ObjReader reader;
     tinyobj::ObjReaderConfig reader_config;
@@ -34,12 +34,12 @@ bool WavefrontLoader::load(ObjResource &resource) {
     return true;
 }
 
-void WavefrontLoader::loadOnGPU(ObjResource &resource, const tinyobj::ObjReader &reader) {
+void WavefrontLoader::loadOnGPU(ObjResource& resource, const tinyobj::ObjReader& reader) {
     loadMeshes(resource, reader);
 
     // Convert OBJ materials to PBR-compatible format
     std::vector<ObjMaterial> objMaterials;
-    for (const tinyobj::material_t &objMat : reader.GetMaterials()) {
+    for (const tinyobj::material_t& objMat : reader.GetMaterials()) {
         ObjMaterial mat = {};
 
         // Convert diffuse to baseColor
@@ -62,7 +62,7 @@ void WavefrontLoader::loadOnGPU(ObjResource &resource, const tinyobj::ObjReader 
     Log::debug() << "Loaded " << objMaterials.size() << " materials.";
 }
 
-void WavefrontLoader::loadMeshes(ObjResource &resource, const tinyobj::ObjReader &reader) {
+void WavefrontLoader::loadMeshes(ObjResource& resource, const tinyobj::ObjReader& reader) {
     const unsigned VERTICES_PER_FACE = 3;
     const glm::vec3 UNINITIALIZED_VEC3(-1.0f);
     const glm::vec2 UNINITIALIZED_VEC2(-1.0f);
@@ -77,15 +77,17 @@ void WavefrontLoader::loadMeshes(ObjResource &resource, const tinyobj::ObjReader
     // Copy all attributes :(
     // NOTE: We convert all attributes to only use a single index buffer (vertex index).
     // -1 to identify uninitialized values.
-    const auto &attribs = reader.GetAttrib();
-    std::vector<ObjResource::Vertex> outVertices(
-        attribs.vertices.size() / 3,
-        ObjResource::Vertex{.position=UNINITIALIZED_VEC3, .normal=UNINITIALIZED_VEC3, .texcoord=UNINITIALIZED_VEC2, .materialId=0});
+    const auto& attribs = reader.GetAttrib();
+    std::vector<ObjResource::Vertex> outVertices(attribs.vertices.size() / 3,
+                                                 ObjResource::Vertex{.position = UNINITIALIZED_VEC3,
+                                                                     .normal = UNINITIALIZED_VEC3,
+                                                                     .texcoord = UNINITIALIZED_VEC2,
+                                                                     .materialId = 0});
 
     Log::debug() << "Found " << attribs.vertices.size() << " vertex positions, " << attribs.normals.size()
                  << " normals and " << attribs.texcoords.size() << " texcoords.";
 
-    for (const auto &shape : reader.GetShapes()) {
+    for (const auto& shape : reader.GetShapes()) {
         std::vector<unsigned int> meshVertexIndices;
         meshVertexIndices.reserve(shape.mesh.indices.size());
         size_t originalVertexCount = attribs.vertices.size() / VERTICES_PER_FACE;

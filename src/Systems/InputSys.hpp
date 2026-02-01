@@ -13,7 +13,7 @@ public:
     InputSys& operator=(const InputSys&) = delete;
     InputSys(InputSys&&) = delete;
     InputSys& operator=(InputSys&&) = delete;
-    
+
     bool init();
     void update(float deltaTime);
     void handleEvent(const SDL_Event& event);

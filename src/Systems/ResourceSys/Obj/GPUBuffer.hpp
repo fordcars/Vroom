@@ -9,9 +9,7 @@ class GPUBuffer {
 public:
     GPUBuffer();
     template <typename T>
-    GPUBuffer(GLenum target, const std::vector<T>& data,
-              GLenum usageHint = GL_STATIC_DRAW)
-        : GPUBuffer() {
+    GPUBuffer(GLenum target, const std::vector<T>& data, GLenum usageHint = GL_STATIC_DRAW) : GPUBuffer() {
         setData(target, data, usageHint);
     }
 
@@ -26,10 +24,9 @@ public:
     [[nodiscard]] size_t getCount() const;
     [[nodiscard]] size_t getSize() const;
 
-    template <typename T>
-    void setData(GLenum target, const std::vector<T>& data,
-                 GLenum usageHint = GL_STATIC_DRAW) {
-        if(data.empty()) return;
+    template <typename T> void setData(GLenum target, const std::vector<T>& data, GLenum usageHint = GL_STATIC_DRAW) {
+        if (data.empty())
+            return;
 
         glBindBuffer(target, mId);
         glBufferData(target, data.size() * sizeof(T), data.data(), usageHint);

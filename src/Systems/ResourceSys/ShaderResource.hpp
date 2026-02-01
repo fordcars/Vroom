@@ -35,13 +35,11 @@ public:
 private:
     std::string mName; // Useful for logs
     GLuint mId = 0;
-    std::array<GLint, Constants::UniformName::size()> mUniformLocations {};
-    std::array<GLint, Constants::UniformBlockName::size()> mUniformBlockLocations {};
+    std::array<GLint, Constants::UniformName::size()> mUniformLocations{};
+    std::array<GLint, Constants::UniformBlockName::size()> mUniformBlockLocations{};
 
-    static GLuint compileShader(const std::filesystem::path& shaderPath,
-                                const std::string& shaderSource, GLenum type);
-    static GLuint linkShaderProgram(const std::string& shaderProgramName,
-                                    GLuint vertexShader, GLuint fragmentShader);
+    static GLuint compileShader(const std::filesystem::path& shaderPath, const std::string& shaderSource, GLenum type);
+    static GLuint linkShaderProgram(const std::string& shaderProgramName, GLuint vertexShader, GLuint fragmentShader);
     static std::string getGLShaderDebugLog(GLuint object, PFNGLGETSHADERIVPROC glGet_iv,
                                            PFNGLGETSHADERINFOLOGPROC glGet_InfoLog);
 

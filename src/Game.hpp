@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <SDL2/SDL.h>
+#include <array>
 
 class Game {
 public:
@@ -14,7 +14,7 @@ public:
     bool start();
 
 private:
-    SDL_Window* mMainWindow {};
+    SDL_Window* mMainWindow{};
     bool mQuitting = false;
 
     static constexpr std::size_t DELTA_TIME_FRAMES_TO_AVERAGE = 5;

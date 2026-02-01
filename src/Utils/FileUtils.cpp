@@ -9,15 +9,15 @@ namespace Utils {
 std::string getFileContents(const std::filesystem::path& path) {
     namespace fs = std::filesystem;
 
-    if(fs::exists(path)) {
+    if (fs::exists(path)) {
         std::ifstream file(path);
 
-        if(file.is_open()) {
+        if (file.is_open()) {
             std::stringstream outStream;
             outStream << file.rdbuf();
             return outStream.str();
         }
-        
+
         Log::error() << "Failed to open file: '" << path << "'.";
     } else {
         Log::error() << "FIle does not exist: '" << path << "'.";
@@ -25,4 +25,4 @@ std::string getFileContents(const std::filesystem::path& path) {
 
     return "";
 }
-}  // namespace Utils
+} // namespace Utils

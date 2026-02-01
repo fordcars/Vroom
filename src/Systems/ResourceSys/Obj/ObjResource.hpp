@@ -4,11 +4,11 @@
 
 #include "Animation/AnimationContainer.hpp"
 #include "GPUBuffer.hpp"
+#include "ObjBoundingBox.hpp"
 #include "ObjImage.hpp"
 #include "ObjLoader.hpp"
 #include "ObjMesh.hpp"
 #include "ObjTexture.hpp"
-#include "ObjBoundingBox.hpp"
 
 class ObjResource {
 public:
@@ -35,9 +35,7 @@ public:
     ObjBoundingBox::Ptr boundingBox;
     AnimationContainer::Ptr animationContainer; // Optional
 
-    static Ptr create(std::unique_ptr<ObjLoader> loader) {
-        return std::make_shared<ObjResource>(std::move(loader));
-    }
+    static Ptr create(std::unique_ptr<ObjLoader> loader) { return std::make_shared<ObjResource>(std::move(loader)); }
 
     ObjResource(std::unique_ptr<ObjLoader> loader);
 };

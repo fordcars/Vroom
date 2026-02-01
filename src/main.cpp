@@ -5,15 +5,14 @@
 #include "Log.hpp"
 #include "Utils/getopt.h"
 
-namespace
-{
+namespace {
 void printHelp(const std::string& progName) {
     std::cout << "Usage:\n"
               << "    " << progName << '\n'
               << "Options:\n"
               << "    -l        logging level (0: errors only, 3: all)" << std::endl;
 }
-}
+} // namespace
 
 int main(int argc, char* argv[]) {
 #ifdef IS_DEBUG
@@ -23,25 +22,25 @@ int main(int argc, char* argv[]) {
 #endif
 
     int c;
-    while((c = getopt(argc, argv, "hl:")) != -1) { // NOLINT(concurrency-mt-unsafe)
-        switch(c) {
-            case '?':
-            case 'l': {
-                try {
-                    loggingLevel = static_cast<LogLevel>(std::stoi(optarg));
-                } catch(const std::invalid_argument& e) {
-                    std::cerr << "Invalid logging level: " << e.what() << std::endl;
-                }
-                break;
+    while ((c = getopt(argc, argv, "hl:")) != -1) { // NOLINT(concurrency-mt-unsafe)
+        switch (c) {
+        case '?':
+        case 'l': {
+            try {
+                loggingLevel = static_cast<LogLevel>(std::stoi(optarg));
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Invalid logging level: " << e.what() << std::endl;
             }
-            case 'h':
-            default:
-                printHelp(argv[0]);
-                return 0;
-                break;
+            break;
+        }
+        case 'h':
+        default:
+            printHelp(argv[0]);
+            return 0;
+            break;
 
-            case -1:
-                break;
+        case -1:
+            break;
         }
     }
 

@@ -3,9 +3,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "AudioResource.hpp"
 #include "Obj/ObjResource.hpp"
 #include "ShaderResource.hpp"
-#include "AudioResource.hpp"
 
 class ResourceSys {
 public:

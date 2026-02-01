@@ -11,8 +11,8 @@
 #include "Components/SoundComp.hpp"
 #include "Entity.hpp"
 
-class PlayerEntity : public Entity<PositionComp, RenderableComp, SoundComp, AnimationComp,
-                                   SpherePhysicsComp, FrictionComp, GravityComp> {
+class PlayerEntity : public Entity<PositionComp, RenderableComp, SoundComp, AnimationComp, SpherePhysicsComp,
+                                   FrictionComp, GravityComp> {
 public:
     static std::vector<PlayerEntity> instances;
 };

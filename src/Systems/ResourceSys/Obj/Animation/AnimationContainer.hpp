@@ -20,22 +20,19 @@ public:
     using Ptr = std::shared_ptr<AnimationContainer>;
     using CPtr = std::shared_ptr<const AnimationContainer>;
 
-    static Ptr create(const tinygltf::Model& model) {
-        return std::make_shared<AnimationContainer>(model);
-    }
+    static Ptr create(const tinygltf::Model& model) { return std::make_shared<AnimationContainer>(model); }
 
     AnimationContainer(const tinygltf::Model& model);
 
     Animation* getAnimation(std::size_t nameIndex) {
-        if(nameIndex >= mAnimations.size()) {
+        if (nameIndex >= mAnimations.size()) {
             Log::error() << "Animation " << nameIndex << " out of bounds.";
             return nullptr;
         }
-        if(!mAnimations[nameIndex]) {
+        if (!mAnimations[nameIndex]) {
             auto name = Constants::AnimationName::runtimeGet(nameIndex);
-            if(name.has_value()) {
-                Log::error() << "Animation " << name.value()
-                             << " not found in container.";
+            if (name.has_value()) {
+                Log::error() << "Animation " << name.value() << " not found in container.";
             }
             return nullptr;
         }
@@ -53,8 +50,10 @@ public:
     }
 
     Skin::Ptr getSkin(int skinIndex) {
-        if(skinIndex < 0) return nullptr;
-        if(skinIndex >= mSkins.size()) return nullptr;
+        if (skinIndex < 0)
+            return nullptr;
+        if (skinIndex >= mSkins.size())
+            return nullptr;
         return mSkins[skinIndex];
     }
 
@@ -65,9 +64,8 @@ private:
     std::vector<AnimationNode::Ptr> mNodes;
     std::unordered_set<int> mVisitedInputNodes;
     std::unordered_map<int, AnimationNode*> mGltfNodeIndexToNode;
-    std::vector<Skin::Ptr> mSkins; // All skins
-    std::array<Animation::Ptr, Constants::AnimationName::size()>
-        mAnimations{}; // Animations mapped by name index
+    std::vector<Skin::Ptr> mSkins;                                              // All skins
+    std::array<Animation::Ptr, Constants::AnimationName::size()> mAnimations{}; // Animations mapped by name index
 
     void loadNodes(const tinygltf::Model& model, int parentNodeIndex);
     void loadSkins(const tinygltf::Model& model);

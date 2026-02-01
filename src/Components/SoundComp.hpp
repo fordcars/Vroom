@@ -1,11 +1,11 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include "Systems/ResourceSys/AudioResource.hpp"
+#include <glm/glm.hpp>
 
 struct SoundComp {
     AudioResource::Ptr audioResource;
-    glm::vec3 direction {}; // Only used if cone angles are set
+    glm::vec3 direction{}; // Only used if cone angles are set
 
     // If angles set to 0, the sound is omnidirectional
     float coneInnerAngle = 0.0f; // In radians

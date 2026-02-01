@@ -17,15 +17,12 @@ public:
     using Ptr = std::shared_ptr<Skin>;
     using CPtr = std::shared_ptr<const Skin>;
 
-    static Ptr create(AnimationContainer& container, const tinygltf::Model& model,
-                      const tinygltf::Skin& skin) {
+    static Ptr create(AnimationContainer& container, const tinygltf::Model& model, const tinygltf::Skin& skin) {
         return std::make_shared<Skin>(container, model, skin);
     }
 
-    Skin(AnimationContainer& container, const tinygltf::Model& model,
-         const tinygltf::Skin& skin);
-    void updateTransformBuffer(
-        std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms);
+    Skin(AnimationContainer& container, const tinygltf::Model& model, const tinygltf::Skin& skin);
+    void updateTransformBuffer(std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms);
 
     [[nodiscard]] const std::vector<AnimationNode*>& getJoints() const { return mJoints; }
     [[nodiscard]] const GPUBuffer& getTransformBuffer() const { return mTransformBuffer; }
@@ -35,6 +32,5 @@ private:
     std::vector<glm::mat4> mInverseBindMatrices; // Inverse bind matrices for each joint
     GPUBuffer mTransformBuffer;                  // Transform matrices for each joint
 
-    void load(AnimationContainer& container, const tinygltf::Model& model,
-              const tinygltf::Skin& skin);
+    void load(AnimationContainer& container, const tinygltf::Model& model, const tinygltf::Skin& skin);
 };

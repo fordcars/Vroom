@@ -4,18 +4,14 @@
 #include <glm/gtc/quaternion.hpp>
 #include <stack>
 
-#include "ResourceSys/Obj/Animation/Animation.hpp"
 #include "Entities/EntityFilter.hpp"
+#include "ResourceSys/Obj/Animation/Animation.hpp"
 
 namespace {
 // Interpolation helper
-glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t) {
-    return a * (1.0f - t) + b * t;
-}
+glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t) { return a * (1.0f - t) + b * t; }
 
-glm::quat slerpQuat(const glm::quat& a, const glm::quat& b, float t) {
-    return glm::slerp(a, b, t);
-}
+glm::quat slerpQuat(const glm::quat& a, const glm::quat& b, float t) { return glm::slerp(a, b, t); }
 } // namespace
 
 // Static
@@ -26,7 +22,7 @@ AnimationSys& AnimationSys::get() {
 
 void AnimationSys::update(float deltaTime) {
     EntityFilter<RenderableComp, AnimationComp> filter;
-    for(auto& [renderableComp, animationComp] : filter) {
+    for (auto& [renderableComp, animationComp] : filter) {
         updateAnimation(renderableComp, animationComp, deltaTime);
     }
 }
@@ -34,30 +30,28 @@ void AnimationSys::update(float deltaTime) {
 // Blend factor dictates how much the current pose is blended with the new pose.
 // A blend factor of 0 means the current pose is unchanged, while a blend factor
 // of 1 means the current pose is completely replaced by the new pose.
-void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
-                                          Animation& currentAnim, float blendFactor,
+void AnimationSys::applyAnimationChannels(AnimationComp& animationComp, Animation& currentAnim, float blendFactor,
                                           float deltaTime) {
-    for(auto& channel : currentAnim.getChannels()) {
+    for (auto& channel : currentAnim.getChannels()) {
         auto* node = channel.targetNode;
-        if(!node || channel.sampler.timestamps.size() < 2) continue;
+        if (!node || channel.sampler.timestamps.size() < 2)
+            continue;
 
         // Find the two closest keyframes
-        auto it =
-            std::ranges::lower_bound(channel.sampler.timestamps,
-                            animationComp.currentTime);
+        auto it = std::ranges::lower_bound(channel.sampler.timestamps, animationComp.currentTime);
         size_t i = std::distance(channel.sampler.timestamps.begin(), it);
 
         size_t i0 = 0;
         size_t i1 = 0;
-        if(i == 0) {
-            if(animationComp.mode == AnimationMode::Loop) {
+        if (i == 0) {
+            if (animationComp.mode == AnimationMode::Loop) {
                 i0 = channel.sampler.timestamps.size() - 1;
                 i1 = 0;
             } else {
                 i0 = 0;
                 i1 = 1;
             }
-        } else if(i >= channel.sampler.timestamps.size()) {
+        } else if (i >= channel.sampler.timestamps.size()) {
             i1 = channel.sampler.timestamps.size() - 1;
             i0 = i1 - 1;
         } else {
@@ -73,67 +67,61 @@ void AnimationSys::applyAnimationChannels(AnimationComp& animationComp,
         // Avoid division by zero (if two keyframes have the same time)
         float alpha = (t1 > t0) ? (animationComp.currentTime - t0) / (t1 - t0) : 0.0f;
 
-        if(channel.targetPath == Animation::TargetPath::Translation) {
-            node->translation = lerpVec3(v0, v1, alpha) * blendFactor +
-                                node->translation * (1.0f - blendFactor);
-        } else if(channel.targetPath == Animation::TargetPath::Rotation) {
+        if (channel.targetPath == Animation::TargetPath::Translation) {
+            node->translation = lerpVec3(v0, v1, alpha) * blendFactor + node->translation * (1.0f - blendFactor);
+        } else if (channel.targetPath == Animation::TargetPath::Rotation) {
             glm::quat q0 = glm::quat(v0.w, v0.x, v0.y, v0.z);
             glm::quat q1 = glm::quat(v1.w, v1.x, v1.y, v1.z);
-            node->rotation =
-                slerpQuat(node->rotation, slerpQuat(q0, q1, alpha), blendFactor);
-        } else if(channel.targetPath == Animation::TargetPath::Scale) {
-            node->scale = lerpVec3(v0, v1, alpha) * blendFactor +
-                          node->scale * (1.0f - blendFactor);
+            node->rotation = slerpQuat(node->rotation, slerpQuat(q0, q1, alpha), blendFactor);
+        } else if (channel.targetPath == Animation::TargetPath::Scale) {
+            node->scale = lerpVec3(v0, v1, alpha) * blendFactor + node->scale * (1.0f - blendFactor);
         }
     }
 }
 
-void AnimationSys::updateAnimation(RenderableComp& renderableComp,
-                                   AnimationComp& animationComp, float deltaTime) {
+void AnimationSys::updateAnimation(RenderableComp& renderableComp, AnimationComp& animationComp, float deltaTime) {
     // Detect animation change and initialize crossfade
-    if(animationComp.currentAnimation != animationComp.previousAnimation) {
+    if (animationComp.currentAnimation != animationComp.previousAnimation) {
         animationComp.previousAnimation = animationComp.currentAnimation;
         animationComp.crossfadeTime = animationComp.crossfadeDuration;
     }
 
-    if(!renderableComp.objectResource->animationContainer) return;
+    if (!renderableComp.objectResource->animationContainer)
+        return;
 
     auto animationContainer = renderableComp.objectResource->animationContainer;
-    auto *currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
-    if(!currentAnim) return;
+    auto* currentAnim = animationContainer->getAnimation(animationComp.currentAnimation);
+    if (!currentAnim)
+        return;
 
     float scaledDelta = deltaTime * animationComp.speed;
     animationComp.currentTime += scaledDelta;
 
-    if(animationComp.startTime >= 0.0f &&
-       animationComp.currentTime < animationComp.startTime) {
+    if (animationComp.startTime >= 0.0f && animationComp.currentTime < animationComp.startTime) {
         animationComp.currentTime = animationComp.startTime;
     }
 
-    if(animationComp.mode == AnimationMode::OneShot) {
-        if(animationComp.currentTime > currentAnim->getDuration()) {
+    if (animationComp.mode == AnimationMode::OneShot) {
+        if (animationComp.currentTime > currentAnim->getDuration()) {
             animationComp.currentTime = currentAnim->getDuration();
             return; // Stop updating if the animation is one shot and has finished
         }
-    } else if(animationComp.mode == AnimationMode::Loop) {
-        if(animationComp.currentTime > currentAnim->getDuration()) {
-            animationComp.currentTime =
-                fmod(animationComp.currentTime, currentAnim->getDuration());
+    } else if (animationComp.mode == AnimationMode::Loop) {
+        if (animationComp.currentTime > currentAnim->getDuration()) {
+            animationComp.currentTime = fmod(animationComp.currentTime, currentAnim->getDuration());
         }
     }
 
-    if(animationComp.endTime >= 0.0f &&
-       animationComp.currentTime > animationComp.endTime) {
+    if (animationComp.endTime >= 0.0f && animationComp.currentTime > animationComp.endTime) {
         animationComp.currentTime = animationComp.endTime;
-        if(animationComp.mode == AnimationMode::OneShot) {
+        if (animationComp.mode == AnimationMode::OneShot) {
             return;
         }
     }
 
     // During crossfade, interpolate between old and new animations
-    if(animationComp.crossfadeTime > 0.0f) {
-        float blendFactor =
-            1.0f - (animationComp.crossfadeTime / animationComp.crossfadeDuration);
+    if (animationComp.crossfadeTime > 0.0f) {
+        float blendFactor = 1.0f - (animationComp.crossfadeTime / animationComp.crossfadeDuration);
         animationComp.crossfadeTime -= deltaTime;
         applyAnimationChannels(animationComp, *currentAnim, blendFactor, deltaTime);
     } else {
@@ -143,18 +131,18 @@ void AnimationSys::updateAnimation(RenderableComp& renderableComp,
     // Update mesh and skin transforms with new node transforms
     std::unordered_map<AnimationNode*, glm::mat4> cachedTransforms;
     updateMeshTransforms(*renderableComp.objectResource.get(), cachedTransforms);
-    for(auto& skin : animationContainer->getSkins()) {
+    for (auto& skin : animationContainer->getSkins()) {
         skin->updateTransformBuffer(cachedTransforms);
     }
 }
 
 // Handles skeletal (not skinned) animation
-void AnimationSys::updateMeshTransforms(
-    const ObjResource& objResource,
-    std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms) {
+void AnimationSys::updateMeshTransforms(const ObjResource& objResource,
+                                        std::unordered_map<AnimationNode*, glm::mat4>& cachedTransforms) {
     // Apply all joints transformations, from root to animationNode, for each mesh
-    for(const auto& mesh : objResource.objMeshes) {
-        if(!mesh->animationNode) continue;
+    for (const auto& mesh : objResource.objMeshes) {
+        if (!mesh->animationNode)
+            continue;
         AnimationNode* joint = mesh->animationNode;
         std::stack<AnimationNode*> stack;
         glm::mat4 accumulatedTransform = glm::mat4(1.0f);
@@ -162,8 +150,8 @@ void AnimationSys::updateMeshTransforms(
         // Go up the hierarchy
         // If we hit a joint that has already been processed, we can use its cached
         // transform
-        while(joint != nullptr) {
-            if(cachedTransforms.contains(joint)) {
+        while (joint != nullptr) {
+            if (cachedTransforms.contains(joint)) {
                 accumulatedTransform = cachedTransforms[joint];
                 break;
             }
@@ -173,14 +161,12 @@ void AnimationSys::updateMeshTransforms(
         }
 
         // Apply from root (or after last cached) to joint
-        while(!stack.empty()) {
+        while (!stack.empty()) {
             joint = stack.top();
             stack.pop();
 
-            glm::mat4 localTransform =
-                glm::translate(glm::mat4(1.0f), joint->translation) *
-                glm::mat4_cast(joint->rotation) *
-                glm::scale(glm::mat4(1.0f), joint->scale);
+            glm::mat4 localTransform = glm::translate(glm::mat4(1.0f), joint->translation) *
+                                       glm::mat4_cast(joint->rotation) * glm::scale(glm::mat4(1.0f), joint->scale);
 
             accumulatedTransform = accumulatedTransform * localTransform;
             cachedTransforms.insert({joint, accumulatedTransform});

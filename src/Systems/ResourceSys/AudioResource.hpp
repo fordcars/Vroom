@@ -6,17 +6,15 @@
 #include <type_traits>
 
 #include "Log.hpp"
-#include "miniaudio.h"
 #include "Systems/AudioSys.hpp"
+#include "miniaudio.h"
 
 class AudioResource {
 public:
     using Ptr = std::shared_ptr<AudioResource>;
     using CPtr = std::shared_ptr<const AudioResource>;
 
-    static Ptr create(const std::filesystem::path& path) {
-        return std::make_shared<AudioResource>(path);
-    }
+    static Ptr create(const std::filesystem::path& path) { return std::make_shared<AudioResource>(path); }
 
     AudioResource(const std::filesystem::path& path);
     ~AudioResource();
@@ -37,25 +35,20 @@ private:
     std::unique_ptr<ma_sound> mMiniAudioSound;
 
 public:
-    template <
-        auto MiniAudioFunction, typename... Args>
-    bool call(Args&&... args) requires std::is_same_v<
-            decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)),
-            ma_result> {
-        ma_result result =
-            MiniAudioFunction(mMiniAudioSound.get(), std::forward<Args>(args)...);
-        if(result != MA_SUCCESS) {
-            Log::warn() << "Failed to call miniaudio sound function: "
-                        << ma_result_description(result);
+    template <auto MiniAudioFunction, typename... Args>
+    bool call(Args&&... args) requires
+        std::is_same_v<decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)), ma_result> {
+        ma_result result = MiniAudioFunction(mMiniAudioSound.get(), std::forward<Args>(args)...);
+        if (result != MA_SUCCESS) {
+            Log::warn() << "Failed to call miniaudio sound function: " << ma_result_description(result);
             return false;
         }
         return true;
     }
 
     template <auto MiniAudioFunction, typename... Args>
-    decltype(auto) call(Args&&... args) requires (!std::is_same_v<
-            decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)),
-            ma_result>) {
+    decltype(auto) call(Args&&... args) requires(
+        !std::is_same_v<decltype(MiniAudioFunction(mMiniAudioSound.get(), std::declval<Args>()...)), ma_result>) {
         return MiniAudioFunction(mMiniAudioSound.get(), std::forward<Args>(args)...);
     }
 };

@@ -24,13 +24,12 @@ constexpr unsigned MAX_BONES_PER_SKINNED_MESH = 500;
 // Strings used as map keys, but known at compile time
 // are defined here; prefer to use a simple array with
 // these values instead of a map of std::strings.
-using UniformName = Utils::StringIndexor<
-    "MVP", "modelMatrix", "viewMatrix", "projectionMatrix", "normalMatrix", "time",
-    "isSkinned", "lightPos_worldspace", "lightDiffuseColor", "lightSpecularColor",
-    "lightIntensity", "positionTex", "normalTex", "albedoTex", "metallicTex",
-    "roughnessTex", "baseColorTex", "hasBaseColorTex", "hasNormalTex",
-    "metallicRoughnessTex", "hasMetallicRoughnessTex", "emissiveTex", "hasEmissiveTex",
-    "normalScale", "colorTex">;
+using UniformName =
+    Utils::StringIndexor<"MVP", "modelMatrix", "viewMatrix", "projectionMatrix", "normalMatrix", "time", "isSkinned",
+                         "lightPos_worldspace", "lightDiffuseColor", "lightSpecularColor", "lightIntensity",
+                         "positionTex", "normalTex", "albedoTex", "metallicTex", "roughnessTex", "baseColorTex",
+                         "hasBaseColorTex", "hasNormalTex", "metallicRoughnessTex", "hasMetallicRoughnessTex",
+                         "emissiveTex", "hasEmissiveTex", "normalScale", "colorTex">;
 using UniformBlockName = Utils::StringIndexor<"ObjMaterialsBlock", "SkinTransformBlock">;
 using AnimationName = Utils::StringIndexor<"Normal Walk", "Zombie Walk", "Happy">;
 

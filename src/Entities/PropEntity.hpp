@@ -8,8 +8,7 @@
 #include "Components/RenderableComp.hpp"
 #include "Entity.hpp"
 
-class PropEntity
-    : public Entity<PositionComp, RenderableComp, FrictionComp, BoxPhysicsComp> {
+class PropEntity : public Entity<PositionComp, RenderableComp, FrictionComp, BoxPhysicsComp> {
 public:
     static std::vector<PropEntity> instances;
 };

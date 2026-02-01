@@ -23,7 +23,7 @@ public:
 
     ObjTexture(std::string name, ObjImage::Ptr image, GLuint samplerId);
     ObjTexture(const ObjTexture& o) = default;
-    ObjTexture(ObjTexture&& o) noexcept ;
+    ObjTexture(ObjTexture&& o) noexcept;
     ~ObjTexture();
     ObjTexture& operator=(const ObjTexture&) = delete;
     ObjTexture& operator=(ObjTexture&&) = delete;

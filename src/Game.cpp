@@ -21,12 +21,13 @@ Game::~Game() {
 }
 
 bool Game::start() {
-    if(init()) {
+    if (init()) {
         GameplaySys::get().start();
 
         mLastFrameTime = SDL_GetTicks(); // Reset this here to avoid a huge delta time on
                                          // the first frame.
-        while(!mQuitting) doMainLoop();
+        while (!mQuitting)
+            doMainLoop();
         return true;
     }
 
@@ -36,24 +37,23 @@ bool Game::start() {
 bool Game::init() {
     Log::info() << "Initializing game...";
 
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         Log::sdlError() << "Unable to initialize SDL!";
         return false;
     }
 
     // Create window
-    mMainWindow = SDL_CreateWindow(
-        Constants::GAME_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        Constants::DEFAULT_WINDOW_SIZE_X, Constants::DEFAULT_WINDOW_SIZE_Y,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+    mMainWindow = SDL_CreateWindow(Constants::GAME_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                   Constants::DEFAULT_WINDOW_SIZE_X, Constants::DEFAULT_WINDOW_SIZE_Y,
+                                   SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
-    if(!mMainWindow) {
+    if (!mMainWindow) {
         Log::sdlError() << "Unable to create window!";
         return false;
     }
 
-    return InputSys::get().init() && RenderingSys::get().init(mMainWindow) &&
-           AudioSys::get().init() && ResourceSys::get().loadResources();
+    return InputSys::get().init() && RenderingSys::get().init(mMainWindow) && AudioSys::get().init() &&
+           ResourceSys::get().loadResources();
 }
 
 void Game::requestQuit() {
@@ -66,7 +66,8 @@ void Game::doMainLoop() {
     float deltaTime = getCurrentDeltaTime(startFrameTime);
 
     // Handle events
-    if(!EventSys::get().handleEvents()) requestQuit();
+    if (!EventSys::get().handleEvents())
+        requestQuit();
 
     // Logic and stuff
     AnimationSys::get().update(deltaTime);
@@ -81,9 +82,9 @@ void Game::doMainLoop() {
     RenderingSys::get().render(mMainWindow);
 
     // Limit FPS if VSync is off
-    if(!Constants::ENABLE_VSYNC) {
+    if (!Constants::ENABLE_VSYNC) {
         Uint32 endFrameTime = SDL_GetTicks() - startFrameTime;
-        if(endFrameTime < (1000 / Constants::NO_VSYNC_MAX_FPS)) {
+        if (endFrameTime < (1000 / Constants::NO_VSYNC_MAX_FPS)) {
             SDL_Delay((1000 / Constants::NO_VSYNC_MAX_FPS) - endFrameTime);
         }
     }
@@ -99,7 +100,7 @@ float Game::getCurrentDeltaTime(Uint32 startFrameTime) {
     mLastDeltaTimeIndex = (mLastDeltaTimeIndex + 1) % 5;
 
     float sum = 0.0f;
-    for(float mLastDeltaTime : mLastDeltaTimes) {
+    for (float mLastDeltaTime : mLastDeltaTimes) {
         sum += mLastDeltaTime;
     }
     return sum / 5.0f;
@@ -107,24 +108,24 @@ float Game::getCurrentDeltaTime(Uint32 startFrameTime) {
 
 void Game::checkForErrors() {
     GLenum err;
-    while((err = glGetError()) != GL_NO_ERROR) {
-        if(err == GL_INVALID_ENUM)
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        if (err == GL_INVALID_ENUM)
             Log::error() << "OpenGL error: GL_INVALID_ENUM";
-        else if(err == GL_INVALID_VALUE)
+        else if (err == GL_INVALID_VALUE)
             Log::error() << "OpenGL error: GL_INVALID_VALUE";
-        else if(err == GL_INVALID_OPERATION)
+        else if (err == GL_INVALID_OPERATION)
             Log::error() << "OpenGL error: GL_INVALID_OPERATION";
-        else if(err == GL_STACK_OVERFLOW)
+        else if (err == GL_STACK_OVERFLOW)
             Log::error() << "OpenGL error: GL_STACK_OVERFLOW";
-        else if(err == GL_STACK_UNDERFLOW)
+        else if (err == GL_STACK_UNDERFLOW)
             Log::error() << "OpenGL error: GL_STACK_UNDERFLOW";
-        else if(err == GL_OUT_OF_MEMORY)
+        else if (err == GL_OUT_OF_MEMORY)
             Log::error() << "OpenGL error: GL_OUT_OF_MEMORY";
     }
 
     // Often, SDL errors will not be important, since it includes internal diagnostics
     std::string message = SDL_GetError();
-    if(!message.empty()) {
+    if (!message.empty()) {
         Log::warn() << "SDL message: " << message;
         SDL_ClearError();
     }

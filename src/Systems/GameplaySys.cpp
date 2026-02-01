@@ -17,10 +17,8 @@ GameplaySys& GameplaySys::get() {
 
 void GameplaySys::start() {
     // Init stuff
-    if(Constants::ENABLE_FXAA)
-    {
-        RenderingSys::get().setPostProcessShader(
-            ResourceSys::get().getShaderResource("fxaa"));
+    if (Constants::ENABLE_FXAA) {
+        RenderingSys::get().setPostProcessShader(ResourceSys::get().getShaderResource("fxaa"));
     }
 
     // Create camera
@@ -28,8 +26,7 @@ void GameplaySys::start() {
     CameraInfoComp& info = camera.get<CameraInfoComp>();
     PositionComp& cameraPos = camera.get<PositionComp>();
     info.horizFOV = Constants::HORIZ_FOV;
-    info.aspectRatio = static_cast<float>(Constants::DEFAULT_WINDOW_SIZE_X) /
-                       Constants::DEFAULT_WINDOW_SIZE_Y;
+    info.aspectRatio = static_cast<float>(Constants::DEFAULT_WINDOW_SIZE_X) / Constants::DEFAULT_WINDOW_SIZE_Y;
     info.nearClippingPlane = 2.0f;
     info.farClippingPlane = 10000.0f;
     info.upVector = {0.0f, 1.0f, 0.0f};
@@ -41,8 +38,7 @@ void GameplaySys::start() {
     // Create player
     {
         PlayerEntity player;
-        auto [position, renderable, sound, animation, physics, frictionComp, gravity] =
-            player.getComponents();
+        auto [position, renderable, sound, animation, physics, frictionComp, gravity] = player.getComponents();
         position.coords.x = -5;
         position.coords.y = 3;
         position.coords.z = 10;
@@ -65,8 +61,7 @@ void GameplaySys::start() {
         position.coords.x = 10;
         position.coords.y = 0;
         position.coords.z = 10;
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(std::move(prop));
     }
@@ -79,8 +74,7 @@ void GameplaySys::start() {
         position.coords.y = 0;
         position.coords.z = 10;
         position.rotation.y = 1.6f;
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(std::move(prop));
     }
@@ -94,8 +88,7 @@ void GameplaySys::start() {
         position.coords.z = -20;
         position.scale = glm::vec3(2.0f);
         position.rotation.y = 1.0f;
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(std::move(prop));
     }
@@ -108,8 +101,7 @@ void GameplaySys::start() {
         position.coords.y = -1;
         position.coords.z = 0;
         position.scale = {100, 1, 100};
-        renderable.objectResource =
-            ResourceSys::get().getObjResource("low_poly_blendered");
+        renderable.objectResource = ResourceSys::get().getObjResource("low_poly_blendered");
         renderable.shader = ResourceSys::get().getShaderResource("deferred_pbr");
         PropEntity::instances.emplace_back(std::move(prop));
     }
@@ -147,15 +139,13 @@ void GameplaySys::start() {
 void GameplaySys::update(float deltaTime) {
     auto& playerPosition = PlayerEntity::instances[0].get<PositionComp>().coords;
     auto& cameraPosition = CameraEntity::instances[0].get<PositionComp>().coords;
-    CameraEntity::instances[0].get<CameraInfoComp>().direction =
-        glm::vec4(playerPosition, 1);
+    CameraEntity::instances[0].get<CameraInfoComp>().direction = glm::vec4(playerPosition, 1);
 
     // Update skybox
     SkyboxEntity::instances[0].get<PositionComp>().coords = cameraPosition;
 
     // Random debug stuff
-    PropEntity::instances[1].get<PositionComp>().coords.x =
-        10 + 2 * sin(static_cast<float>(SDL_GetTicks()) / 1000.0f);
+    PropEntity::instances[1].get<PositionComp>().coords.x = 10 + 2 * sin(static_cast<float>(SDL_GetTicks()) / 1000.0f);
     PropEntity::instances[2].get<PositionComp>().rotation.x = static_cast<float>(SDL_GetTicks()) / 1000.0f;
 
     // PropEntity::instances[0].get<PositionComp>().coords.x = playerPosition.x;

@@ -3,8 +3,7 @@
 #include <atomic>
 
 namespace Utils {
-template <typename Derived>
-class Identifiable {
+template <typename Derived> class Identifiable {
 public:
     static inline std::atomic<std::size_t> nextId{0};
     const std::size_t id;

@@ -9,7 +9,8 @@ GPUBuffer::~GPUBuffer() { glDeleteBuffers(1, &mId); }
 
 GPUBuffer::GPUBuffer(const GPUBuffer& other) : mSize(other.mSize) {
     glGenBuffers(1, &mId);
-    if(mSize == 0) return;
+    if (mSize == 0)
+        return;
 
     // Bind the source buffer for reading
     glBindBuffer(GL_COPY_READ_BUFFER, other.mId);

@@ -34,7 +34,8 @@ void UISys::update(float deltaTime) {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    if(mShowFPSOverlay) showFPSOverlay();
+    if (mShowFPSOverlay)
+        showFPSOverlay();
 }
 
 void UISys::render() {
@@ -48,9 +49,8 @@ void UISys::shutdown() {
     ImGui::DestroyContext();
 }
 
-void UISys::showFPSOverlay()
-{
-    ImGui::SetNextWindowSize(ImVec2(100, 50)); // Set a fixed size
+void UISys::showFPSOverlay() {
+    ImGui::SetNextWindowSize(ImVec2(100, 50));                 // Set a fixed size
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always); // Fixed position
 
     ImGui::Begin("FPS", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);

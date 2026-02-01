@@ -3,12 +3,12 @@
 #include <memory>
 #include <optional>
 
-#include "Log.hpp"
-#include "Entities/EntityFilter.hpp"
+#include "Components/PhysicsComp.hpp"
 #include "Components/PositionComp.hpp"
 #include "Components/SoundComp.hpp"
-#include "Components/PhysicsComp.hpp"
 #include "Entities/CameraEntity.hpp"
+#include "Entities/EntityFilter.hpp"
+#include "Log.hpp"
 
 // Static
 AudioSys& AudioSys::get() {
@@ -20,9 +20,8 @@ AudioSys::AudioSys() : mEngine(std::make_shared<Engine>()) {}
 
 bool AudioSys::init() {
     ma_result result = ma_engine_init(NULL, &mEngine->miniAudioEngine);
-    if(result != MA_SUCCESS) {
-        Log::error() << "Failed to initialize audio engine: "
-                     << ma_result_description(result);
+    if (result != MA_SUCCESS) {
+        Log::error() << "Failed to initialize audio engine: " << ma_result_description(result);
         return false;
     }
 
@@ -34,17 +33,16 @@ void AudioSys::update(float) {
     auto cameraPos = CameraEntity::instances[0].get<PositionComp>();
     auto cameraInfo = CameraEntity::instances[0].get<CameraInfoComp>();
     call<ma_engine_listener_set_position>(0, cameraPos.coords.x, cameraPos.coords.y, cameraPos.coords.z);
-    
-    glm::vec3 dir = cameraInfo.direction.w == 1.0f
-        ? glm::vec3(cameraInfo.direction) - cameraPos.coords
-        : glm::vec3(cameraInfo.direction);
+
+    glm::vec3 dir = cameraInfo.direction.w == 1.0f ? glm::vec3(cameraInfo.direction) - cameraPos.coords
+                                                   : glm::vec3(cameraInfo.direction);
 
     call<ma_engine_listener_set_direction>(0, dir.x, dir.y, dir.z);
     call<ma_engine_listener_set_world_up>(0, cameraInfo.upVector.x, cameraInfo.upVector.y, cameraInfo.upVector.z);
 
     // Update spatial parameters for all entities
-    for(auto& [sound, position, physics] : EntityFilter<SoundComp, PositionComp, std::optional<PhysicsComp>>()) {
-        if(!sound.audioResource || (sound.audioResource->call<ma_sound_is_spatialization_enabled>() == 0u)) {
+    for (auto& [sound, position, physics] : EntityFilter<SoundComp, PositionComp, std::optional<PhysicsComp>>()) {
+        if (!sound.audioResource || (sound.audioResource->call<ma_sound_is_spatialization_enabled>() == 0u)) {
             continue;
         }
         sound.audioResource->call<ma_sound_set_position>(position.coords.x, position.coords.y, position.coords.z);
@@ -52,9 +50,10 @@ void AudioSys::update(float) {
         sound.audioResource->call<ma_sound_set_cone>(sound.coneInnerAngle, sound.coneOuterAngle, sound.coneOuterGain);
         sound.audioResource->call<ma_sound_set_rolloff>(sound.rolloffFactor);
 
-        if(physics) {
+        if (physics) {
             auto& physicsComp = physics->get();
-            sound.audioResource->call<ma_sound_set_velocity>(physicsComp.velocity.x, physicsComp.velocity.y, physicsComp.velocity.z);
+            sound.audioResource->call<ma_sound_set_velocity>(physicsComp.velocity.x, physicsComp.velocity.y,
+                                                             physicsComp.velocity.z);
         }
     }
 }

@@ -16,9 +16,8 @@ struct AnimationComp {
     float crossfadeTime = 0.0f;
     float crossfadeDuration = 1.00f;
 
-    void setAnimation(std::size_t animNameIndex,
-                      AnimationMode mode = AnimationMode::Loop) {
-        if(currentAnimation != animNameIndex) {
+    void setAnimation(std::size_t animNameIndex, AnimationMode mode = AnimationMode::Loop) {
+        if (currentAnimation != animNameIndex) {
             currentAnimation = animNameIndex;
             currentTime = 0.0f;
         }
